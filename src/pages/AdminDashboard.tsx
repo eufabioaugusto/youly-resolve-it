@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +28,20 @@ import {
 const AdminDashboard = () => {
   const { signOut } = useAuth();
   const { users, loading: usersLoading, promoteToAdmin } = useAdmin();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut();
+    try {
+      setLoggingOut(true);
+      console.log('Iniciando logout...');
+      await signOut();
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      // Force redirect even if logout fails
+      window.location.href = "/";
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   // Mock data
@@ -133,8 +145,12 @@ const AdminDashboard = () => {
             <Button variant="ghost" size="icon">
               <User className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
+            <Button variant="ghost" size="icon" onClick={handleLogout} disabled={loggingOut}>
+              {loggingOut ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </div>

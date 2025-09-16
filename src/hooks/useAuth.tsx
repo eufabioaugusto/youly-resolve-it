@@ -22,16 +22,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Handle logout events
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing all data');
+          setSession(null);
+          setUser(null);
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.warn('Error getting session:', error);
+        setSession(null);
+        setUser(null);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 
@@ -61,9 +76,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Clear any cached data and redirect to home
-    window.location.href = "/";
+    try {
+      // Check if there's an active session before trying to sign out
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.warn('Logout error (ignoring):', error);
+          // Continue with logout process even if server logout fails
+        }
+      }
+    } catch (error) {
+      console.warn('Error during logout process (ignoring):', error);
+      // Continue with logout process even if there are errors
+    } finally {
+      // Always clear local state and redirect
+      setSession(null);
+      setUser(null);
+      
+      // Clear any cached data and redirect to home
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
+    }
   };
 
   return (

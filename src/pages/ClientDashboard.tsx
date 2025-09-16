@@ -31,6 +31,7 @@ const ClientDashboard = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (clienteProfile) {
@@ -106,7 +107,17 @@ const ClientDashboard = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
+    try {
+      setLoggingOut(true);
+      console.log('Iniciando logout...');
+      await signOut();
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      // Force redirect even if logout fails
+      window.location.href = "/";
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -145,8 +156,12 @@ const ClientDashboard = () => {
                 <User className="w-4 h-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
+            <Button variant="ghost" size="icon" onClick={handleLogout} disabled={loggingOut}>
+              {loggingOut ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </div>

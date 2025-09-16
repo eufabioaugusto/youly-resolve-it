@@ -39,6 +39,7 @@ const WorkerDashboard = () => {
   const [carteira, setCarteira] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (montadorProfile) {
@@ -184,7 +185,17 @@ const WorkerDashboard = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
+    try {
+      setLoggingOut(true);
+      console.log('Iniciando logout...');
+      await signOut();
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      // Force redirect even if logout fails
+      window.location.href = "/";
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleApply = async (jobId: string) => {
@@ -242,9 +253,13 @@ const WorkerDashboard = () => {
                 Minha Conta
               </Button>
             </Link>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
+            <Button onClick={handleLogout} variant="outline" size="sm" disabled={loggingOut}>
+              {loggingOut ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+              ) : (
+                <LogOut className="w-4 h-4 mr-2" />
+              )}
+              {loggingOut ? 'Saindo...' : 'Sair'}
             </Button>
           </div>
         </div>
