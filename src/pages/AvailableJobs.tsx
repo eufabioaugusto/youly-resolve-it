@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import CandidateModal from "@/components/CandidateModal";
+import JobDetailsModal from "@/components/JobDetailsModal";
 
 interface Job {
   id: string;
@@ -47,6 +48,7 @@ const AvailableJobs = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [candidateModalOpen, setCandidateModalOpen] = useState(false);
+  const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (montadorProfile) {
@@ -296,7 +298,7 @@ const AvailableJobs = () => {
                         variant="outline"
                         onClick={() => {
                           setSelectedJob(job);
-                          setCandidateModalOpen(true);
+                          setJobDetailsModalOpen(true);
                         }}
                         className="flex-1"
                       >
@@ -318,6 +320,13 @@ const AvailableJobs = () => {
               ))
             )}
           </div>
+
+          {/* Modal de Detalhes */}
+          <JobDetailsModal
+            job={selectedJob}
+            open={jobDetailsModalOpen}
+            onOpenChange={setJobDetailsModalOpen}
+          />
 
           {/* Modal de Candidatura */}
           <CandidateModal

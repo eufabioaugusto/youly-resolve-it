@@ -19,7 +19,8 @@ import {
   User,
   Bell,
   LogOut,
-  Users
+  Users,
+  MessageSquare
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -178,7 +179,7 @@ const ClientDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Link to="/criar-pedido">
             <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
               <CardContent className="p-6">
@@ -194,6 +195,20 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
           </Link>
+
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">Negociações</h3>
+                  <p className="text-sm text-muted-foreground">Acompanhar orçamentos</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-primary-foreground" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
             <Card className="shadow-card">
               <CardContent className="p-6">

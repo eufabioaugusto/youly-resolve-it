@@ -350,9 +350,10 @@ const WorkerDashboard = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="available" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
             <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>
+            <TabsTrigger value="negotiations">Negociações</TabsTrigger>
             <TabsTrigger value="wallet">Carteira</TabsTrigger>
           </TabsList>
           
@@ -408,7 +409,7 @@ const WorkerDashboard = () => {
                               {new Date(job.created_at).toLocaleDateString('pt-BR')}
                             </span>
                             <div className="flex gap-2">
-                              <Link to={`/trabalho/${job.id}`}>
+                              <Link to="/trabalhos-disponiveis">
                                 <Button variant="outline" size="sm">
                                   <Eye className="w-4 h-4 mr-2" />
                                   Ver detalhes
@@ -521,6 +522,29 @@ const WorkerDashboard = () => {
             </Card>
           </TabsContent>
           
+          <TabsContent value="negotiations" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Negociações em Andamento</CardTitle>
+                <CardDescription>
+                  Acompanhe suas negociações de orçamentos com clientes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Suas negociações aparecerão aqui quando você enviar orçamentos.
+                  </p>
+                  <Link to="/trabalhos-disponiveis">
+                    <Button className="bg-gradient-primary">
+                      Ver Trabalhos Disponíveis
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="wallet" className="mt-6">
             <Card>
               <CardHeader>

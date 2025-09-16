@@ -91,10 +91,20 @@ const SuggestedMontadores = () => {
 
         // Filtrar montadores que têm especialidades relacionadas ao job
         if (jobData.categoria) {
-          montadoresWithProfiles = montadoresWithProfiles.filter(montador => 
-            montador.especialidades && 
-            montador.especialidades.some(esp => esp.toLowerCase().includes(jobData.categoria.toLowerCase()) || jobData.categoria.toLowerCase().includes(esp.toLowerCase()))
-          );
+          montadoresWithProfiles = montadoresWithProfiles.filter(montador => {
+            if (!montador.especialidades) return false;
+            
+            const jobCategoria = jobData.categoria.toLowerCase();
+            return montador.especialidades.some(esp => {
+              const especialidade = esp.toLowerCase();
+              return especialidade.includes(jobCategoria) || 
+                     jobCategoria.includes(especialidade) ||
+                     (jobCategoria === 'mesa' && especialidade === 'mesa') ||
+                     (jobCategoria === 'guarda-roupa' && especialidade === 'guarda-roupa') ||
+                     (jobCategoria === 'cama' && especialidade === 'cama') ||
+                     (jobCategoria === 'estante' && especialidade === 'estante');
+            });
+          });
         }
 
         // Se não há montadores com especialidades específicas, mostrar todos os ativos (máximo 3)
