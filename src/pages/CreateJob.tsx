@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { Wrench, ArrowLeft, Upload, Calendar } from "lucide-react";
+import { Wrench, ArrowLeft, Upload, Calendar, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const CreateJob = () => {
@@ -17,6 +17,7 @@ const CreateJob = () => {
   const { toast } = useToast();
   const { clienteProfile } = useProfile();
   const [loading, setLoading] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     descricao: '',
@@ -92,6 +93,63 @@ const CreateJob = () => {
     setFormData({ ...formData, data_opcoes: newOpcoes });
   };
 
+  const searchCEP = async (cep: string) => {
+    if (cep.length !== 8) return;
+    
+    setCepLoading(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        setFormData({
+          ...formData,
+          endereco: {
+            ...formData.endereco,
+            cep: cep,
+            rua: data.logradouro || '',
+            bairro: data.bairro || '',
+            cidade: data.localidade || '',
+            estado: data.uf || ''
+          }
+        });
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique se o CEP está correto",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Tente novamente em alguns momentos",
+        variant: "destructive"
+      });
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  const handleCepChange = (value: string) => {
+    const cleanCEP = value.replace(/\D/g, '');
+    setFormData({
+      ...formData,
+      endereco: { ...formData.endereco, cep: cleanCEP }
+    });
+
+    if (cleanCEP.length === 8) {
+      searchCEP(cleanCEP);
+    }
+  };
+
+  // Calcular data mínima (48h = 2 dias corridos)
+  const getMinDate = () => {
+    const now = new Date();
+    now.setDate(now.getDate() + 2);
+    return now.toISOString().split('T')[0];
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
@@ -164,6 +222,9 @@ const CreateJob = () => {
                       step="0.01"
                       min="0"
                     />
+                    <p className="text-sm text-muted-foreground">
+                      Insira o valor estimado do produto a ser montado
+                    </p>
                   </div>
                 </div>
 
@@ -171,6 +232,26 @@ const CreateJob = () => {
                 <div className="space-y-4">
                   <h3 className="font-semibold">Endereço para o serviço</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="cep">CEP *</Label>
+                      <div className="relative">
+                        <Input 
+                          id="cep"
+                          placeholder="00000-000"
+                          value={formData.endereco.cep.replace(/(\d{5})(\d)/, '$1-$2')}
+                          onChange={(e) => handleCepChange(e.target.value)}
+                          maxLength={9}
+                          required
+                        />
+                        {cepLoading && (
+                          <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Digite o CEP para preenchimento automático
+                      </p>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="rua">Rua *</Label>
                       <Input 
@@ -231,27 +312,20 @@ const CreateJob = () => {
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cep">CEP *</Label>
-                      <Input 
-                        id="cep"
-                        value={formData.endereco.cep}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, cep: e.target.value }
-                        })}
-                        required
-                      />
-                    </div>
                   </div>
                 </div>
 
                 {/* Datas disponíveis */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Datas disponíveis (até 3 opções)
-                  </h3>
+                  <div>
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Datas disponíveis (até 3 opções)
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Selecione até 3 datas alternativas com antecedência mínima de 48h
+                    </p>
+                  </div>
                   {formData.data_opcoes.map((opcao, index) => (
                     <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
                       <Checkbox 
@@ -265,7 +339,7 @@ const CreateJob = () => {
                           type="date"
                           value={opcao.data}
                           onChange={(e) => updateDataOpcao(index, 'data', e.target.value)}
-                          min={new Date().toISOString().split('T')[0]}
+                          min={getMinDate()}
                         />
                         <Select 
                           value={opcao.periodo} 
@@ -275,8 +349,8 @@ const CreateJob = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="manha">Manhã (8h-12h)</SelectItem>
-                            <SelectItem value="tarde">Tarde (13h-17h)</SelectItem>
+                            <SelectItem value="manha">Manhã (08h–12h)</SelectItem>
+                            <SelectItem value="tarde">Tarde (13h–18h)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
