@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
+import JobDetailsModal from "@/components/JobDetailsModal";
 
 const ClientDashboard = () => {
   const { signOut } = useAuth();
@@ -32,6 +33,8 @@ const ClientDashboard = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (clienteProfile) {
@@ -280,7 +283,16 @@ const ClientDashboard = () => {
                     <Separator className="my-4" />
                     
                     <div className="flex gap-3">
-                      <Button variant="outline" size="sm">Ver detalhes</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setDetailsModalOpen(true);
+                        }}
+                      >
+                        Ver detalhes
+                      </Button>
                       {job.status === 'em_negociacao' ? (
                         <Button 
                           onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
@@ -289,12 +301,22 @@ const ClientDashboard = () => {
                           Ver Negociação
                         </Button>
                       ) : job.status === 'aberto' ? (
-                        <Button 
-                          onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
-                          className="bg-gradient-primary hover:shadow-glow"
-                        >
-                          Ver Montadores Sugeridos
-                        </Button>
+                        <>
+                          <Button 
+                            onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
+                            className="bg-gradient-primary hover:shadow-glow"
+                            size="sm"
+                          >
+                            Ver Montadores Sugeridos
+                          </Button>
+                          <Button 
+                            onClick={() => navigate(`/pedido/${job.id}/candidatos`)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Ver Candidatos ({job.candidaturas_count || 0})
+                          </Button>
+                        </>
                       ) : null}
                       {job.status === "aguardando_pagamento" && (
                         <Button size="sm" className="bg-gradient-primary">Pagar agora</Button>
@@ -309,6 +331,13 @@ const ClientDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal de Detalhes */}
+        <JobDetailsModal
+          job={selectedJob}
+          open={detailsModalOpen}
+          onOpenChange={setDetailsModalOpen}
+        />
       </div>
     </div>
   );

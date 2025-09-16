@@ -32,39 +32,47 @@ const CentralNegociacao = () => {
           Voltar ao dashboard
         </Link>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <DollarSign className="w-8 h-8 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Central de Negociação</h1>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              Em Desenvolvimento
-            </Badge>
-          </div>
-
-          <Card className="shadow-glow border-0 mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Sistema de Negociação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  Sistema de negociação em desenvolvimento.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Job ID: {jobId}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Usuário: {isCliente ? 'Cliente' : 'Montador'}
-                </p>
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <MessageSquare className="w-8 h-8 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Central de Negociação</h1>
+              <p className="text-white/80 mb-4">
+                Negocie diretamente com o montador sobre preço e detalhes do serviço
+              </p>
+            </div>
+
+            <Card className="shadow-glow border-0 mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Informações do Trabalho
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <AlertCircle className="w-16 h-16 text-warning mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Sistema em Desenvolvimento</h3>
+                  <p className="text-muted-foreground mb-4">
+                    A central de negociação está sendo finalizada.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>Job ID: {jobId}</p>
+                    <p>Usuário: {isCliente ? 'Cliente' : 'Montador'}</p>
+                  </div>
+                  <div className="mt-6">
+                    <Button
+                      onClick={() => navigate(isCliente ? "/cliente" : "/montador")}
+                      className="bg-gradient-primary"
+                    >
+                      Voltar ao Dashboard
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
       </div>
     </div>
   );

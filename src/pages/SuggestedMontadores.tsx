@@ -93,12 +93,24 @@ const SuggestedMontadores = () => {
         if (jobData.categoria) {
           montadoresWithProfiles = montadoresWithProfiles.filter(montador => 
             montador.especialidades && 
-            montador.especialidades.includes(jobData.categoria)
+            montador.especialidades.some(esp => esp.toLowerCase().includes(jobData.categoria.toLowerCase()) || jobData.categoria.toLowerCase().includes(esp.toLowerCase()))
           );
         }
 
-        // Pegar até 3 montadores
-        setMontadores(montadoresWithProfiles.slice(0, 3));
+        // Se não há montadores com especialidades específicas, mostrar todos os ativos (máximo 3)
+        if (montadoresWithProfiles.length === 0) {
+          montadoresWithProfiles = montadoresData.map(montador => {
+            const profile = profilesData?.find(p => p.user_id === montador.user_id);
+            return {
+              ...montador,
+              profiles: profile || { nome: 'Montador' }
+            };
+          }).slice(0, 3);
+        } else {
+          // Pegar até 3 montadores especializados
+          montadoresWithProfiles = montadoresWithProfiles.slice(0, 3);
+        }
+        setMontadores(montadoresWithProfiles);
       } else {
         setMontadores([]);
       }

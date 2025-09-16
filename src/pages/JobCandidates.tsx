@@ -55,6 +55,7 @@ const JobCandidates = () => {
   const [job, setJob] = useState<Job | null>(null);
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
   const [loading, setLoading] = useState(true);
+  const [negotiatingWith, setNegotiatingWith] = useState<string | null>(null);
 
   useEffect(() => {
     if (jobId && clienteProfile) {
@@ -153,6 +154,53 @@ const JobCandidates = () => {
         description: error.message,
         variant: "destructive"
       });
+    }
+  };
+
+  const handleStartNegotiation = async (montadorId: string) => {
+    if (!job || !clienteProfile) return;
+    
+    setNegotiatingWith(montadorId);
+    try {
+      // Criar negociação
+      const { error: negociacaoError } = await supabase
+        .from('negociacoes')
+        .insert({
+          job_id: job.id,
+          montador_id: montadorId,
+          cliente_id: clienteProfile.id,
+          status: 'pendente'
+        });
+
+      if (negociacaoError) throw negociacaoError;
+
+      // Atualizar job status
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({ 
+          status: 'em_negociacao',
+          montador_id: montadorId
+        })
+        .eq('id', job.id);
+
+      if (jobError) throw jobError;
+
+      toast({
+        title: "Negociação iniciada!",
+        description: "Você será redirecionado para a central de negociação."
+      });
+
+      // Navegar para central de negociação
+      navigate(`/cliente/negociacao/${job.id}`);
+
+    } catch (error: any) {
+      toast({
+        title: "Erro ao iniciar negociação",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setNegotiatingWith(null);
     }
   };
 
@@ -324,16 +372,22 @@ const JobCandidates = () => {
 
                     {/* Proposta e Observações */}
                     {(candidatura.proposta || candidatura.observacoes) && (
-                      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                      <div className="mb-4 p-4 bg-muted/50 rounded-lg">
                         {candidatura.proposta && (
-                          <p className="font-medium mb-2">
-                            Proposta: R$ {candidatura.proposta.toFixed(2)}
-                          </p>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium">Proposta:</span>
+                            <span className="text-xl font-bold text-success">
+                              R$ {candidatura.proposta.toFixed(2)}
+                            </span>
+                          </div>
                         )}
                         {candidatura.observacoes && (
-                          <p className="text-sm text-muted-foreground">
-                            {candidatura.observacoes}
-                          </p>
+                          <div>
+                            <p className="text-sm font-medium mb-1">Observações:</p>
+                            <p className="text-sm text-muted-foreground">
+                              {candidatura.observacoes}
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}
@@ -343,32 +397,51 @@ const JobCandidates = () => {
                       Candidatura enviada em {new Date(candidatura.created_at).toLocaleString('pt-BR')}
                     </p>
 
-                    {/* Seleção de Data */}
+                    {/* Actions */}
                     {candidatura.status === 'pendente' && job.status === 'aberto' && (
                       <div className="space-y-3">
                         <Separator />
-                        <p className="font-medium">Escolha uma data para aceitar este montador:</p>
-                        <div className="grid gap-2">
-                          {(Array.isArray(job.data_opcoes) ? job.data_opcoes : []).map((opcao, index) => (
-                            <Button
-                              key={index}
-                              variant="outline"
-                              className="justify-start h-auto p-3"
-                              onClick={() => handleAcceptCandidate(candidatura.id, candidatura.montadores.id, opcao)}
-                            >
+                        <div className="flex gap-3">
+                          <Button 
+                            onClick={() => handleStartNegotiation(candidatura.montadores.id)}
+                            disabled={negotiatingWith === candidatura.montadores.id}
+                            className="bg-gradient-primary hover:shadow-glow"
+                          >
+                            {negotiatingWith === candidatura.montadores.id ? (
                               <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4" />
-                                <div>
-                                  <p className="font-medium">
-                                    {formatDate(opcao.data)} - {formatPeriodo(opcao.periodo)}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Aceitar candidatura para esta data
-                                  </p>
-                                </div>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Iniciando...
                               </div>
-                            </Button>
-                          ))}
+                            ) : (
+                              "Iniciar Negociação"
+                            )}
+                          </Button>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium mb-2">Ou aceitar candidatura escolhendo uma data:</p>
+                          <div className="grid gap-2">
+                            {(Array.isArray(job.data_opcoes) ? job.data_opcoes : []).map((opcao, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                className="justify-start h-auto p-3"
+                                onClick={() => handleAcceptCandidate(candidatura.id, candidatura.montadores.id, opcao)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4" />
+                                  <div>
+                                    <p className="font-medium">
+                                      {formatDate(opcao.data)} - {formatPeriodo(opcao.periodo)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Aceitar candidatura para esta data
+                                    </p>
+                                  </div>
+                                </div>
+                              </Button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

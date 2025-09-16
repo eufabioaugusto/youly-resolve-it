@@ -18,6 +18,7 @@ import {
   Filter
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import CandidateModal from "@/components/CandidateModal";
 
 interface Job {
   id: string;
@@ -44,6 +45,8 @@ const AvailableJobs = () => {
   const [candidaturas, setCandidaturas] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [candidateModalOpen, setCandidateModalOpen] = useState(false);
 
   useEffect(() => {
     if (montadorProfile) {
@@ -97,32 +100,16 @@ const AvailableJobs = () => {
     }
   };
 
-  const handleCandidatura = async (jobId: string) => {
-    if (!montadorProfile) return;
+  const openCandidateModal = (job: Job) => {
+    setSelectedJob(job);
+    setCandidateModalOpen(true);
+  };
 
-    try {
-      const { error } = await supabase
-        .from('candidaturas')
-        .insert({
-          job_id: jobId,
-          montador_id: montadorProfile.id,
-          status: 'pendente'
-        });
-
-      if (error) throw error;
-
-      setCandidaturas(prev => [...prev, jobId]);
-      toast({
-        title: "Candidatura enviada!",
-        description: "O cliente será notificado sobre sua candidatura."
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao enviar candidatura",
-        description: error.message,
-        variant: "destructive"
-      });
+  const handleCandidaturaSuccess = () => {
+    if (selectedJob) {
+      setCandidaturas(prev => [...prev, selectedJob.id]);
     }
+    fetchCandidaturas(); // Refresh candidaturas
   };
 
   const isJobAvailable = (job: Job) => {
@@ -303,22 +290,42 @@ const AvailableJobs = () => {
                       </p>
                     </div>
 
-                    {/* Botão de Candidatura */}
-                    <Button 
-                      onClick={() => handleCandidatura(job.id)}
-                      disabled={candidaturas.includes(job.id)}
-                      className="w-full bg-gradient-primary hover:shadow-glow"
-                    >
-                      {candidaturas.includes(job.id) 
-                        ? "Candidatura Enviada" 
-                        : "Candidatar-se"
-                      }
-                    </Button>
+                    {/* Botões */}
+                    <div className="flex gap-3">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setCandidateModalOpen(true);
+                        }}
+                        className="flex-1"
+                      >
+                        Ver detalhes
+                      </Button>
+                      <Button 
+                        onClick={() => openCandidateModal(job)}
+                        disabled={candidaturas.includes(job.id)}
+                        className="flex-1 bg-gradient-primary hover:shadow-glow"
+                      >
+                        {candidaturas.includes(job.id) 
+                          ? "Candidatura Enviada" 
+                          : "Candidatar-se"
+                        }
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
             )}
           </div>
+
+          {/* Modal de Candidatura */}
+          <CandidateModal
+            job={selectedJob}
+            open={candidateModalOpen}
+            onOpenChange={setCandidateModalOpen}
+            onSuccess={handleCandidaturaSuccess}
+          />
         </div>
       </div>
     </div>
