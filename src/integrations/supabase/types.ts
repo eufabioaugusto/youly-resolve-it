@@ -191,6 +191,7 @@ export type Database = {
         Row: {
           avaliacao_media: number | null
           badges: string[] | null
+          chave_pix: string | null
           created_at: string
           documentos: Json | null
           especialidades: string[] | null
@@ -205,6 +206,7 @@ export type Database = {
         Insert: {
           avaliacao_media?: number | null
           badges?: string[] | null
+          chave_pix?: string | null
           created_at?: string
           documentos?: Json | null
           especialidades?: string[] | null
@@ -219,6 +221,7 @@ export type Database = {
         Update: {
           avaliacao_media?: number | null
           badges?: string[] | null
+          chave_pix?: string | null
           created_at?: string
           documentos?: Json | null
           especialidades?: string[] | null

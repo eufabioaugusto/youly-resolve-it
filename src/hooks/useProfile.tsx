@@ -22,6 +22,7 @@ interface MontadorProfile {
   horas_trabalhadas?: number;
   status?: string;
   badges?: string[];
+  chave_pix?: string;
 }
 
 interface ClienteProfile {
