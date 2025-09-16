@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useProfile } from './useProfile';
 import { useToast } from './use-toast';
 import { notificarNegociacao } from '@/lib/notifications';
 
@@ -28,23 +29,33 @@ export const useNegociacoes = () => {
   const [negociacoes, setNegociacoes] = useState<Negociacao[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { profile, montadorProfile, clienteProfile } = useProfile();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user && profile && (montadorProfile || clienteProfile)) {
       fetchNegociacoes();
     }
-  }, [user]);
+  }, [user, profile, montadorProfile, clienteProfile]);
 
   const fetchNegociacoes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('negociacoes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Buscar negociações básicas primeiro
+      let query = supabase.from('negociacoes').select('*');
+      
+      // Filtrar baseado no papel do usuário
+      if (profile?.role === 'montador' && montadorProfile) {
+        query = query.eq('montador_id', montadorProfile.id);
+      } else if (profile?.role === 'client' && clienteProfile) {
+        query = query.eq('cliente_id', clienteProfile.id);
+      }
+      
+      const { data: negociacoesData, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNegociacoes(data || []);
+      
+      console.log('Negociações encontradas:', negociacoesData?.length || 0);
+      setNegociacoes(negociacoesData || []);
     } catch (error: any) {
       console.error('Erro ao buscar negociações:', error);
       toast({
@@ -163,21 +174,90 @@ export const useNegociacoes = () => {
 
       console.log('Buscando negociação para jobId:', jobId);
       
-      const { data, error } = await supabase
+      // Buscar negociação básica primeiro
+      const { data: negociacaoData, error: negociacaoError } = await supabase
         .from('negociacoes')
-        .select(`
-          *,
-          jobs(*),
-          montadores(*, profiles(nome)),
-          clientes(*, profiles(nome))
-        `)
+        .select('*')
         .eq('job_id', jobId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Erro na consulta de negociação:', error);
-        throw error;
+      if (negociacaoError) {
+        console.error('Erro na consulta de negociação básica:', negociacaoError);
+        throw negociacaoError;
       }
+
+      if (!negociacaoData) {
+        console.log('Negociação não encontrada para jobId:', jobId);
+        return null;
+      }
+
+      // Buscar dados relacionados separadamente
+      const [jobData, montadorData, clienteData] = await Promise.all([
+        // Job
+        supabase
+          .from('jobs')
+          .select('*')
+          .eq('id', negociacaoData.job_id)
+          .single(),
+        
+        // Montador com perfil
+        supabase
+          .from('montadores')
+          .select('*')
+          .eq('id', negociacaoData.montador_id)
+          .single()
+          .then(async (result) => {
+            if (result.data) {
+              const profileResult = await supabase
+                .from('profiles')
+                .select('nome')
+                .eq('user_id', result.data.user_id)
+                .single();
+              
+              return {
+                ...result,
+                data: {
+                  ...result.data,
+                  profiles: profileResult.data
+                }
+              };
+            }
+            return result;
+          }),
+        
+        // Cliente com perfil
+        supabase
+          .from('clientes')
+          .select('*')
+          .eq('id', negociacaoData.cliente_id)
+          .single()
+          .then(async (result) => {
+            if (result.data) {
+              const profileResult = await supabase
+                .from('profiles')
+                .select('nome')
+                .eq('user_id', result.data.user_id)
+                .single();
+              
+              return {
+                ...result,
+                data: {
+                  ...result.data,
+                  profiles: profileResult.data
+                }
+              };
+            }
+            return result;
+          })
+      ]);
+
+      // Combinar todos os dados
+      const data = {
+        ...negociacaoData,
+        jobs: jobData.data,
+        montadores: montadorData.data,
+        clientes: clienteData.data
+      };
       
       if (data) {
         console.log('Negociação encontrada:', data);

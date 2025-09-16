@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useNegociacoes } from "@/hooks/useNegociacoes";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import JobDetailsModal from "@/components/JobDetailsModal";
@@ -35,6 +36,7 @@ const WorkerDashboard = () => {
   const { signOut } = useAuth();
   const { profile, montadorProfile, loading } = useProfile();
   const { isComplete: isProfileComplete } = useProfileCompletion();
+  const { negociacoes, loading: negociacoesLoading } = useNegociacoes();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -584,16 +586,85 @@ const WorkerDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    Suas negociações aparecerão aqui quando você enviar orçamentos.
-                  </p>
-                  <Link to="/trabalhos-disponiveis">
-                    <Button className="bg-gradient-primary">
-                      Ver Trabalhos Disponíveis
-                    </Button>
-                  </Link>
-                </div>
+                {negociacoesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Carregando negociações...</p>
+                  </div>
+                ) : negociacoes.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      Suas negociações aparecerão aqui quando você enviar orçamentos.
+                    </p>
+                    <TabsTrigger value="available" asChild>
+                      <Button className="bg-gradient-primary">
+                        Ver Trabalhos Disponíveis
+                      </Button>
+                    </TabsTrigger>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {negociacoes.map((negociacao) => (
+                      <Card key={negociacao.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">
+                                Negociação #{negociacao.id.slice(0, 8)}
+                              </h3>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <User className="w-4 h-4" />
+                                  Cliente {negociacao.cliente_id.slice(0, 8)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {new Date(negociacao.created_at).toLocaleDateString('pt-BR')}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={
+                                negociacao.status === 'pendente' ? 'outline' :
+                                negociacao.status === 'orcamento_enviado' ? 'default' :
+                                negociacao.status === 'aceito' ? 'default' :
+                                negociacao.status === 'contra_proposta' ? 'secondary' : 'destructive'
+                              } className={
+                                negociacao.status === 'orcamento_enviado' ? 'bg-warning text-warning-foreground' :
+                                negociacao.status === 'aceito' ? 'bg-success text-success-foreground' :
+                                negociacao.status === 'contra_proposta' ? 'bg-info text-info-foreground' : ''
+                              }>
+                                {negociacao.status === 'pendente' ? 'Aguardando Orçamento' :
+                                 negociacao.status === 'orcamento_enviado' ? 'Orçamento Enviado' :
+                                 negociacao.status === 'aceito' ? 'Aceito' :
+                                 negociacao.status === 'contra_proposta' ? 'Contra-proposta' :
+                                 negociacao.status === 'recusado' ? 'Recusado' : negociacao.status}
+                              </Badge>
+                              {negociacao.valor_proposto_montador && (
+                                <span className="font-bold text-green-600">
+                                  R$ {negociacao.valor_proposto_montador.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/montador/negociacao/${negociacao.job_id}`)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver Negociação
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
