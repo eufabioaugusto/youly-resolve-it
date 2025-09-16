@@ -80,10 +80,13 @@ const SuggestedMontadores = () => {
         if (profilesError) throw profilesError;
 
         // Combinar dados e filtrar por especialidades relacionadas ao job
-        let montadoresWithProfiles = montadoresData.map(montador => ({
-          ...montador,
-          profiles: profilesData?.find(p => p.user_id === montador.user_id) || null
-        }));
+        let montadoresWithProfiles = montadoresData.map(montador => {
+          const profile = profilesData?.find(p => p.user_id === montador.user_id);
+          return {
+            ...montador,
+            profiles: profile || { nome: 'Montador' }
+          };
+        });
 
         // Filtrar montadores que têm especialidades relacionadas ao job
         if (jobData.categoria) {
