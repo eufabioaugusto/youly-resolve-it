@@ -1,21 +1,25 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 import { 
-  Wrench, 
   Star, 
   MapPin, 
+  Clock, 
+  DollarSign, 
   Calendar,
-  DollarSign,
   User,
-  Bell,
+  Settings,
   LogOut,
   Eye,
-  Clock,
+  Clock as TimeClock,
   Wallet,
   TrendingUp,
   CheckCircle,
@@ -24,351 +28,424 @@ import {
 
 const WorkerDashboard = () => {
   const { signOut } = useAuth();
+  const { profile, montadorProfile, loading } = useProfile();
+  
+  const [availableJobs, setAvailableJobs] = useState([]);
+  const [myJobs, setMyJobs] = useState([]);
+  const [carteira, setCarteira] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    if (montadorProfile) {
+      fetchAvailableJobs();
+      fetchMyJobs();
+      fetchCarteira();
+    }
+  }, [montadorProfile]);
+
+  const fetchAvailableJobs = async () => {
+    if (!montadorProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          clientes!inner(
+            id,
+            user_id,
+            avaliacao_media,
+            pedidos_total,
+            profiles!inner(nome)
+          )
+        `)
+        .eq('status', 'aberto')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setAvailableJobs(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar trabalhos disponíveis:', error);
+    }
+  };
+
+  const fetchMyJobs = async () => {
+    if (!montadorProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          clientes!inner(
+            id,
+            user_id,
+            avaliacao_media,
+            pedidos_total,
+            profiles!inner(nome)
+          )
+        `)
+        .eq('montador_id', montadorProfile.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setMyJobs(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar meus trabalhos:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const fetchCarteira = async () => {
+    if (!montadorProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('carteira')
+        .select('*')
+        .eq('montador_id', montadorProfile.id)
+        .single();
+
+      if (error) throw error;
+      setCarteira(data);
+    } catch (error) {
+      console.error('Erro ao buscar carteira:', error);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
   };
-  // Mock data
-  const availableJobs = [
-    {
-      id: "1",
-      title: "Montagem de Guarda-roupa 6 portas",
-      client: "Maria Silva",
-      location: "Vila Madalena - SP",
-      distance: "2.5 km",
-      estimatedHours: 4,
-      suggestedPrice: 200,
-      urgency: "high",
-      postedAt: "2 horas atrás"
-    },
-    {
-      id: "2", 
-      title: "Mesa de jantar + 6 cadeiras",
-      client: "João Santos",
-      location: "Pinheiros - SP",
-      distance: "5.1 km",
-      estimatedHours: 3,
-      suggestedPrice: 150,
-      urgency: "medium",
-      postedAt: "4 horas atrás"
-    },
-    {
-      id: "3",
-      title: "Cama box + cabeceira",
-      client: "Ana Costa",
-      location: "Jardins - SP", 
-      distance: "1.8 km",
-      estimatedHours: 2,
-      suggestedPrice: 100,
-      urgency: "low",
-      postedAt: "6 horas atrás"
-    }
-  ];
 
-  const myJobs = [
-    {
-      id: "1",
-      title: "Rack para TV 65 polegadas",
-      client: "Carlos Oliveira", 
-      status: "scheduled",
-      scheduledDate: "2024-09-22T14:00:00Z",
-      price: 120,
-      location: "Mooca - SP"
-    },
-    {
-      id: "2",
-      title: "Estante modulada escritório",
-      client: "Fernanda Lima",
-      status: "completed", 
-      completedDate: "2024-09-18T16:30:00Z",
-      price: 180,
-      location: "Vila Olímpia - SP",
-      rating: 5
-    }
-  ];
-
-  const getUrgencyBadge = (urgency: string) => {
-    switch (urgency) {
-      case "high":
-        return <Badge className="bg-destructive text-destructive-foreground">Urgente</Badge>;
-      case "medium":
-        return <Badge className="bg-warning text-warning-foreground">Moderado</Badge>;
-      case "low":
-        return <Badge variant="secondary">Flexível</Badge>;
-      default:
-        return <Badge variant="secondary">Normal</Badge>;
-    }
-  };
-
-  const getJobStatusBadge = (status: string) => {
-    switch (status) {
-      case "scheduled":
-        return <Badge className="bg-primary text-primary-foreground">Agendado</Badge>;
-      case "completed":
-        return <Badge className="bg-success text-success-foreground">Concluído</Badge>;
-      case "in_progress":
-        return <Badge className="bg-warning text-warning-foreground">Em andamento</Badge>;
-      default:
-        return <Badge variant="secondary">Pendente</Badge>;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">YOULY</span>
-          </Link>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Bem-vindo, {profile?.nome || 'Montador'}! 🔧
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Encontre novos trabalhos ou acompanhe seus serviços.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link to="/montador/perfil">
+              <Button variant="outline" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Minha Conta
+              </Button>
+            </Link>
+            <Button onClick={handleLogout} variant="outline" size="sm">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
             </Button>
           </div>
         </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Bem-vindo, Roberto! 🔧</h1>
-          <p className="text-muted-foreground">Encontre novos trabalhos ou acompanhe seus serviços.</p>
-        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="shadow-card">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">R$ 1.250</h3>
-                  <p className="text-sm text-muted-foreground">Saldo disponível</p>
+                  <p className="text-sm font-medium text-muted-foreground">Saldo disponível</p>
+                  <p className="text-2xl font-bold">
+                    R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
+                  </p>
                 </div>
-                <Wallet className="w-8 h-8 text-success" />
+                <Wallet className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="shadow-card">
+          
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">4.9</h3>
-                  <p className="text-sm text-muted-foreground">Avaliação média</p>
+                  <p className="text-sm font-medium text-muted-foreground">Avaliação média</p>
+                  <p className="text-2xl font-bold">
+                    {montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}
+                  </p>
                 </div>
-                <Star className="w-8 h-8 text-warning fill-warning" />
+                <Star className="h-8 w-8 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="shadow-card">
+          
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">23</h3>
-                  <p className="text-sm text-muted-foreground">Trabalhos este mês</p>
+                  <p className="text-sm font-medium text-muted-foreground">Trabalhos realizados</p>
+                  <p className="text-2xl font-bold">
+                    {montadorProfile?.projetos_realizados || 0}
+                  </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-primary" />
+                <TrendingUp className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="shadow-card">
+          
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">87h</h3>
-                  <p className="text-sm text-muted-foreground">Horas trabalhadas</p>
+                  <p className="text-sm font-medium text-muted-foreground">Horas trabalhadas</p>
+                  <p className="text-2xl font-bold">
+                    {montadorProfile?.horas_trabalhadas || 0}h
+                  </p>
                 </div>
-                <Clock className="w-8 h-8 text-muted-foreground" />
+                <TimeClock className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="available" className="space-y-6">
+        {/* Tabs */}
+        <Tabs defaultValue="available" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
             <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>
             <TabsTrigger value="wallet">Carteira</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="available" className="space-y-6">
-            <Card className="shadow-card">
+          <TabsContent value="available" className="mt-6">
+            <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Trabalhos Disponíveis</CardTitle>
-                    <CardDescription>Encontre novos trabalhos na sua região</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filtros
-                  </Button>
-                </div>
+                <CardTitle>Trabalhos Disponíveis</CardTitle>
+                <CardDescription>Encontre novos trabalhos na sua região</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {availableJobs.map((job) => (
-                    <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-lg">{job.title}</h3>
-                            {getUrgencyBadge(job.urgency)}
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                            <div className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              {job.client}
+                {loadingData ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Carregando trabalhos...</p>
+                  </div>
+                ) : availableJobs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Nenhum trabalho disponível no momento.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {availableJobs.map((job) => (
+                      <Card key={job.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">{job.descricao}</h3>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <User className="w-4 h-4" />
+                                  {job.clientes?.profiles?.nome || 'Cliente'}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.endereco?.bairro}, {job.endereco?.cidade}
+                                </span>
+                                {job.categoria && (
+                                  <Badge variant="outline">{job.categoria}</Badge>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {job.location} • {job.distance}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              ~{job.estimatedHours}h
+                            <div className="text-right">
+                              {job.valor_estimado && (
+                                <p className="text-2xl font-bold text-green-600 mb-1">
+                                  R$ {job.valor_estimado.toFixed(2)}
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">{job.postedAt}</span>
-                            <span className="font-bold text-xl text-success">R$ {job.suggestedPrice}</span>
+                          
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(job.created_at).toLocaleDateString('pt-BR')}
+                            </span>
+                            <div className="flex gap-2">
+                              <Link to={`/trabalho/${job.id}`}>
+                                <Button variant="outline" size="sm">
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver detalhes
+                                </Button>
+                              </Link>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      <Separator className="my-4" />
-                      
-                      <div className="flex gap-3">
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4 mr-2" />
-                          Ver detalhes
-                        </Button>
-                        <Link to="/trabalhos-disponiveis">
-                          <Button size="sm" className="bg-gradient-primary">
-                            Candidatar-se
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="my-jobs" className="space-y-6">
-            <Card className="shadow-card">
+          <TabsContent value="my-jobs" className="mt-6">
+            <Card>
               <CardHeader>
                 <CardTitle>Meus Trabalhos</CardTitle>
                 <CardDescription>Acompanhe seus trabalhos aceitos e histórico</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {myJobs.map((job) => (
-                    <div key={job.id} className="border rounded-lg p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-2">{job.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                            <div className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              {job.client}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {job.location}
-                            </div>
-                            {job.scheduledDate && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                {new Date(job.scheduledDate).toLocaleDateString('pt-BR')}
+                {loadingData ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Carregando seus trabalhos...</p>
+                  </div>
+                ) : myJobs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Você ainda não tem trabalhos.</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Candidate-se aos trabalhos disponíveis para começar!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myJobs.map((job) => (
+                      <Card key={job.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">{job.descricao}</h3>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <User className="w-4 h-4" />
+                                  {job.clientes?.profiles?.nome || 'Cliente'}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.endereco?.bairro}, {job.endereco?.cidade}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {new Date(job.created_at).toLocaleDateString('pt-BR')}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            {getJobStatusBadge(job.status)}
-                            <span className="font-bold text-lg">R$ {job.price}</span>
-                          </div>
-                          {job.rating && (
-                            <div className="flex items-center gap-1 mt-2">
-                              <Star className="w-4 h-4 fill-warning text-warning" />
-                              <span className="text-sm font-medium">{job.rating}/5</span>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Separator className="my-4" />
-                      
-                      <div className="flex gap-3">
-                        <Button variant="outline" size="sm">Ver detalhes</Button>
-                        {job.status === "scheduled" && (
-                          <Button size="sm" variant="outline">Iniciar trabalho</Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                            <div className="text-right">
+                              {job.valor_estimado && (
+                                <p className="text-2xl font-bold text-green-600 mb-1">
+                                  R$ {job.valor_estimado.toFixed(2)}
+                                </p>
+                              )}
+                              <Badge variant={
+                                job.status === 'em_andamento' ? 'default' :
+                                job.status === 'concluido' ? 'secondary' : 'outline'
+                              }>
+                                {job.status === 'em_andamento' ? 'Em Andamento' : 
+                                 job.status === 'concluido' ? 'Concluído' : 
+                                 job.status === 'aberto' ? 'Aberto' : job.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                Ver detalhes
+                              </Button>
+                              {job.status === 'em_andamento' && (
+                                <Button size="sm">
+                                  Finalizar trabalho
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="wallet" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">Saldo Disponível</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-success mb-2">R$ 1.250,00</div>
-                  <p className="text-sm text-muted-foreground">Pronto para saque</p>
-                  <Button className="w-full mt-4 bg-gradient-primary">
-                    Solicitar Saque
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">Saques Solicitados</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-warning mb-2">R$ 800,00</div>
-                  <p className="text-sm text-muted-foreground">Em processamento</p>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Prazo: até 2 dias úteis
+          <TabsContent value="wallet" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Carteira</CardTitle>
+                <CardDescription>Gerencie seus ganhos e saques</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Wallet className="w-5 h-5" />
+                          Disponível
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-3xl font-bold text-green-600">
+                          R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Valor disponível para saque
+                        </p>
+                        <Button className="w-full mt-4" variant="outline">
+                          Solicitar Saque
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="w-5 h-5" />
+                          Bloqueado
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-3xl font-bold text-yellow-600">
+                          R$ {carteira?.saldo_bloqueado?.toFixed(2) || '0,00'}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Valores em processamento
+                        </p>
+                        <Button className="w-full mt-4" variant="outline" disabled>
+                          Aguardando...
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5" />
+                          Total Sacado
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-3xl font-bold">
+                          R$ {carteira?.total_sacado?.toFixed(2) || '0,00'}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Total já sacado
+                        </p>
+                        <Button className="w-full mt-4" variant="outline">
+                          Ver Histórico
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">Total Recebido</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-primary mb-2">R$ 12.450,00</div>
-                  <p className="text-sm text-muted-foreground">Este mês</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    <TrendingUp className="w-4 h-4 text-success" />
-                    <span className="text-xs text-success">+15% vs mês anterior</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import AdminRegister from "./pages/AdminRegister";
 import ClientDashboard from "./pages/ClientDashboard";
 import WorkerDashboard from "./pages/WorkerDashboard";
+import MontadorProfile from "./pages/MontadorProfile";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateJob from "./pages/CreateJob";
 import AvailableJobs from "./pages/AvailableJobs";
@@ -42,6 +43,11 @@ const App = () => (
               <Route path="/montador" element={
                 <ProtectedRoute requiredRole="montador">
                   <WorkerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/montador/perfil" element={
+                <ProtectedRoute requiredRole="montador">
+                  <MontadorProfile />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
