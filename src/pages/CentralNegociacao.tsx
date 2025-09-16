@@ -13,6 +13,7 @@ import { ArrowLeft, Clock, MapPin, DollarSign, MessageSquare, CheckCircle, XCirc
 import { useProfile } from "@/hooks/useProfile";
 import { useNegociacoes } from "@/hooks/useNegociacoes";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CentralNegociacao = () => {
   const { jobId } = useParams();
@@ -45,11 +46,38 @@ const CentralNegociacao = () => {
     try {
       console.log(`Tentativa ${tentativa} de carregar negociação para jobId:`, jobId);
       
+      // Primeiro, verificar se existe uma negociação para este job
+      const { data: negociacaoData, error: negociacaoError } = await supabase
+        .from('negociacoes')
+        .select('*')
+        .eq('job_id', jobId)
+        .maybeSingle();
+
+      if (negociacaoError) {
+        console.error('Erro ao buscar negociação básica:', negociacaoError);
+        throw negociacaoError;
+      }
+
+      if (!negociacaoData) {
+        if (tentativa < 3) {
+          console.log(`Negociação não encontrada, tentando novamente em 2s...`);
+          setTimeout(() => {
+            loadNegociacao(tentativa + 1);
+          }, 2000);
+          return;
+        } else {
+          console.log('Negociação não encontrada após todas as tentativas');
+          setNegociacao(null);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Se a negociação existe, buscar com joins
       const data = await fetchNegociacao(jobId);
       
       if (!data && tentativa < 3) {
-        // Se não encontrar na primeira tentativa, tentar novamente após um delay
-        console.log(`Negociação não encontrada, tentando novamente em 2s...`);
+        console.log(`Dados completos não encontrados, tentando novamente em 2s...`);
         setTimeout(() => {
           loadNegociacao(tentativa + 1);
         }, 2000);
@@ -57,7 +85,7 @@ const CentralNegociacao = () => {
       }
       
       if (!data) {
-        console.log('Negociação não encontrada após todas as tentativas');
+        console.log('Dados completos não encontrados após todas as tentativas');
         setNegociacao(null);
       } else {
         console.log('Negociação carregada com sucesso:', data);
@@ -290,7 +318,7 @@ const CentralNegociacao = () => {
               {isCliente && negociacao.montadores ? (
                 <div className="flex items-center gap-4">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src={negociacao.montadores.foto_perfil_url || ""} />
+                    <AvatarImage src={negociacao.montadores?.foto_perfil_url || ""} />
                     <AvatarFallback>
                       {(negociacao.montadores.profiles?.nome || 'M').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </AvatarFallback>

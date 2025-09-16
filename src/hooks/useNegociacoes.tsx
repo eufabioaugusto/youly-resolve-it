@@ -4,6 +4,9 @@ import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 import { notificarNegociacao } from '@/lib/notifications';
 
+// Cache local para negociações
+const negociacoesCache = new Map<string, any>();
+
 interface Negociacao {
   id: string;
   job_id: string;
@@ -71,6 +74,9 @@ export const useNegociacoes = () => {
 
       if (error) throw error;
 
+      // Limpar cache para forçar recarregamento
+      negociacoesCache.clear();
+
       toast({
         title: "Orçamento enviado!",
         description: "O cliente foi notificado do seu orçamento."
@@ -107,6 +113,9 @@ export const useNegociacoes = () => {
         .eq('id', negociacaoId);
 
       if (error) throw error;
+
+      // Limpar cache para forçar recarregamento
+      negociacoesCache.clear();
 
       const acaoTexto = {
         'aceito': 'Orçamento aceito!',
@@ -145,6 +154,13 @@ export const useNegociacoes = () => {
     if (!user) return null;
 
     try {
+      // Verificar cache primeiro
+      const cacheKey = `negociacao_${jobId}`;
+      if (negociacoesCache.has(cacheKey)) {
+        console.log('Negociação encontrada no cache:', jobId);
+        return negociacoesCache.get(cacheKey);
+      }
+
       console.log('Buscando negociação para jobId:', jobId);
       
       const { data, error } = await supabase
@@ -156,14 +172,20 @@ export const useNegociacoes = () => {
           clientes(*, profiles(nome))
         `)
         .eq('job_id', jobId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Erro na consulta de negociação:', error);
         throw error;
       }
       
-      console.log('Negociação encontrada:', data);
+      if (data) {
+        console.log('Negociação encontrada:', data);
+        // Armazenar no cache por 5 minutos
+        negociacoesCache.set(cacheKey, data);
+        setTimeout(() => negociacoesCache.delete(cacheKey), 5 * 60 * 1000);
+      }
+      
       return data;
     } catch (error) {
       console.error('Erro ao buscar negociação:', error);

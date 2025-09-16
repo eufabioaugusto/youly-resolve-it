@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, Clock, Users, ArrowLeft, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ interface Montador {
   projetos_realizados: number;
   especialidades: string[];
   preco_hora: number;
+  foto_perfil_url?: string;
   profiles: {
     nome: string;
   } | null;
@@ -65,7 +66,7 @@ const SuggestedMontadores = () => {
       // Buscar montadores ativos que têm especialidades relacionadas ao job
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
-        .select('id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora')
+        .select('id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url')
         .eq('status', 'ativo')
         .order('avaliacao_media', { ascending: false })
         .order('projetos_realizados', { ascending: false });
@@ -146,6 +147,24 @@ const SuggestedMontadores = () => {
     try {
       console.log('Iniciando contratação:', { jobId: job.id, montadorId, clienteId: clienteProfile.id });
       
+      // Verificar se já existe uma negociação para este job
+      const { data: existingNegociacao, error: checkError } = await supabase
+        .from('negociacoes')
+        .select('id')
+        .eq('job_id', job.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Erro ao verificar negociação existente:', checkError);
+        throw checkError;
+      }
+
+      if (existingNegociacao) {
+        console.log('Negociação já existe, redirecionando...');
+        navigate(`/cliente/negociacao/${job.id}`);
+        return;
+      }
+      
       // Criar negociação usando o hook
       const negociacao = await criarNegociacao(job.id, montadorId, clienteProfile.id);
       
@@ -172,10 +191,10 @@ const SuggestedMontadores = () => {
         description: "Você será redirecionado para a central de negociação."
       });
 
-      // Aguardar um pouco antes de navegar para garantir que os dados foram persistidos
+      // Aguardar mais tempo antes de navegar
       setTimeout(() => {
-        navigate(`/cliente/negociacao/${job.id}`);
-      }, 1000);
+        navigate(`/cliente/negociacao/${job.id}`, { replace: true });
+      }, 2000);
 
     } catch (error: any) {
       console.error('Erro completo na contratação:', error);
@@ -316,6 +335,10 @@ const SuggestedMontadores = () => {
                     <CardContent className="p-6">
                       <div className="flex items-start gap-6">
                         <Avatar className="w-16 h-16">
+                          <AvatarImage 
+                            src={montador.foto_perfil_url || ""} 
+                            alt={`Foto de ${montador.profiles?.nome || 'Montador'}`}
+                          />
                           <AvatarFallback className="bg-gradient-primary text-white text-lg font-bold">
                             {getInitials(montador.profiles?.nome || 'MT')}
                           </AvatarFallback>
@@ -353,9 +376,9 @@ const SuggestedMontadores = () => {
                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                   Contratando...
                                 </div>
-                              ) : (
-                                "Contratar Montador"
-                              )}
+                               ) : (
+                                 "Iniciar Negociação"
+                               )}
                             </Button>
                           </div>
                           
