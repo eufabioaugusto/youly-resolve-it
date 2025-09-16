@@ -33,7 +33,7 @@ interface Candidatura {
     preco_hora?: number;
     especialidades?: string[];
     badges?: string[];
-    profiles: any;
+    profiles?: any;
   };
 }
 
@@ -90,14 +90,44 @@ const JobCandidates = () => {
             projetos_realizados,
             preco_hora,
             especialidades,
-            badges,
-            profiles!montadores_user_id_fkey(nome)
+            badges
           )
         `)
         .eq('job_id', jobId)
         .order('created_at');
 
       if (candidaturasError) throw candidaturasError;
+
+      // Buscar perfis dos montadores separadamente
+      if (candidaturasData && candidaturasData.length > 0) {
+        const userIds = candidaturasData.map(c => c.montadores.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+
+        // Combinar dados
+        candidaturasData.forEach((candidatura: any) => {
+          candidatura.montadores.profiles = profiles?.find(p => p.user_id === candidatura.montadores.user_id) || { nome: 'Montador' };
+        });
+      }
+
+      if (candidaturasError) throw candidaturasError;
+
+      // Buscar perfis dos montadores separadamente
+      if (candidaturasData && candidaturasData.length > 0) {
+        const userIds = candidaturasData.map(c => c.montadores.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+
+        // Combinar dados
+        candidaturasData.forEach((candidatura: any) => {
+          candidatura.montadores.profiles = profiles?.find(p => p.user_id === candidatura.montadores.user_id) || { nome: 'Montador' };
+        });
+      }
+
       setCandidaturas(candidaturasData || []);
     } catch (error) {
       console.error('Erro ao buscar candidaturas:', error);
@@ -245,19 +275,19 @@ const JobCandidates = () => {
             <CardHeader>
               <CardTitle className="text-xl">{job.descricao}</CardTitle>
               <CardDescription>
-                <div className="flex items-center gap-4 mt-2">
-                  <Badge variant="outline">{job.categoria}</Badge>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {job.endereco.cidade}, {job.endereco.estado}
-                  </div>
-                  {job.valor_estimado && (
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      R$ {job.valor_estimado.toFixed(2)}
-                    </div>
-                  )}
-                </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <Badge variant="outline">{job.categoria}</Badge>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4" />
+                            {job.endereco.cidade}, {job.endereco.estado}
+                          </span>
+                          {job.valor_estimado && (
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              R$ {job.valor_estimado.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -305,7 +335,7 @@ const JobCandidates = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg">
-                          {candidatura.montadores.profiles?.nome || 'Montador'}
+                          {(candidatura as any).montadores.profiles?.nome || 'Montador'}
                         </CardTitle>
                         <div className="flex items-center gap-4 mt-2">
                           <div className="flex items-center gap-1">
