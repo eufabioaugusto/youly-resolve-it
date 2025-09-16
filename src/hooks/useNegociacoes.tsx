@@ -139,10 +139,35 @@ export const useNegociacoes = () => {
     return responderOrcamento(negociacaoId, 'recusado');
   };
 
+  // Buscar negociação individual
+  const fetchNegociacao = async (jobId: string) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('negociacoes')
+        .select(`
+          *,
+          jobs(*),
+          montadores(*, profiles(nome)),
+          clientes(*, profiles(nome))
+        `)
+        .eq('job_id', jobId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar negociação:', error);
+      return null;
+    }
+  };
+
   return {
     negociacoes,
     loading,
     refetch: fetchNegociacoes,
+    fetchNegociacao,
     enviarOrcamento,
     responderOrcamento,
     aceitarContraproposta,
