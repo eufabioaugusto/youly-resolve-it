@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,27 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Wrench, ArrowLeft, Users, Wrench as WorkerIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("client");
+  const { signUp, user } = useAuth();
+  const { profile, createMontadorProfile, createClienteProfile } = useProfile();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  // Form states
+  const [clientForm, setClientForm] = useState({
+    name: '', email: '', phone: '', password: ''
+  });
+  const [workerForm, setWorkerForm] = useState({
+    name: '', email: '', phone: '', cpf: '', hourlyRate: '', bio: '', password: ''
+  });
   
   useEffect(() => {
     const type = searchParams.get("type");
@@ -19,6 +34,69 @@ const Register = () => {
       setActiveTab("worker");
     }
   }, [searchParams]);
+
+  // Redirect se já estiver logado
+  if (user && profile) {
+    const dashboardMap = {
+      'client': '/cliente',
+      'montador': '/montador',
+      'admin': '/admin'
+    };
+    return <Navigate to={dashboardMap[profile.role] || '/'} replace />;
+  }
+
+  const handleClientRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signUp(clientForm.email, clientForm.password, {
+      role: 'client',
+      nome: clientForm.name,
+      telefone: clientForm.phone
+    });
+    
+    if (error) {
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Verifique seu e-mail para confirmar a conta."
+      });
+    }
+    
+    setLoading(false);
+  };
+
+  const handleWorkerRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signUp(workerForm.email, workerForm.password, {
+      role: 'montador', 
+      nome: workerForm.name,
+      telefone: workerForm.phone,
+      documento: workerForm.cpf
+    });
+    
+    if (error) {
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Verifique seu e-mail para confirmar a conta."
+      });
+    }
+    
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -57,109 +135,154 @@ const Register = () => {
               </TabsList>
               
               <TabsContent value="client" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="client-name">Nome completo</Label>
-                  <Input 
-                    id="client-name" 
-                    placeholder="Seu nome completo"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client-email">E-mail</Label>
-                  <Input 
-                    id="client-email" 
-                    type="email" 
-                    placeholder="seu@email.com"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client-phone">Telefone</Label>
-                  <Input 
-                    id="client-phone" 
-                    placeholder="(11) 99999-9999"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client-password">Senha</Label>
-                  <Input 
-                    id="client-password" 
-                    type="password" 
-                    placeholder="Mínimo 8 caracteres"
-                    className="h-11"
-                  />
-                </div>
-                
-                <Button className="w-full h-11 bg-gradient-primary hover:shadow-glow">
-                  Criar conta como Cliente
-                </Button>
+                <form onSubmit={handleClientRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-name">Nome completo</Label>
+                    <Input 
+                      id="client-name" 
+                      placeholder="Seu nome completo"
+                      value={clientForm.name}
+                      onChange={(e) => setClientForm({...clientForm, name: e.target.value})}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-email">E-mail</Label>
+                    <Input 
+                      id="client-email" 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={clientForm.email}
+                      onChange={(e) => setClientForm({...clientForm, email: e.target.value})}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-phone">Telefone</Label>
+                    <Input 
+                      id="client-phone" 
+                      placeholder="(11) 99999-9999"
+                      value={clientForm.phone}
+                      onChange={(e) => setClientForm({...clientForm, phone: e.target.value})}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-password">Senha</Label>
+                    <Input 
+                      id="client-password" 
+                      type="password" 
+                      placeholder="Mínimo 8 caracteres"
+                      value={clientForm.password}
+                      onChange={(e) => setClientForm({...clientForm, password: e.target.value})}
+                      className="h-11"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-11 bg-gradient-primary hover:shadow-glow"
+                  >
+                    {loading ? "Criando conta..." : "Criar conta como Cliente"}
+                  </Button>
+                </form>
               </TabsContent>
               
               <TabsContent value="worker" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="worker-name">Nome completo</Label>
-                  <Input 
-                    id="worker-name" 
-                    placeholder="Seu nome completo"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="worker-email">E-mail</Label>
-                  <Input 
-                    id="worker-email" 
-                    type="email" 
-                    placeholder="seu@email.com"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="worker-phone">Telefone</Label>
-                  <Input 
-                    id="worker-phone" 
-                    placeholder="(11) 99999-9999"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="worker-cpf">CPF</Label>
-                  <Input 
-                    id="worker-cpf" 
-                    placeholder="000.000.000-00"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hourly-rate">Valor por hora (R$)</Label>
-                  <Input 
-                    id="hourly-rate" 
-                    placeholder="45,00"
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="worker-bio">Experiência profissional</Label>
-                  <Textarea 
-                    id="worker-bio" 
-                    placeholder="Conte sobre sua experiência com montagem de móveis..."
-                    className="resize-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="worker-password">Senha</Label>
-                  <Input 
-                    id="worker-password" 
-                    type="password" 
-                    placeholder="Mínimo 8 caracteres"
-                    className="h-11"
-                  />
-                </div>
-                
-                <Button className="w-full h-11 bg-gradient-primary hover:shadow-glow">
-                  Criar conta como Montador
-                </Button>
+                <form onSubmit={handleWorkerRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-name">Nome completo</Label>
+                    <Input 
+                      id="worker-name" 
+                      placeholder="Seu nome completo"
+                      value={workerForm.name}
+                      onChange={(e) => setWorkerForm({...workerForm, name: e.target.value})}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-email">E-mail</Label>
+                    <Input 
+                      id="worker-email" 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={workerForm.email}
+                      onChange={(e) => setWorkerForm({...workerForm, email: e.target.value})}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-phone">Telefone</Label>
+                    <Input 
+                      id="worker-phone" 
+                      placeholder="(11) 99999-9999"
+                      value={workerForm.phone}
+                      onChange={(e) => setWorkerForm({...workerForm, phone: e.target.value})}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-cpf">CPF</Label>
+                    <Input 
+                      id="worker-cpf" 
+                      placeholder="000.000.000-00"
+                      value={workerForm.cpf}
+                      onChange={(e) => setWorkerForm({...workerForm, cpf: e.target.value})}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hourly-rate">Valor por hora (R$)</Label>
+                    <Input 
+                      id="hourly-rate" 
+                      type="number"
+                      placeholder="45,00"
+                      value={workerForm.hourlyRate}
+                      onChange={(e) => setWorkerForm({...workerForm, hourlyRate: e.target.value})}
+                      className="h-11"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-bio">Experiência profissional</Label>
+                    <Textarea 
+                      id="worker-bio" 
+                      placeholder="Conte sobre sua experiência com montagem de móveis..."
+                      value={workerForm.bio}
+                      onChange={(e) => setWorkerForm({...workerForm, bio: e.target.value})}
+                      className="resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="worker-password">Senha</Label>
+                    <Input 
+                      id="worker-password" 
+                      type="password" 
+                      placeholder="Mínimo 8 caracteres"
+                      value={workerForm.password}
+                      onChange={(e) => setWorkerForm({...workerForm, password: e.target.value})}
+                      className="h-11"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-11 bg-gradient-primary hover:shadow-glow"
+                  >
+                    {loading ? "Criando conta..." : "Criar conta como Montador"}
+                  </Button>
+                </form>
               </TabsContent>
             </Tabs>
             

@@ -1,12 +1,55 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Wrench, ArrowLeft } from "lucide-react";
+import { useState } from "react";
 
 const Login = () => {
+  const { signIn, user } = useAuth();
+  const { profile } = useProfile();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Redirect se já estiver logado
+  if (user && profile) {
+    const dashboardMap = {
+      'client': '/cliente',
+      'montador': '/montador',
+      'admin': '/admin'
+    };
+    return <Navigate to={dashboardMap[profile.role] || '/'} replace />;
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      toast({
+        title: "Erro ao fazer login",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Redirecionando para seu dashboard..."
+      });
+    }
+    
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -30,35 +73,47 @@ const Login = () => {
               Acesse sua conta para continuar
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="seu@email.com"
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••"
-                className="h-11"
-              />
-            </div>
-            
-            <div className="flex items-center justify-between text-sm">
-              <Link to="#" className="text-primary hover:underline">
-                Esqueceu a senha?
-              </Link>
-            </div>
-            
-            <Button className="w-full h-11 bg-gradient-primary hover:shadow-glow">
-              Entrar
-            </Button>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center justify-between text-sm">
+                <Link to="#" className="text-primary hover:underline">
+                  Esqueceu a senha?
+                </Link>
+              </div>
+              
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-gradient-primary hover:shadow-glow"
+              >
+                {loading ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
             
             <Separator />
             
