@@ -174,7 +174,7 @@ const WorkerDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Preencha todos os seus dados para aparecer nas buscas dos clientes e receber propostas de trabalho.
                   </p>
-                  <Link to="/montador/profile">
+                  <Link to="/montador/perfil">
                     <Button variant="destructive" size="sm">
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Finalizar Cadastro
