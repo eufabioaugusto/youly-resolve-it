@@ -14,6 +14,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useNegociacoes } from "@/hooks/useNegociacoes";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PagamentoModal } from "@/components/PagamentoModal";
 
 const CentralNegociacao = () => {
   const { jobId } = useParams();
@@ -25,6 +26,7 @@ const CentralNegociacao = () => {
   const [negociacao, setNegociacao] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
   
   // Form states
   const [valorProposta, setValorProposta] = useState('');
@@ -616,6 +618,19 @@ const CentralNegociacao = () => {
             </Card>
           )}
         </div>
+
+        {/* Modal de Pagamento */}
+        {negociacao && (
+          <PagamentoModal
+            open={pagamentoModalOpen}
+            onOpenChange={setPagamentoModalOpen}
+            jobId={negociacao.job?.id || ''}
+            montadorId={negociacao.montador?.id || ''}
+            valor={negociacao.valor_proposto_montador || negociacao.valor_proposto_cliente || 0}
+            jobDescricao={negociacao.job?.descricao || ''}
+            montadorNome={negociacao.montador?.nome || ''}
+          />
+        )}
       </div>
     </div>
   );

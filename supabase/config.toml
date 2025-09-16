@@ -3,6 +3,12 @@ project_id = "ttzgwemurovxdxhgbdxz"
 [functions.send-email]
 verify_jwt = false
 
+[functions.mp-create-checkout]
+verify_jwt = true
+
+[functions.mp-webhook]
+verify_jwt = false
+
 [auth]
 [auth.email]
 # Enable custom SMTP

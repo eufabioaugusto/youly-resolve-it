@@ -22,6 +22,8 @@ import CreateJob from "./pages/CreateJob";
 import AvailableJobs from "./pages/AvailableJobs";
 import JobCandidates from "./pages/JobCandidates";
 import SuggestedMontadores from "./pages/SuggestedMontadores";
+import PagamentoSucesso from "./pages/PagamentoSucesso";
+import PagamentoFalha from "./pages/PagamentoFalha";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +105,9 @@ const App = () => (
                   <SuggestedMontadores />
                 </ProtectedRoute>
               } />
+              <Route path="/pagamento/sucesso" element={<PagamentoSucesso />} />
+              <Route path="/pagamento/falha" element={<PagamentoFalha />} />
+              <Route path="/pagamento/pendente" element={<PagamentoSucesso />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
