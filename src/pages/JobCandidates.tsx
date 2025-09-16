@@ -2,6 +2,8 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NivelBadge } from "@/components/ui/nivel-badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
@@ -33,6 +35,9 @@ interface Candidatura {
     preco_hora?: number;
     especialidades?: string[];
     badges?: string[];
+    foto_perfil_url?: string;
+    nivel_gamificacao?: string;
+    is_premium?: boolean;
     profiles?: any;
   };
 }
@@ -90,7 +95,10 @@ const JobCandidates = () => {
             projetos_realizados,
             preco_hora,
             especialidades,
-            badges
+            badges,
+            foto_perfil_url,
+            nivel_gamificacao,
+            is_premium
           )
         `)
         .eq('job_id', jobId)
@@ -333,31 +341,45 @@ const JobCandidates = () => {
                 <Card key={candidatura.id} className="shadow-glow border-0">
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {(candidatura as any).montadores.profiles?.nome || 'Montador'}
-                        </CardTitle>
-                        <div className="flex items-center gap-4 mt-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">
-                              {candidatura.montadores.avaliacao_media.toFixed(1)}
-                            </span>
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={candidatura.montadores.foto_perfil_url || ""} />
+                          <AvatarFallback>
+                            {((candidatura as any).montadores.profiles?.nome || 'M').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <CardTitle className="text-lg">
+                              {(candidatura as any).montadores.profiles?.nome || 'Montador'}
+                            </CardTitle>
+                            <NivelBadge 
+                              nivel={candidatura.montadores.nivel_gamificacao || 'Bronze'} 
+                              isPremium={candidatura.montadores.is_premium || false}
+                            />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
-                            <span className="text-sm">
-                              {candidatura.montadores.projetos_realizados} projetos
-                            </span>
-                          </div>
-                          {candidatura.montadores.preco_hora && (
+                          <div className="flex items-center gap-4 mt-2">
                             <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
-                              <span className="text-sm">
-                                R$ {candidatura.montadores.preco_hora}/hora
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-medium">
+                                {candidatura.montadores.avaliacao_media.toFixed(1)}
                               </span>
                             </div>
-                          )}
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="w-4 h-4" />
+                              <span className="text-sm">
+                                {candidatura.montadores.projetos_realizados} projetos
+                              </span>
+                            </div>
+                            {candidatura.montadores.preco_hora && (
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4" />
+                                <span className="text-sm">
+                                  R$ {candidatura.montadores.preco_hora}/hora
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Badge 

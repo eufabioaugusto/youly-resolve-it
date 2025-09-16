@@ -23,6 +23,11 @@ interface MontadorProfile {
   status?: string;
   badges?: string[];
   chave_pix?: string;
+  foto_perfil_url?: string;
+  total_valor_movimentado?: number;
+  total_avaliacoes?: number;
+  nivel_gamificacao?: string;
+  is_premium?: boolean;
 }
 
 interface ClienteProfile {

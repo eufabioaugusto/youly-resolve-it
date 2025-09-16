@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Save, User, MapPin, Phone, FileText, X, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cpfMask, phoneMask, validateCPF, validatePhone } from "@/lib/masks";
+import { PhotoUpload } from "@/components/ui/photo-upload";
+import { NivelBadge } from "@/components/ui/nivel-badge";
 import axios from "axios";
 
 const especialidadesDisponiveis = [
@@ -38,6 +39,7 @@ const MontadorProfile = () => {
   const [precoHora, setPrecoHora] = useState("");
   const [especialidades, setEspecialidades] = useState<string[]>([]);
   const [chavePix, setChavePix] = useState("");
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
   const [endereco, setEndereco] = useState({
     rua: "",
     numero: "",
@@ -58,6 +60,7 @@ const MontadorProfile = () => {
       setPrecoHora(montadorProfile.preco_hora?.toString() || "");
       setEspecialidades(montadorProfile.especialidades || []);
       setChavePix(montadorProfile.chave_pix || "");
+      setFotoPerfil(montadorProfile.foto_perfil_url || null);
       
       if (profile.endereco) {
         setEndereco(profile.endereco);
@@ -162,6 +165,7 @@ const MontadorProfile = () => {
           preco_hora: precoHora ? parseFloat(precoHora) : null,
           especialidades,
           chave_pix: chavePix,
+          foto_perfil_url: fotoPerfil,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', profile.user_id);
@@ -224,26 +228,39 @@ const MontadorProfile = () => {
             {/* Perfil Básico */}
             <Card className="shadow-glow border-0">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Informações Pessoais
+                <CardTitle className="flex items-center gap-4">
+                  <PhotoUpload
+                    currentPhotoUrl={fotoPerfil || undefined}
+                    onPhotoUpdate={setFotoPerfil}
+                    userId={profile?.user_id || ''}
+                    fallbackInitials={getInitials(nome)}
+                    size="md"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h2 className="text-2xl font-bold">Informações Básicas</h2>
+                      {montadorProfile && (
+                        <NivelBadge 
+                          nivel={montadorProfile.nivel_gamificacao || 'Bronze'} 
+                          isPremium={montadorProfile.is_premium || false}
+                        />
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      Dados pessoais e profissionais
+                    </p>
+                    {montadorProfile && (
+                      <div className="text-sm text-muted-foreground mt-2">
+                        {montadorProfile.projetos_realizados || 0} projetos • 
+                        {montadorProfile.total_avaliacoes || 0} avaliações • 
+                        R$ {(montadorProfile.total_valor_movimentado || 0).toFixed(2)} movimentado
+                      </div>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
+                
               <CardContent className="space-y-6">
-                <div className="flex items-center gap-6 mb-6">
-                  <Avatar className="w-20 h-20">
-                    <AvatarFallback className="bg-gradient-primary text-white text-xl font-bold">
-                      {getInitials(nome || 'MT')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-xl font-bold">{nome || 'Montador'}</h3>
-                    <p className="text-muted-foreground">
-                      {montadorProfile?.avaliacao_media || 0} ★ • {montadorProfile?.projetos_realizados || 0} projetos
-                    </p>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome completo</Label>
