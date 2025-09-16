@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CreateJob from "./pages/CreateJob";
 import AvailableJobs from "./pages/AvailableJobs";
 import JobCandidates from "./pages/JobCandidates";
+import SuggestedMontadores from "./pages/SuggestedMontadores";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,11 @@ const App = () => (
               <Route path="/trabalhos-disponiveis" element={
                 <ProtectedRoute requiredRole="montador">
                   <AvailableJobs />
+                </ProtectedRoute>
+              } />
+              <Route path="/pedido/:jobId/montadores-sugeridos" element={
+                <ProtectedRoute requiredRole="client">
+                  <SuggestedMontadores />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />

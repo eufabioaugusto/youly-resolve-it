@@ -57,7 +57,7 @@ const CreateJob = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { data: jobData, error } = await supabase
         .from('jobs')
         .insert({
           cliente_id: clienteProfile.id,
@@ -66,16 +66,22 @@ const CreateJob = () => {
           endereco: formData.endereco,
           data_opcoes: opcoesSelecionadas,
           valor_estimado: parseFloat(formData.valor_estimado) || null
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Pequeno delay para dar tempo das notificações serem criadas
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       toast({
         title: "Pedido criado com sucesso!",
-        description: "Montadores próximos serão notificados."
+        description: "Redirecionando para montadores sugeridos..."
       });
       
-      navigate('/cliente');
+      // Redirecionar para página de montadores sugeridos
+      navigate(`/pedido/${jobData.id}/montadores-sugeridos`);
     } catch (error: any) {
       toast({
         title: "Erro ao criar pedido",
@@ -387,7 +393,14 @@ const CreateJob = () => {
                   disabled={loading}
                   className="w-full h-11 bg-gradient-primary hover:shadow-glow"
                 >
-                  {loading ? "Criando pedido..." : "Criar Pedido"}
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Notificando montadores...
+                    </div>
+                  ) : (
+                    "Criar Pedido"
+                  )}
                 </Button>
               </form>
             </CardContent>
