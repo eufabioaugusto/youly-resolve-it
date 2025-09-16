@@ -65,28 +65,34 @@ export type Database = {
       carteira: {
         Row: {
           created_at: string
+          data_liberacao_admin: string | null
           id: string
           montador_id: string
           saldo_bloqueado: number | null
           saldo_disponivel: number | null
+          saldo_em_processamento: number | null
           total_sacado: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          data_liberacao_admin?: string | null
           id?: string
           montador_id: string
           saldo_bloqueado?: number | null
           saldo_disponivel?: number | null
+          saldo_em_processamento?: number | null
           total_sacado?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          data_liberacao_admin?: string | null
           id?: string
           montador_id?: string
           saldo_bloqueado?: number | null
           saldo_disponivel?: number | null
+          saldo_em_processamento?: number | null
           total_sacado?: number | null
           updated_at?: string
         }
@@ -99,6 +105,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      carteira_transacoes: {
+        Row: {
+          carteira_id: string
+          created_at: string | null
+          descricao: string
+          id: string
+          job_id: string | null
+          pagamento_id: string | null
+          processed_by: string | null
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          carteira_id: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          job_id?: string | null
+          pagamento_id?: string | null
+          processed_by?: string | null
+          tipo: string
+          valor: number
+        }
+        Update: {
+          carteira_id?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          job_id?: string | null
+          pagamento_id?: string | null
+          processed_by?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Relationships: []
       }
       clientes: {
         Row: {
@@ -254,39 +296,48 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          data_pagamento: string | null
           id: string
           job_id: string
           montador_id: string
           observacoes_cliente: string | null
           observacoes_montador: string | null
+          pagamento_id: string | null
           status: string
           updated_at: string
+          valor_final: number | null
           valor_proposto_cliente: number | null
           valor_proposto_montador: number | null
         }
         Insert: {
           cliente_id: string
           created_at?: string
+          data_pagamento?: string | null
           id?: string
           job_id: string
           montador_id: string
           observacoes_cliente?: string | null
           observacoes_montador?: string | null
+          pagamento_id?: string | null
           status?: string
           updated_at?: string
+          valor_final?: number | null
           valor_proposto_cliente?: number | null
           valor_proposto_montador?: number | null
         }
         Update: {
           cliente_id?: string
           created_at?: string
+          data_pagamento?: string | null
           id?: string
           job_id?: string
           montador_id?: string
           observacoes_cliente?: string | null
           observacoes_montador?: string | null
+          pagamento_id?: string | null
           status?: string
           updated_at?: string
+          valor_final?: number | null
           valor_proposto_cliente?: number | null
           valor_proposto_montador?: number | null
         }
@@ -310,6 +361,13 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: false
             referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negociacoes_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -345,10 +403,16 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          failure_reason: string | null
           id: string
+          installments: number | null
           job_id: string
+          mercado_pago_payment_id: string | null
+          mercado_pago_payment_method: string | null
+          mercado_pago_preference_id: string | null
           metodo: Database["public"]["Enums"]["pagamento_metodo"] | null
           montador_id: string | null
+          processed_at: string | null
           status: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id: string | null
           updated_at: string
@@ -357,10 +421,16 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          failure_reason?: string | null
           id?: string
+          installments?: number | null
           job_id: string
+          mercado_pago_payment_id?: string | null
+          mercado_pago_payment_method?: string | null
+          mercado_pago_preference_id?: string | null
           metodo?: Database["public"]["Enums"]["pagamento_metodo"] | null
           montador_id?: string | null
+          processed_at?: string | null
           status?: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id?: string | null
           updated_at?: string
@@ -369,10 +439,16 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          failure_reason?: string | null
           id?: string
+          installments?: number | null
           job_id?: string
+          mercado_pago_payment_id?: string | null
+          mercado_pago_payment_method?: string | null
+          mercado_pago_preference_id?: string | null
           metodo?: Database["public"]["Enums"]["pagamento_metodo"] | null
           montador_id?: string | null
+          processed_at?: string | null
           status?: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id?: string | null
           updated_at?: string
@@ -494,6 +570,19 @@ export type Database = {
       }
       is_admin: {
         Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      liberar_valor_carteira: {
+        Args: { p_admin_user_id: string; p_carteira_id: string }
+        Returns: boolean
+      }
+      processar_pagamento_aprovado: {
+        Args: {
+          p_installments?: number
+          p_mp_payment_id: string
+          p_mp_payment_method: string
+          p_pagamento_id: string
+        }
         Returns: boolean
       }
       promote_to_admin: {
