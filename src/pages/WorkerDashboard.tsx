@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Star, 
@@ -23,12 +24,14 @@ import {
   Wallet,
   TrendingUp,
   CheckCircle,
-  Filter
+  Filter,
+  AlertTriangle
 } from "lucide-react";
 
 const WorkerDashboard = () => {
   const { signOut } = useAuth();
   const { profile, montadorProfile, loading } = useProfile();
+  const { isComplete: isProfileComplete } = useProfileCompletion();
   
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
@@ -157,6 +160,31 @@ const WorkerDashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Incomplete Profile Alert */}
+        {!isProfileComplete && (
+          <Card className="mb-8 border-destructive bg-destructive/5">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <AlertTriangle className="h-8 w-8 text-destructive flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-destructive mb-2">
+                    Complete seu cadastro para receber trabalhos
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Preencha todos os seus dados para aparecer nas buscas dos clientes e receber propostas de trabalho.
+                  </p>
+                  <Link to="/montador/profile">
+                    <Button variant="destructive" size="sm">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Finalizar Cadastro
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
