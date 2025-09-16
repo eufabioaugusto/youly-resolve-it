@@ -14,7 +14,389 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      candidaturas: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          montador_id: string
+          observacoes: string | null
+          proposta: number | null
+          status: Database["public"]["Enums"]["candidatura_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          montador_id: string
+          observacoes?: string | null
+          proposta?: number | null
+          status?: Database["public"]["Enums"]["candidatura_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          montador_id?: string
+          observacoes?: string | null
+          proposta?: number | null
+          status?: Database["public"]["Enums"]["candidatura_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidaturas_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidaturas_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carteira: {
+        Row: {
+          created_at: string
+          id: string
+          montador_id: string
+          saldo_bloqueado: number | null
+          saldo_disponivel: number | null
+          total_sacado: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          montador_id: string
+          saldo_bloqueado?: number | null
+          saldo_disponivel?: number | null
+          total_sacado?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          montador_id?: string
+          saldo_bloqueado?: number | null
+          saldo_disponivel?: number | null
+          total_sacado?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: true
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          avaliacao_media: number | null
+          created_at: string
+          id: string
+          pedidos_total: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao_media?: number | null
+          created_at?: string
+          id?: string
+          pedidos_total?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avaliacao_media?: number | null
+          created_at?: string
+          id?: string
+          pedidos_total?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          categoria: string | null
+          cliente_id: string
+          created_at: string
+          data_opcoes: Json | null
+          descricao: string
+          endereco: Json
+          id: string
+          montador_id: string | null
+          nota_fiscal: string | null
+          status: Database["public"]["Enums"]["job_status"] | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          cliente_id: string
+          created_at?: string
+          data_opcoes?: Json | null
+          descricao: string
+          endereco: Json
+          id?: string
+          montador_id?: string | null
+          nota_fiscal?: string | null
+          status?: Database["public"]["Enums"]["job_status"] | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          categoria?: string | null
+          cliente_id?: string
+          created_at?: string
+          data_opcoes?: Json | null
+          descricao?: string
+          endereco?: Json
+          id?: string
+          montador_id?: string | null
+          nota_fiscal?: string | null
+          status?: Database["public"]["Enums"]["job_status"] | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      montadores: {
+        Row: {
+          avaliacao_media: number | null
+          badges: string[] | null
+          created_at: string
+          documentos: Json | null
+          especialidades: string[] | null
+          horas_trabalhadas: number | null
+          id: string
+          preco_hora: number | null
+          projetos_realizados: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao_media?: number | null
+          badges?: string[] | null
+          created_at?: string
+          documentos?: Json | null
+          especialidades?: string[] | null
+          horas_trabalhadas?: number | null
+          id?: string
+          preco_hora?: number | null
+          projetos_realizados?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avaliacao_media?: number | null
+          badges?: string[] | null
+          created_at?: string
+          documentos?: Json | null
+          especialidades?: string[] | null
+          horas_trabalhadas?: number | null
+          id?: string
+          preco_hora?: number | null
+          projetos_realizados?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean | null
+          mensagem: string
+          tipo: Database["public"]["Enums"]["notificacao_tipo"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean | null
+          mensagem: string
+          tipo?: Database["public"]["Enums"]["notificacao_tipo"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean | null
+          mensagem?: string
+          tipo?: Database["public"]["Enums"]["notificacao_tipo"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pagamentos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          job_id: string
+          metodo: Database["public"]["Enums"]["pagamento_metodo"] | null
+          montador_id: string | null
+          status: Database["public"]["Enums"]["pagamento_status"] | null
+          transacao_gateway_id: string | null
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          job_id: string
+          metodo?: Database["public"]["Enums"]["pagamento_metodo"] | null
+          montador_id?: string | null
+          status?: Database["public"]["Enums"]["pagamento_status"] | null
+          transacao_gateway_id?: string | null
+          updated_at?: string
+          valor_total: number
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          metodo?: Database["public"]["Enums"]["pagamento_metodo"] | null
+          montador_id?: string | null
+          status?: Database["public"]["Enums"]["pagamento_status"] | null
+          transacao_gateway_id?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          documento: string | null
+          endereco: Json | null
+          id: string
+          nome: string
+          role: Database["public"]["Enums"]["user_role"]
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          documento?: string | null
+          endereco?: Json | null
+          id?: string
+          nome: string
+          role: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          documento?: string | null
+          endereco?: Json | null
+          id?: string
+          nome?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saques: {
+        Row: {
+          chave_pix: string | null
+          created_at: string
+          id: string
+          montador_id: string
+          processed_by: string | null
+          status: Database["public"]["Enums"]["saque_status"] | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          chave_pix?: string | null
+          created_at?: string
+          id?: string
+          montador_id: string
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["saque_status"] | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          chave_pix?: string | null
+          created_at?: string
+          id?: string
+          montador_id?: string
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["saque_status"] | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saques_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +405,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      candidatura_status: "pendente" | "aceito" | "recusado"
+      job_status:
+        | "aberto"
+        | "aguardando_pagamento"
+        | "em_andamento"
+        | "concluido"
+        | "cancelado"
+      notificacao_tipo: "sistema" | "job" | "pagamento" | "saque"
+      pagamento_metodo: "pix" | "cartao"
+      pagamento_status: "pago" | "pendente" | "estornado"
+      saque_status: "solicitado" | "pago" | "rejeitado"
+      user_role: "client" | "montador" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +543,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      candidatura_status: ["pendente", "aceito", "recusado"],
+      job_status: [
+        "aberto",
+        "aguardando_pagamento",
+        "em_andamento",
+        "concluido",
+        "cancelado",
+      ],
+      notificacao_tipo: ["sistema", "job", "pagamento", "saque"],
+      pagamento_metodo: ["pix", "cartao"],
+      pagamento_status: ["pago", "pendente", "estornado"],
+      saque_status: ["solicitado", "pago", "rejeitado"],
+      user_role: ["client", "montador", "admin"],
+    },
   },
 } as const
