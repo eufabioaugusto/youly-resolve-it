@@ -152,8 +152,13 @@ const ClientDashboard = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Button>
             <Link to="/cliente/perfil">
               <Button variant="ghost" size="icon">
@@ -196,15 +201,20 @@ const ClientDashboard = () => {
             </Card>
           </Link>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer" onClick={() => navigate('/cliente/negociacoes')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">Negociações</h3>
                   <p className="text-sm text-muted-foreground">Acompanhar orçamentos</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center relative">
                   <MessageSquare className="w-6 h-6 text-primary-foreground" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </div>
               </div>
             </CardContent>

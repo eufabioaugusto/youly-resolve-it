@@ -73,7 +73,7 @@ const JobCandidates = () => {
         .select('*')
         .eq('id', jobId)
         .eq('cliente_id', clienteProfile?.id)
-        .single();
+        .maybeSingle();
 
       if (jobError) throw jobError;
       setJob(jobData);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
@@ -63,6 +64,13 @@ export function useNotifications() {
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
           setUnreadCount(prev => prev + 1);
+          
+          // Show toast notification
+          toast({
+            title: "Nova notificação!",
+            description: newNotification.mensagem,
+            duration: 5000,
+          });
         }
       )
       .subscribe();

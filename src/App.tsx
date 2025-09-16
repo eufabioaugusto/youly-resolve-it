@@ -14,6 +14,7 @@ import AdminRegister from "./pages/AdminRegister";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientProfile from "./pages/ClientProfile";
 import CentralNegociacao from "./pages/CentralNegociacao";
+import CentralNegociacoes from "./pages/CentralNegociacoes";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import MontadorProfile from "./pages/MontadorProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -45,6 +46,11 @@ const App = () => (
               <Route path="/cliente/perfil" element={
                 <ProtectedRoute requiredRole="client">
                   <ClientProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/cliente/negociacoes" element={
+                <ProtectedRoute requiredRole="client">
+                  <CentralNegociacoes />
                 </ProtectedRoute>
               } />
               <Route path="/cliente/negociacao/:jobId" element={
