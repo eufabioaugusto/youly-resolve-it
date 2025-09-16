@@ -510,7 +510,7 @@ export type Database = {
         | "concluido"
         | "cancelado"
         | "em_negociacao"
-      notificacao_tipo: "sistema" | "job" | "pagamento" | "saque"
+      notificacao_tipo: "sistema" | "job" | "pagamento" | "saque" | "negociacao"
       pagamento_metodo: "pix" | "cartao"
       pagamento_status: "pago" | "pendente" | "estornado"
       saque_status: "solicitado" | "pago" | "rejeitado"
@@ -651,7 +651,7 @@ export const Constants = {
         "cancelado",
         "em_negociacao",
       ],
-      notificacao_tipo: ["sistema", "job", "pagamento", "saque"],
+      notificacao_tipo: ["sistema", "job", "pagamento", "saque", "negociacao"],
       pagamento_metodo: ["pix", "cartao"],
       pagamento_status: ["pago", "pendente", "estornado"],
       saque_status: ["solicitado", "pago", "rejeitado"],
