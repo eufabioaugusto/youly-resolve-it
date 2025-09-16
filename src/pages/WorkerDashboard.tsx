@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import JobDetailsModal from "@/components/JobDetailsModal";
+import CandidateModal from "@/components/CandidateModal";
 import { 
   Star, 
   MapPin, 
@@ -33,6 +36,7 @@ const WorkerDashboard = () => {
   const { profile, montadorProfile, loading } = useProfile();
   const { isComplete: isProfileComplete } = useProfileCompletion();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
@@ -40,6 +44,11 @@ const WorkerDashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  
+  // Modal states
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
+  const [candidateModalOpen, setCandidateModalOpen] = useState(false);
 
   useEffect(() => {
     if (montadorProfile) {
@@ -53,6 +62,8 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
+      console.log('Fetching available jobs for montador:', montadorProfile.id);
+      
       // Buscar jobs em aberto
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
@@ -61,26 +72,41 @@ const WorkerDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (jobsError) throw jobsError;
+      if (jobsError) {
+        console.error('Error fetching jobs:', jobsError);
+        throw jobsError;
+      }
+
+      console.log('Jobs found:', jobsData?.length || 0);
 
       if (jobsData && jobsData.length > 0) {
         // Buscar dados dos clientes
         const clienteIds = jobsData.map(job => job.cliente_id);
+        console.log('Fetching cliente data for ids:', clienteIds);
+        
         const { data: clientesData, error: clientesError } = await supabase
           .from('clientes')
           .select('id, user_id, avaliacao_media, pedidos_total')
           .in('id', clienteIds);
 
-        if (clientesError) throw clientesError;
+        if (clientesError) {
+          console.error('Error fetching clientes:', clientesError);
+          throw clientesError;
+        }
 
         // Buscar nomes dos clientes
         const userIds = clientesData?.map(cliente => cliente.user_id) || [];
+        console.log('Fetching profile data for user ids:', userIds);
+        
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('user_id, nome')
           .in('user_id', userIds);
 
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
 
         // Combinar os dados
         const jobsWithClientes = jobsData.map(job => {
@@ -98,12 +124,19 @@ const WorkerDashboard = () => {
           };
         });
 
+        console.log('Combined jobs data:', jobsWithClientes);
         setAvailableJobs(jobsWithClientes);
       } else {
+        console.log('No jobs found');
         setAvailableJobs([]);
       }
     } catch (error) {
       console.error('Erro ao buscar trabalhos disponíveis:', error);
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: "Não foi possível carregar os pedidos disponíveis. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -196,6 +229,24 @@ const WorkerDashboard = () => {
     } finally {
       setLoggingOut(false);
     }
+  };
+
+  const handleOpenJobDetails = (job) => {
+    setSelectedJob(job);
+    setJobDetailsModalOpen(true);
+  };
+
+  const handleOpenCandidateModal = (job) => {
+    setSelectedJob(job);
+    setCandidateModalOpen(true);
+  };
+
+  const handleCandidaturaSuccess = () => {
+    fetchAvailableJobs(); // Refresh the jobs list
+    toast({
+      title: "Candidatura enviada!",
+      description: "O cliente foi notificado sobre sua proposta."
+    });
   };
 
   const handleApply = async (jobId: string) => {
@@ -409,12 +460,14 @@ const WorkerDashboard = () => {
                               {new Date(job.created_at).toLocaleDateString('pt-BR')}
                             </span>
                             <div className="flex gap-2">
-                              <Link to="/trabalhos-disponiveis">
-                                <Button variant="outline" size="sm">
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Ver detalhes
-                                </Button>
-                              </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleOpenJobDetails(job)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver detalhes
+                              </Button>
                               {job.status === 'em_negociacao' ? (
                                 <Button 
                                   onClick={() => navigate(`/montador/negociacao/${job.id}`)}
@@ -424,7 +477,7 @@ const WorkerDashboard = () => {
                                 </Button>
                               ) : (
                                 <Button 
-                                  onClick={() => handleApply(job.id)}
+                                  onClick={() => handleOpenCandidateModal(job)}
                                   disabled={loadingJobId === job.id}
                                   className="bg-gradient-primary hover:shadow-glow"
                                 >
@@ -619,6 +672,20 @@ const WorkerDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Modals */}
+        <JobDetailsModal
+          job={selectedJob}
+          open={jobDetailsModalOpen}
+          onOpenChange={setJobDetailsModalOpen}
+        />
+
+        <CandidateModal
+          job={selectedJob}
+          open={candidateModalOpen}
+          onOpenChange={setCandidateModalOpen}
+          onSuccess={handleCandidaturaSuccess}
+        />
       </div>
     </div>
   );
