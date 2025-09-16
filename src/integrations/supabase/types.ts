@@ -195,11 +195,16 @@ export type Database = {
           created_at: string
           documentos: Json | null
           especialidades: string[] | null
+          foto_perfil_url: string | null
           horas_trabalhadas: number | null
           id: string
+          is_premium: boolean | null
+          nivel_gamificacao: string | null
           preco_hora: number | null
           projetos_realizados: number | null
           status: string | null
+          total_avaliacoes: number | null
+          total_valor_movimentado: number | null
           updated_at: string
           user_id: string
         }
@@ -210,11 +215,16 @@ export type Database = {
           created_at?: string
           documentos?: Json | null
           especialidades?: string[] | null
+          foto_perfil_url?: string | null
           horas_trabalhadas?: number | null
           id?: string
+          is_premium?: boolean | null
+          nivel_gamificacao?: string | null
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          total_avaliacoes?: number | null
+          total_valor_movimentado?: number | null
           updated_at?: string
           user_id: string
         }
@@ -225,11 +235,16 @@ export type Database = {
           created_at?: string
           documentos?: Json | null
           especialidades?: string[] | null
+          foto_perfil_url?: string | null
           horas_trabalhadas?: number | null
           id?: string
+          is_premium?: boolean | null
+          nivel_gamificacao?: string | null
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          total_avaliacoes?: number | null
+          total_valor_movimentado?: number | null
           updated_at?: string
           user_id?: string
         }
