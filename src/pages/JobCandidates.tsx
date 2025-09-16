@@ -1,0 +1,386 @@
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  ArrowLeft, 
+  Star, 
+  MapPin, 
+  Calendar, 
+  DollarSign,
+  Clock,
+  CheckCircle,
+  Award,
+  Briefcase
+} from "lucide-react";
+import { useState, useEffect } from "react";
+
+interface Candidatura {
+  id: string;
+  proposta?: number;
+  observacoes?: string;
+  status: string;
+  created_at: string;
+  montadores: {
+    id: string;
+    user_id: string;
+    avaliacao_media: number;
+    projetos_realizados: number;
+    preco_hora?: number;
+    especialidades?: string[];
+    badges?: string[];
+    profiles: any;
+  };
+}
+
+interface Job {
+  id: string;
+  descricao: string;
+  categoria: string;
+  endereco: any;
+  data_opcoes: any;
+  valor_estimado?: number;
+  status: string;
+}
+
+const JobCandidates = () => {
+  const { jobId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { clienteProfile } = useProfile();
+  const [job, setJob] = useState<Job | null>(null);
+  const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (jobId && clienteProfile) {
+      fetchJobAndCandidates();
+    }
+  }, [jobId, clienteProfile]);
+
+  const fetchJobAndCandidates = async () => {
+    if (!jobId) return;
+
+    try {
+      // Buscar job
+      const { data: jobData, error: jobError } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
+        .eq('cliente_id', clienteProfile?.id)
+        .single();
+
+      if (jobError) throw jobError;
+      setJob(jobData);
+
+      // Buscar candidaturas
+      const { data: candidaturasData, error: candidaturasError } = await supabase
+        .from('candidaturas')
+        .select(`
+          *,
+          montadores!inner(
+            id,
+            user_id,
+            avaliacao_media,
+            projetos_realizados,
+            preco_hora,
+            especialidades,
+            badges,
+            profiles!montadores_user_id_fkey(nome)
+          )
+        `)
+        .eq('job_id', jobId)
+        .order('created_at');
+
+      if (candidaturasError) throw candidaturasError;
+      setCandidaturas(candidaturasData || []);
+    } catch (error) {
+      console.error('Erro ao buscar candidaturas:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as candidaturas",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptCandidate = async (candidaturaId: string, montadorId: string, selectedDate: any) => {
+    try {
+      // Iniciar transação - aceitar candidatura e atualizar job
+      const { error: candidaturaError } = await supabase
+        .from('candidaturas')
+        .update({ status: 'aceito' })
+        .eq('id', candidaturaId);
+
+      if (candidaturaError) throw candidaturaError;
+
+      // Atualizar job com montador e data escolhida
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({ 
+          montador_id: montadorId,
+          status: 'em_andamento',
+          data_opcoes: [selectedDate] // Manter apenas a data escolhida
+        })
+        .eq('id', jobId);
+
+      if (jobError) throw jobError;
+
+      // Rejeitar outras candidaturas
+      const { error: rejectError } = await supabase
+        .from('candidaturas')
+        .update({ status: 'recusado' })
+        .eq('job_id', jobId)
+        .neq('id', candidaturaId);
+
+      if (rejectError) throw rejectError;
+
+      toast({
+        title: "Candidatura aceita!",
+        description: "O montador foi selecionado e notificado."
+      });
+
+      navigate('/cliente');
+    } catch (error: any) {
+      toast({
+        title: "Erro ao aceitar candidatura",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatPeriodo = (periodo: string) => {
+    return periodo === 'manha' ? 'Manhã (08h-12h)' : 'Tarde (13h-18h)';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-white text-lg">Carregando candidaturas...</div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-white text-lg">Pedido não encontrado</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-hero">
+      <div className="container mx-auto px-4 py-8">
+        <Link 
+          to="/cliente" 
+          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar aos meus pedidos
+        </Link>
+
+        <div className="max-w-4xl mx-auto">
+          {/* Informações do Job */}
+          <Card className="mb-6 shadow-glow border-0">
+            <CardHeader>
+              <CardTitle className="text-xl">{job.descricao}</CardTitle>
+              <CardDescription>
+                <div className="flex items-center gap-4 mt-2">
+                  <Badge variant="outline">{job.categoria}</Badge>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {job.endereco.cidade}, {job.endereco.estado}
+                  </div>
+                  {job.valor_estimado && (
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      R$ {job.valor_estimado.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <p className="font-medium mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Suas opções de data:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {job.data_opcoes.map((opcao, index) => (
+                    <Badge key={index} variant="outline" className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDate(opcao.data)} - {formatPeriodo(opcao.periodo)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Candidaturas */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Candidaturas Recebidas ({candidaturas.length})
+              </h2>
+              <p className="text-white/80">Escolha o montador ideal para seu projeto</p>
+            </div>
+
+            {candidaturas.length === 0 ? (
+              <Card className="shadow-glow border-0">
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground">
+                    Ainda não há candidaturas para este pedido.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Os montadores serão notificados automaticamente sobre seu pedido.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              candidaturas.map((candidatura) => (
+                <Card key={candidatura.id} className="shadow-glow border-0">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {candidatura.montadores.profiles?.nome || 'Montador'}
+                        </CardTitle>
+                        <div className="flex items-center gap-4 mt-2">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">
+                              {candidatura.montadores.avaliacao_media.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Briefcase className="w-4 h-4" />
+                            <span className="text-sm">
+                              {candidatura.montadores.projetos_realizados} projetos
+                            </span>
+                          </div>
+                          {candidatura.montadores.preco_hora && (
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span className="text-sm">
+                                R$ {candidatura.montadores.preco_hora}/hora
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={candidatura.status === 'aceito' ? 'default' : 'outline'}
+                        className={candidatura.status === 'aceito' ? 'bg-green-500' : ''}
+                      >
+                        {candidatura.status === 'pendente' ? 'Aguardando' : 
+                         candidatura.status === 'aceito' ? 'Aceita' : 'Rejeitada'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    {/* Especialidades */}
+                    {candidatura.montadores.especialidades && candidatura.montadores.especialidades.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Especialidades:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {candidatura.montadores.especialidades.map((spec, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {spec}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Badges */}
+                    {candidatura.montadores.badges && candidatura.montadores.badges.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Conquistas:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {candidatura.montadores.badges.map((badge, index) => (
+                            <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">
+                              <Award className="w-3 h-3" />
+                              {badge}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Proposta e Observações */}
+                    {(candidatura.proposta || candidatura.observacoes) && (
+                      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                        {candidatura.proposta && (
+                          <p className="font-medium mb-2">
+                            Proposta: R$ {candidatura.proposta.toFixed(2)}
+                          </p>
+                        )}
+                        {candidatura.observacoes && (
+                          <p className="text-sm text-muted-foreground">
+                            {candidatura.observacoes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Data da candidatura */}
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Candidatura enviada em {new Date(candidatura.created_at).toLocaleString('pt-BR')}
+                    </p>
+
+                    {/* Seleção de Data */}
+                    {candidatura.status === 'pendente' && job.status === 'aberto' && (
+                      <div className="space-y-3">
+                        <Separator />
+                        <p className="font-medium">Escolha uma data para aceitar este montador:</p>
+                        <div className="grid gap-2">
+                          {(Array.isArray(job.data_opcoes) ? job.data_opcoes : []).map((opcao, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              className="justify-start h-auto p-3"
+                              onClick={() => handleAcceptCandidate(candidatura.id, candidatura.montadores.id, opcao)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                <div>
+                                  <p className="font-medium">
+                                    {formatDate(opcao.data)} - {formatPeriodo(opcao.periodo)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Aceitar candidatura para esta data
+                                  </p>
+                                </div>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JobCandidates;

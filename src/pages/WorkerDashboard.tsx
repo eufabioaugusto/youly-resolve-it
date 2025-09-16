@@ -257,9 +257,11 @@ const WorkerDashboard = () => {
                           <Eye className="w-4 h-4 mr-2" />
                           Ver detalhes
                         </Button>
-                        <Button size="sm" className="bg-gradient-primary">
-                          Candidatar-se
-                        </Button>
+                        <Link to="/trabalhos-disponiveis">
+                          <Button size="sm" className="bg-gradient-primary">
+                            Candidatar-se
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   ))}

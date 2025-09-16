@@ -18,13 +18,16 @@ import {
   DollarSign,
   User,
   Bell,
-  LogOut
+  LogOut,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const ClientDashboard = () => {
   const { signOut } = useAuth();
   const { profile, clienteProfile } = useProfile();
+  const { notifications, unreadCount, markAllAsRead } = useNotifications();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +49,8 @@ const ClientDashboard = () => {
             user_id,
             avaliacao_media,
             profiles!montadores_user_id_fkey(nome)
-          )
+          ),
+          candidaturas(count)
         `)
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false });

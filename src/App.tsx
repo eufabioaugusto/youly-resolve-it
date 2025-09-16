@@ -15,6 +15,8 @@ import ClientDashboard from "./pages/ClientDashboard";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateJob from "./pages/CreateJob";
+import AvailableJobs from "./pages/AvailableJobs";
+import JobCandidates from "./pages/JobCandidates";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,16 @@ const App = () => (
               <Route path="/criar-pedido" element={
                 <ProtectedRoute requiredRole="client">
                   <CreateJob />
+                </ProtectedRoute>
+              } />
+              <Route path="/pedido/:jobId/candidatos" element={
+                <ProtectedRoute requiredRole="client">
+                  <JobCandidates />
+                </ProtectedRoute>
+              } />
+              <Route path="/trabalhos-disponiveis" element={
+                <ProtectedRoute requiredRole="montador">
+                  <AvailableJobs />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
