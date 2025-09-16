@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Wrench, 
   Users, 
@@ -21,6 +22,12 @@ import {
 } from "lucide-react";
 
 const AdminDashboard = () => {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   // Mock data
   const stats = {
     totalUsers: 1248,
@@ -122,10 +129,8 @@ const AdminDashboard = () => {
             <Button variant="ghost" size="icon">
               <User className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/">
-                <LogOut className="w-4 h-4" />
-              </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>

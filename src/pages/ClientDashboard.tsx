@@ -98,10 +98,8 @@ const ClientDashboard = () => {
             <Button variant="ghost" size="icon">
               <User className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/">
-                <LogOut className="w-4 h-4" />
-              </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Wrench, 
   Star, 
@@ -22,6 +23,11 @@ import {
 } from "lucide-react";
 
 const WorkerDashboard = () => {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
   // Mock data
   const availableJobs = [
     {
@@ -126,10 +132,8 @@ const WorkerDashboard = () => {
             <Button variant="ghost" size="icon">
               <User className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/">
-                <LogOut className="w-4 h-4" />
-              </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
