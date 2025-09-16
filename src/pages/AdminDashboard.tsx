@@ -1,125 +1,94 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdmin } from "@/hooks/useAdmin";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { AdminCarteiraGestao } from "@/components/AdminCarteiraGestao";
 import { 
-  Wrench, 
   Users, 
   DollarSign, 
   TrendingUp, 
-  AlertTriangle,
   CheckCircle,
-  Clock,
-  Bell,
+  Package,
   LogOut,
-  User,
-  Settings,
-  BarChart3,
-  FileText,
-  Shield,
-  UserPlus
+  Activity,
+  Wrench
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
-const AdminDashboard = () => {
-  const { signOut } = useAuth();
-  const { users, loading: usersLoading, promoteToAdmin } = useAdmin();
+export default function AdminDashboard() {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [stats, setStats] = useState({
+    totalJobs: 0,
+    activeJobs: 0,
+    totalMontadores: 0,
+    activeMontadores: 0,
+    totalClientes: 0,
+    totalPagamentos: 0,
+    valorTotalMovimentado: 0
+  });
+  const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const [
+        { count: totalJobs },
+        { count: activeJobs },
+        { count: totalMontadores },
+        { count: activeMontadores },
+        { count: totalClientes },
+        { count: totalPagamentos },
+        { data: pagamentosData }
+      ] = await Promise.all([
+        supabase.from('jobs').select('*', { count: 'exact', head: true }),
+        supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'aberto'),
+        supabase.from('montadores').select('*', { count: 'exact', head: true }),
+        supabase.from('montadores').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('clientes').select('*', { count: 'exact', head: true }),
+        supabase.from('pagamentos').select('*', { count: 'exact', head: true }),
+        supabase.from('pagamentos').select('valor_total')
+      ]);
+
+      const valorTotal = pagamentosData?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0;
+
+      setStats({
+        totalJobs: totalJobs || 0,
+        activeJobs: activeJobs || 0,
+        totalMontadores: totalMontadores || 0,
+        activeMontadores: activeMontadores || 0,
+        totalClientes: totalClientes || 0,
+        totalPagamentos: totalPagamentos || 0,
+        valorTotalMovimentado: valorTotal
+      });
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as estatísticas",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      console.log('Iniciando logout...');
       await signOut();
     } catch (error) {
       console.error('Erro no logout:', error);
-      // Force redirect even if logout fails
       window.location.href = "/";
     } finally {
       setLoggingOut(false);
-    }
-  };
-
-  // Mock data
-  const stats = {
-    totalUsers: 1248,
-    activeWorkers: 342,
-    activeClients: 906,
-    totalOrders: 2156,
-    completedOrders: 1893,
-    pendingOrders: 263,
-    revenue: 89450,
-    avgOrderValue: 145
-  };
-
-  const recentOrders = [
-    {
-      id: "#2156",
-      client: "Maria Silva",
-      worker: "João Santos",
-      service: "Guarda-roupa 6 portas",
-      status: "completed",
-      value: 180,
-      date: "2024-09-20"
-    },
-    {
-      id: "#2155",
-      client: "Carlos Lima", 
-      worker: "Ana Costa",
-      service: "Mesa de jantar + cadeiras",
-      status: "in_progress",
-      value: 150,
-      date: "2024-09-20"
-    },
-    {
-      id: "#2154",
-      client: "Fernanda Oliveira",
-      worker: "Pedro Silva",
-      service: "Estante modulada",
-      status: "awaiting_payment",
-      value: 200,
-      date: "2024-09-19"
-    }
-  ];
-
-  const pendingWithdrawals = [
-    {
-      id: "#W123",
-      worker: "João Santos",
-      amount: 850,
-      requestDate: "2024-09-19",
-      pixKey: "joao@email.com"
-    },
-    {
-      id: "#W124", 
-      worker: "Ana Costa",
-      amount: 620,
-      requestDate: "2024-09-19",
-      pixKey: "11999999999"
-    },
-    {
-      id: "#W125",
-      worker: "Pedro Silva", 
-      amount: 1200,
-      requestDate: "2024-09-18",
-      pixKey: "12345678901"
-    }
-  ];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-success text-success-foreground">Concluído</Badge>;
-      case "in_progress":
-        return <Badge className="bg-warning text-warning-foreground">Em andamento</Badge>;
-      case "awaiting_payment":
-        return <Badge variant="outline">Aguardando pagamento</Badge>;
-      default:
-        return <Badge variant="secondary">Pendente</Badge>;
     }
   };
 
@@ -127,25 +96,22 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Wrench className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Admin Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Gestão da Plataforma YOULY</p>
+              </div>
             </div>
-            <span className="text-xl font-bold">YOULY Admin</span>
-          </Link>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} disabled={loggingOut}>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              disabled={loggingOut}
+            >
               {loggingOut ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
               ) : (
@@ -157,312 +123,133 @@ const AdminDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard Administrativo 📊</h1>
-          <p className="text-muted-foreground">Visão geral da plataforma YOULY.</p>
-        </div>
-
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-card">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Usuários Totais</p>
-                  <h3 className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</h3>
+                  <p className="text-sm text-muted-foreground">Total Jobs</p>
+                  <h3 className="text-2xl font-bold">{stats.totalJobs}</h3>
                 </div>
-                <Users className="w-8 h-8 text-primary" />
+                <Package className="w-8 h-8 text-primary" />
               </div>
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="w-4 h-4 text-success" />
-                <span className="text-sm text-success">+12% este mês</span>
+              <div className="text-sm text-muted-foreground mt-2">
+                {stats.activeJobs} ativos
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pedidos Concluídos</p>
-                  <h3 className="text-2xl font-bold">{stats.completedOrders.toLocaleString()}</h3>
+                  <p className="text-sm text-muted-foreground">Montadores</p>
+                  <h3 className="text-2xl font-bold">{stats.totalMontadores}</h3>
                 </div>
-                <CheckCircle className="w-8 h-8 text-success" />
+                <Users className="w-8 h-8 text-blue-500" />
               </div>
               <div className="text-sm text-muted-foreground mt-2">
-                {stats.pendingOrders} pendentes
+                {stats.activeMontadores} ativos
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Receita Total</p>
-                  <h3 className="text-2xl font-bold">R$ {stats.revenue.toLocaleString()}</h3>
+                  <p className="text-sm text-muted-foreground">Clientes</p>
+                  <h3 className="text-2xl font-bold">{stats.totalClientes}</h3>
                 </div>
-                <DollarSign className="w-8 h-8 text-success" />
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                Ticket médio: R$ {stats.avgOrderValue}
+                <Users className="w-8 h-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Montadores Ativos</p>
-                  <h3 className="text-2xl font-bold">{stats.activeWorkers}</h3>
+                  <p className="text-sm text-muted-foreground">Volume Total</p>
+                  <h3 className="text-2xl font-bold">
+                    {formatCurrency(stats.valorTotalMovimentado)}
+                  </h3>
                 </div>
-                <Wrench className="w-8 h-8 text-primary" />
+                <DollarSign className="w-8 h-8 text-yellow-500" />
               </div>
               <div className="text-sm text-muted-foreground mt-2">
-                {Math.round((stats.activeWorkers / stats.totalUsers) * 100)}% do total
+                {stats.totalPagamentos} pagamentos
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="orders">Pedidos</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="payments">Saques</TabsTrigger>
-            <TabsTrigger value="reports">Relatórios</TabsTrigger>
+        {/* Tabs */}
+        <Tabs defaultValue="carteiras" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="carteiras">Gestão de Carteiras</TabsTrigger>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="orders" className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Pedidos Recentes</CardTitle>
-                <CardDescription>Últimas transações da plataforma</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <p className="font-medium">{order.id}</p>
-                          <p className="text-sm text-muted-foreground">{order.service}</p>
-                        </div>
-                        <div className="text-sm">
-                          <p><strong>Cliente:</strong> {order.client}</p>
-                          <p><strong>Montador:</strong> {order.worker}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {getStatusBadge(order.status)}
-                        <div className="text-right">
-                          <p className="font-bold">R$ {order.value}</p>
-                          <p className="text-sm text-muted-foreground">{order.date}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+
+          <TabsContent value="carteiras">
+            <AdminCarteiraGestao />
           </TabsContent>
-          
-          <TabsContent value="users" className="space-y-6">
-            <div className="grid gap-4">
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Gerenciar Usuários
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => window.open('/admin/register', '_blank')}
-                    >
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Criar Admin
-                    </Button>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Crescimento da Plataforma
                   </CardTitle>
-                  <CardDescription>
-                    Promova usuários para administradores ou visualize informações dos usuários
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {usersLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Jobs concluídos</span>
+                      <span className="font-semibold text-green-600">{stats.totalJobs - stats.activeJobs}</span>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {users.map((user) => (
-                        <div key={user.id} className="flex items-center justify-between py-3 border-b last:border-b-0">
-                          <div className="flex-1">
-                            <p className="font-medium">{user.nome}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {user.role === 'client' ? 'Cliente' : 
-                               user.role === 'montador' ? 'Montador' : 'Administrador'} • 
-                              Cadastrado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={user.role === 'admin' ? 'default' : 'secondary'}
-                              className={user.role === 'admin' ? 'bg-gradient-primary text-primary-foreground' : ''}
-                            >
-                              {user.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
-                              {user.role === 'client' ? 'Cliente' : 
-                               user.role === 'montador' ? 'Montador' : 'Admin'}
-                            </Badge>
-                            {user.role !== 'admin' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => promoteToAdmin(user.user_id)}
-                                className="text-xs"
-                              >
-                                <Shield className="w-3 h-3 mr-1" />
-                                Promover a Admin
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {users.length === 0 && (
-                        <Alert>
-                          <Users className="h-4 w-4" />
-                          <AlertDescription>
-                            Nenhum usuário encontrado no sistema.
-                          </AlertDescription>
-                        </Alert>
-                      )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Montadores ativos</span>
+                      <span className="font-semibold">{stats.activeMontadores}</span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Clientes Ativos</CardTitle>
-                    <CardDescription>{stats.activeClients} usuários</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span>Novos este mês</span>
-                        <Badge variant="secondary">+127</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Taxa de retenção</span>
-                        <Badge className="bg-success text-success-foreground">85%</Badge>
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Volume processado</span>
+                      <span className="font-semibold text-blue-600">
+                        {formatCurrency(stats.valorTotalMovimentado)}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Montadores Verificados</CardTitle>
-                    <CardDescription>{stats.activeWorkers} profissionais</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span>Pendentes aprovação</span>
-                        <Badge variant="outline">12</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Avaliação média</span>
-                        <Badge className="bg-warning text-warning-foreground">4.8/5</Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="payments" className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Solicitações de Saque</CardTitle>
-                    <CardDescription>Pagamentos pendentes para montadores</CardDescription>
-                  </div>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4" />
-                    {pendingWithdrawals.length} pendentes
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {pendingWithdrawals.map((withdrawal) => (
-                    <div key={withdrawal.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <p className="font-medium">{withdrawal.worker}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Chave PIX: {withdrawal.pixKey}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-bold text-lg">R$ {withdrawal.amount}</p>
-                          <p className="text-sm text-muted-foreground">{withdrawal.requestDate}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">Rejeitar</Button>
-                          <Button size="sm" className="bg-success hover:bg-success/90">
-                            Aprovar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="reports" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-2">Relatório Financeiro</h3>
-                      <p className="text-sm text-muted-foreground">Receitas e comissões</p>
-                    </div>
-                    <BarChart3 className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-2">Relatório de Usuários</h3>
-                      <p className="text-sm text-muted-foreground">Crescimento e atividade</p>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Status da Plataforma
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Sistema operacional</span>
                     </div>
-                    <Users className="w-8 h-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-2">Auditoria</h3>
-                      <p className="text-sm text-muted-foreground">Logs e segurança</p>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>Pagamentos funcionando</span>
                     </div>
-                    <Shield className="w-8 h-8 text-primary" />
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span>Maturação ativa</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span>Webhooks conectados</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -472,6 +259,4 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

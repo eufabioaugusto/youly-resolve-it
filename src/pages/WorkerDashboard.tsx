@@ -31,6 +31,7 @@ import {
   Filter,
   AlertTriangle
 } from "lucide-react";
+import { CarteiraWidget } from "@/components/CarteiraWidget";
 
 const WorkerDashboard = () => {
   const { signOut } = useAuth();
@@ -670,77 +671,7 @@ const WorkerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="wallet" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Carteira</CardTitle>
-                <CardDescription>Gerencie seus ganhos e saques</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Wallet className="w-5 h-5" />
-                          Disponível
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-bold text-green-600">
-                          R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Valor disponível para saque
-                        </p>
-                        <Button className="w-full mt-4" variant="outline">
-                          Solicitar Saque
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Clock className="w-5 h-5" />
-                          Bloqueado
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-bold text-yellow-600">
-                          R$ {carteira?.saldo_bloqueado?.toFixed(2) || '0,00'}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Valores em processamento
-                        </p>
-                        <Button className="w-full mt-4" variant="outline" disabled>
-                          Aguardando...
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5" />
-                          Total Sacado
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-3xl font-bold">
-                          R$ {carteira?.total_sacado?.toFixed(2) || '0,00'}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Total já sacado
-                        </p>
-                        <Button className="w-full mt-4" variant="outline">
-                          Ver Histórico
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CarteiraWidget />
           </TabsContent>
         </Tabs>
 
