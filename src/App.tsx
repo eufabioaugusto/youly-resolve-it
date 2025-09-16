@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminRegister from "./pages/AdminRegister";
 import ClientDashboard from "./pages/ClientDashboard";
+import ClientProfile from "./pages/ClientProfile";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import MontadorProfile from "./pages/MontadorProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -38,6 +39,11 @@ const App = () => (
               <Route path="/cliente" element={
                 <ProtectedRoute requiredRole="client">
                   <ClientDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/cliente/perfil" element={
+                <ProtectedRoute requiredRole="client">
+                  <ClientProfile />
                 </ProtectedRoute>
               } />
               <Route path="/montador" element={

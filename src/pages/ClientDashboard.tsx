@@ -41,22 +41,62 @@ const ClientDashboard = () => {
     if (!clienteProfile) return;
     
     try {
-      const { data, error } = await supabase
+      // Buscar jobs do cliente
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
-        .select(`
-          *,
-          montador:montadores(
-            user_id,
-            avaliacao_media,
-            profiles!montadores_user_id_fkey(nome)
-          ),
-          candidaturas(count)
-        `)
+        .select('*')
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setJobs(data || []);
+      if (jobsError) throw jobsError;
+
+      if (jobsData && jobsData.length > 0) {
+        // Buscar montadores associados aos jobs
+        const montadorIds = jobsData
+          .filter(job => job.montador_id)
+          .map(job => job.montador_id);
+
+        let montadorData = [];
+        if (montadorIds.length > 0) {
+          const { data: montadores, error: montadoresError } = await supabase
+            .from('montadores')
+            .select('id, user_id, avaliacao_media')
+            .in('id', montadorIds);
+
+          if (montadoresError) throw montadoresError;
+
+          // Buscar nomes dos montadores
+          const userIds = montadores?.map(m => m.user_id) || [];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('user_id, nome')
+              .in('user_id', userIds);
+
+            montadorData = montadores?.map(montador => ({
+              ...montador,
+              profiles: profiles?.find(p => p.user_id === montador.user_id) || { nome: 'Montador' }
+            })) || [];
+          }
+        }
+
+        // Buscar candidaturas para cada job
+        const { data: candidaturas } = await supabase
+          .from('candidaturas')
+          .select('job_id')
+          .in('job_id', jobsData.map(j => j.id));
+
+        // Combinar os dados
+        const jobsWithData = jobsData.map(job => ({
+          ...job,
+          montador: job.montador_id ? montadorData.find(m => m.id === job.montador_id) : null,
+          candidaturas_count: candidaturas?.filter(c => c.job_id === job.id).length || 0
+        }));
+
+        setJobs(jobsWithData);
+      } else {
+        setJobs([]);
+      }
     } catch (error) {
       console.error('Erro ao buscar jobs:', error);
     } finally {
@@ -99,9 +139,11 @@ const ClientDashboard = () => {
             <Button variant="ghost" size="icon">
               <Bell className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <User className="w-4 h-4" />
-            </Button>
+            <Link to="/cliente/perfil">
+              <Button variant="ghost" size="icon">
+                <User className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="w-4 h-4" />
             </Button>
@@ -112,7 +154,7 @@ const ClientDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Olá, Maria! 👋</h1>
+          <h1 className="text-3xl font-bold mb-2">Olá, {profile?.nome || 'Cliente'}! 👋</h1>
           <p className="text-muted-foreground">Aqui estão seus pedidos e atividades recentes.</p>
         </div>
 
@@ -150,7 +192,13 @@ const ClientDashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">R$ 450</h3>
+                  <h3 className="font-semibold text-lg">
+                    R$ {jobs.reduce((total, job) => {
+                      // Calcular economia baseada em valor estimado vs preço médio de mercado
+                      const economia = job.valor_estimado ? job.valor_estimado * 0.15 : 0; // 15% de economia média
+                      return total + economia;
+                    }, 0).toFixed(2)}
+                  </h3>
                   <p className="text-sm text-muted-foreground">Total economizado</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-success" />
@@ -197,10 +245,10 @@ const ClientDashboard = () => {
                         {job.montador && (
                           <div className="flex items-center gap-2 mb-3">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium">{job.montador.profiles.nome}</span>
+                            <span className="font-medium">{job.montador.profiles?.nome || 'Montador'}</span>
                             <div className="flex items-center gap-1">
                               <Star className="w-4 h-4 fill-warning text-warning" />
-                              <span className="text-sm">{job.montador.avaliacao_media}</span>
+                              <span className="text-sm">{job.montador.avaliacao_media?.toFixed(1) || '0.0'}</span>
                             </div>
                           </div>
                         )}
