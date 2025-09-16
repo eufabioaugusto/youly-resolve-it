@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { Wrench, ArrowLeft, Upload, Calendar, Loader2 } from "lucide-react";
+import { Wrench, ArrowLeft, Upload, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
 
 const CreateJob = () => {
@@ -190,28 +190,28 @@ const CreateJob = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="categoria">Categoria</Label>
-                  <Select 
-                    value={formData.categoria} 
-                    onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="guarda-roupa">Guarda-roupa</SelectItem>
-                      <SelectItem value="cama">Cama</SelectItem>
-                      <SelectItem value="mesa">Mesa de jantar</SelectItem>
-                      <SelectItem value="estante">Estante</SelectItem>
-                      <SelectItem value="rack">Rack/Painel TV</SelectItem>
-                      <SelectItem value="outros">Outros móveis</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="categoria">Categoria</Label>
+                    <Select 
+                      value={formData.categoria} 
+                      onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="guarda-roupa">Guarda-roupa</SelectItem>
+                        <SelectItem value="cama">Cama</SelectItem>
+                        <SelectItem value="mesa">Mesa de jantar</SelectItem>
+                        <SelectItem value="estante">Estante</SelectItem>
+                        <SelectItem value="rack">Rack/Painel TV</SelectItem>
+                        <SelectItem value="outros">Outros móveis</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="valor_estimado">Valor estimado (R$)</Label>
                     <Input 
                       id="valor_estimado"
@@ -222,9 +222,12 @@ const CreateJob = () => {
                       step="0.01"
                       min="0"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Insira o valor estimado do produto a ser montado
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <InfoIcon className="w-3 h-3 text-destructive" />
+                      <p className="text-xs text-muted-foreground">
+                        Insira o valor estimado do produto a ser montado
+                      </p>
+                    </div>
                   </div>
                 </div>
 
