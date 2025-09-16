@@ -15,6 +15,7 @@ interface Montador {
   avaliacao_media: number;
   projetos_realizados: number;
   especialidades: string[];
+  preco_hora: number;
   profiles: {
     nome: string;
   } | null;
@@ -62,7 +63,7 @@ const SuggestedMontadores = () => {
       // Buscar montadores ativos que têm especialidades relacionadas ao job
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
-        .select('id, user_id, avaliacao_media, projetos_realizados, especialidades')
+        .select('id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora')
         .eq('status', 'ativo')
         .order('avaliacao_media', { ascending: false })
         .order('projetos_realizados', { ascending: false });
@@ -119,28 +120,40 @@ const SuggestedMontadores = () => {
     
     setLoadingHire(montadorId);
     try {
-      // Atualizar job para "em_andamento" e associar montador
-      const { error } = await supabase
+      // Criar negociação ao invés de contratar direto
+      const { error: negociacaoError } = await supabase
+        .from('negociacoes')
+        .insert({
+          job_id: job.id,
+          montador_id: montadorId,
+          cliente_id: clienteProfile.id,
+          status: 'pendente'
+        });
+
+      if (negociacaoError) throw negociacaoError;
+
+      // Atualizar job para "em_negociacao"
+      const { error: jobError } = await supabase
         .from('jobs')
         .update({ 
-          status: 'em_andamento',
+          status: 'em_negociacao',
           montador_id: montadorId
         })
         .eq('id', job.id);
 
-      if (error) throw error;
+      if (jobError) throw jobError;
 
       toast({
-        title: "Montador contratado com sucesso!",
-        description: "O montador foi notificado e entrará em contato em breve."
+        title: "Intenção de contratação enviada!",
+        description: "O montador foi notificado e enviará um orçamento em breve."
       });
 
-      // Navegar para dashboard do cliente
-      navigate('/cliente');
+      // Navegar para central de negociação
+      navigate(`/cliente/negociacao/${job.id}`);
 
     } catch (error: any) {
       toast({
-        title: "Erro ao contratar montador",
+        title: "Erro ao enviar intenção de contratação",
         description: error.message,
         variant: "destructive"
       });
@@ -295,6 +308,10 @@ const SuggestedMontadores = () => {
                                 <div className="flex items-center gap-1">
                                   <Users className="w-4 h-4" />
                                   <span>{montador.projetos_realizados} projetos</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  <span className="font-semibold text-primary">R$ {montador.preco_hora?.toFixed(2) || '50,00'}/hora</span>
                                 </div>
                               </div>
                             </div>

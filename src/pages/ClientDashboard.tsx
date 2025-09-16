@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ const ClientDashboard = () => {
   const { signOut } = useAuth();
   const { profile, clienteProfile } = useProfile();
   const { notifications, unreadCount, markAllAsRead } = useNotifications();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -265,6 +266,21 @@ const ClientDashboard = () => {
                     
                     <div className="flex gap-3">
                       <Button variant="outline" size="sm">Ver detalhes</Button>
+                      {job.status === 'em_negociacao' ? (
+                        <Button 
+                          onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
+                          className="bg-gradient-primary hover:shadow-glow"
+                        >
+                          Ver Negociação
+                        </Button>
+                      ) : job.status === 'aberto' ? (
+                        <Button 
+                          onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
+                          className="bg-gradient-primary hover:shadow-glow"
+                        >
+                          Ver Montadores Sugeridos
+                        </Button>
+                      ) : null}
                       {job.status === "aguardando_pagamento" && (
                         <Button size="sm" className="bg-gradient-primary">Pagar agora</Button>
                       )}

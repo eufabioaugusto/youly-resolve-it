@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,13 @@ const WorkerDashboard = () => {
   const { signOut } = useAuth();
   const { profile, montadorProfile, loading } = useProfile();
   const { isComplete: isProfileComplete } = useProfileCompletion();
+  const navigate = useNavigate();
   
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [carteira, setCarteira] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     if (montadorProfile) {
@@ -183,6 +185,30 @@ const WorkerDashboard = () => {
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const handleApply = async (jobId: string) => {
+    if (!montadorProfile) return;
+    
+    setLoadingJobId(jobId);
+    try {
+      const { error } = await supabase
+        .from('candidaturas')
+        .insert({
+          job_id: jobId,
+          montador_id: montadorProfile.id,
+          status: 'pendente'
+        });
+
+      if (error) throw error;
+      
+      // Atualizar lista de trabalhos disponíveis
+      fetchAvailableJobs();
+    } catch (error) {
+      console.error('Erro ao candidatar-se:', error);
+    } finally {
+      setLoadingJobId(null);
+    }
   };
 
   if (loading) {
@@ -373,6 +399,22 @@ const WorkerDashboard = () => {
                                   Ver detalhes
                                 </Button>
                               </Link>
+                              {job.status === 'em_negociacao' ? (
+                                <Button 
+                                  onClick={() => navigate(`/montador/negociacao/${job.id}`)}
+                                  className="bg-gradient-primary hover:shadow-glow"
+                                >
+                                  Ver Negociação
+                                </Button>
+                              ) : (
+                                <Button 
+                                  onClick={() => handleApply(job.id)}
+                                  disabled={loadingJobId === job.id}
+                                  className="bg-gradient-primary hover:shadow-glow"
+                                >
+                                  {loadingJobId === job.id ? 'Candidatando...' : 'Candidatar-se'}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>

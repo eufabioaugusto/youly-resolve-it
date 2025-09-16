@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import AdminRegister from "./pages/AdminRegister";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientProfile from "./pages/ClientProfile";
+import CentralNegociacao from "./pages/CentralNegociacao";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import MontadorProfile from "./pages/MontadorProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -46,6 +47,11 @@ const App = () => (
                   <ClientProfile />
                 </ProtectedRoute>
               } />
+              <Route path="/cliente/negociacao/:jobId" element={
+                <ProtectedRoute requiredRole="client">
+                  <CentralNegociacao />
+                </ProtectedRoute>
+              } />
               <Route path="/montador" element={
                 <ProtectedRoute requiredRole="montador">
                   <WorkerDashboard />
@@ -54,6 +60,11 @@ const App = () => (
               <Route path="/montador/perfil" element={
                 <ProtectedRoute requiredRole="montador">
                   <MontadorProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/montador/negociacao/:jobId" element={
+                <ProtectedRoute requiredRole="montador">
+                  <CentralNegociacao />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
@@ -77,6 +88,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/pedido/:jobId/montadores-sugeridos" element={
+                <ProtectedRoute requiredRole="client">
+                  <SuggestedMontadores />
+                </ProtectedRoute>
+              } />
+              <Route path="/trabalhos-sugeridos/:jobId" element={
                 <ProtectedRoute requiredRole="client">
                   <SuggestedMontadores />
                 </ProtectedRoute>

@@ -235,6 +235,70 @@ export type Database = {
         }
         Relationships: []
       }
+      negociacoes: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          job_id: string
+          montador_id: string
+          observacoes_cliente: string | null
+          observacoes_montador: string | null
+          status: string
+          updated_at: string
+          valor_proposto_cliente: number | null
+          valor_proposto_montador: number | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          job_id: string
+          montador_id: string
+          observacoes_cliente?: string | null
+          observacoes_montador?: string | null
+          status?: string
+          updated_at?: string
+          valor_proposto_cliente?: number | null
+          valor_proposto_montador?: number | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          montador_id?: string
+          observacoes_cliente?: string | null
+          observacoes_montador?: string | null
+          status?: string
+          updated_at?: string
+          valor_proposto_cliente?: number | null
+          valor_proposto_montador?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negociacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negociacoes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negociacoes_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notificacoes: {
         Row: {
           created_at: string
@@ -430,6 +494,7 @@ export type Database = {
         | "em_andamento"
         | "concluido"
         | "cancelado"
+        | "em_negociacao"
       notificacao_tipo: "sistema" | "job" | "pagamento" | "saque"
       pagamento_metodo: "pix" | "cartao"
       pagamento_status: "pago" | "pendente" | "estornado"
@@ -569,6 +634,7 @@ export const Constants = {
         "em_andamento",
         "concluido",
         "cancelado",
+        "em_negociacao",
       ],
       notificacao_tipo: ["sistema", "job", "pagamento", "saque"],
       pagamento_metodo: ["pix", "cartao"],

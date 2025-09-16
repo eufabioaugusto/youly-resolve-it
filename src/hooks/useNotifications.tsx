@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 interface Notification {
   id: string;
   user_id: string;
-  tipo: 'sistema' | 'job' | 'pagamento' | 'saque';
+  tipo: 'sistema' | 'job' | 'pagamento' | 'saque' | 'negociacao';
   mensagem: string;
   lida: boolean;
   created_at: string;
