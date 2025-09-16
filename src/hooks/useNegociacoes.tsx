@@ -8,30 +8,16 @@ interface Negociacao {
   job_id: string;
   montador_id: string;
   cliente_id: string;
-  status: string; // Mudando para string para evitar problemas de tipo
+  status: string;
   valor_proposto_montador?: number;
   valor_proposto_cliente?: number;
   observacoes_montador?: string;
   observacoes_cliente?: string;
   created_at: string;
   updated_at: string;
-  jobs?: {
-    descricao: string;
-    categoria: string;
-    endereco: any;
-    valor_estimado?: number;
-  };
-  montadores?: {
-    profiles?: {
-      nome: string;
-    };
-    preco_hora?: number;
-  };
-  clientes?: {
-    profiles?: {
-      nome: string;
-    };
-  };
+  jobs?: any;
+  montadores?: any;
+  clientes?: any;
 }
 
 export const useNegociacoes = () => {
@@ -43,7 +29,6 @@ export const useNegociacoes = () => {
   useEffect(() => {
     if (user) {
       fetchNegociacoes();
-      setupRealtimeSubscription();
     }
   }, [user]);
 
@@ -51,21 +36,11 @@ export const useNegociacoes = () => {
     try {
       const { data, error } = await supabase
         .from('negociacoes')
-        .select(`
-          *,
-          jobs (descricao, categoria, endereco, valor_estimado),
-          montadores (
-            profiles (nome),
-            preco_hora
-          ),
-          clientes (
-            profiles (nome)
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNegociacoes((data as any) || []);
+      setNegociacoes(data || []);
     } catch (error: any) {
       console.error('Erro ao buscar negociações:', error);
       toast({
@@ -76,28 +51,6 @@ export const useNegociacoes = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('negociacoes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'negociacoes'
-        },
-        (payload) => {
-          console.log('Negociação atualizada:', payload);
-          fetchNegociacoes(); // Recarregar dados para pegar joins
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const enviarOrcamento = async (
@@ -140,9 +93,7 @@ export const useNegociacoes = () => {
     observacoes?: string
   ) => {
     try {
-      const updateData: any = {
-        status: acao
-      };
+      const updateData: any = { status: acao };
 
       if (acao === 'contra_proposta' && valorContraproposta) {
         updateData.valor_proposto_cliente = valorContraproposta;
@@ -155,35 +106,6 @@ export const useNegociacoes = () => {
         .eq('id', negociacaoId);
 
       if (error) throw error;
-
-      // Se aceito, atualizar job para em_andamento
-      if (acao === 'aceito') {
-        const negociacao = negociacoes.find(n => n.id === negociacaoId);
-        if (negociacao) {
-          const { error: jobError } = await supabase
-            .from('jobs')
-            .update({ status: 'em_andamento' })
-            .eq('id', negociacao.job_id);
-
-          if (jobError) throw jobError;
-        }
-      }
-
-      // Se recusado, liberar job para outros montadores
-      if (acao === 'recusado') {
-        const negociacao = negociacoes.find(n => n.id === negociacaoId);
-        if (negociacao) {
-          const { error: jobError } = await supabase
-            .from('jobs')
-            .update({ 
-              status: 'aberto',
-              montador_id: null 
-            })
-            .eq('id', negociacao.job_id);
-
-          if (jobError) throw jobError;
-        }
-      }
 
       const acaoTexto = {
         'aceito': 'Orçamento aceito!',
@@ -210,78 +132,11 @@ export const useNegociacoes = () => {
   };
 
   const aceitarContraproposta = async (negociacaoId: string) => {
-    try {
-      const { error } = await supabase
-        .from('negociacoes')
-        .update({ status: 'aceito' })
-        .eq('id', negociacaoId);
-
-      if (error) throw error;
-
-      // Atualizar job para em_andamento
-      const negociacao = negociacoes.find(n => n.id === negociacaoId);
-      if (negociacao) {
-        const { error: jobError } = await supabase
-          .from('jobs')
-          .update({ status: 'em_andamento' })
-          .eq('id', negociacao.job_id);
-
-        if (jobError) throw jobError;
-      }
-
-      toast({
-        title: "Contra-proposta aceita!",
-        description: "O trabalho foi confirmado!"
-      });
-
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    }
+    return responderOrcamento(negociacaoId, 'aceito');
   };
 
   const recusarContraproposta = async (negociacaoId: string) => {
-    try {
-      const { error } = await supabase
-        .from('negociacoes')
-        .update({ status: 'recusado' })
-        .eq('id', negociacaoId);
-
-      if (error) throw error;
-
-      // Liberar job para outros montadores
-      const negociacao = negociacoes.find(n => n.id === negociacaoId);
-      if (negociacao) {
-        const { error: jobError } = await supabase
-          .from('jobs')
-          .update({ 
-            status: 'aberto',
-            montador_id: null 
-          })
-          .eq('id', negociacao.job_id);
-
-        if (jobError) throw jobError;
-      }
-
-      toast({
-        title: "Contra-proposta recusada",
-        description: "O trabalho foi liberado para outros montadores"
-      });
-
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    }
+    return responderOrcamento(negociacaoId, 'recusado');
   };
 
   return {
