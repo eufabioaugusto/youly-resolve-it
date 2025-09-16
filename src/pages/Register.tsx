@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Wrench, ArrowLeft, Users, Wrench as WorkerIcon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { phoneMask, cpfMask, removeMask, validateCPF, validatePhone } from "@/lib/masks";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ const Register = () => {
     const { error } = await signUp(clientForm.email, clientForm.password, {
       role: 'client',
       nome: clientForm.name,
-      telefone: clientForm.phone
+      telefone: removeMask(clientForm.phone)
     });
     
     if (error) {
@@ -75,11 +76,32 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     
+    // Validações básicas
+    if (!validatePhone(workerForm.phone)) {
+      toast({
+        title: "Telefone inválido",
+        description: "Por favor, insira um telefone válido.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (!validateCPF(workerForm.cpf)) {
+      toast({
+        title: "CPF inválido",
+        description: "Por favor, insira um CPF válido.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await signUp(workerForm.email, workerForm.password, {
       role: 'montador', 
       nome: workerForm.name,
-      telefone: workerForm.phone,
-      documento: workerForm.cpf
+      telefone: removeMask(workerForm.phone),
+      documento: removeMask(workerForm.cpf)
     });
     
     if (error) {
@@ -161,13 +183,17 @@ const Register = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="client-phone">Telefone</Label>
-                    <Input 
-                      id="client-phone" 
-                      placeholder="(11) 99999-9999"
-                      value={clientForm.phone}
-                      onChange={(e) => setClientForm({...clientForm, phone: e.target.value})}
-                      className="h-11"
-                    />
+                     <Input 
+                       id="client-phone" 
+                       placeholder="(11) 9 0000-0000"
+                       value={clientForm.phone}
+                       onChange={(e) => {
+                         const maskedValue = phoneMask(e.target.value);
+                         setClientForm({...clientForm, phone: maskedValue});
+                       }}
+                       className="h-11"
+                       maxLength={16}
+                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="client-password">Senha</Label>
@@ -220,23 +246,31 @@ const Register = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="worker-phone">Telefone</Label>
-                    <Input 
-                      id="worker-phone" 
-                      placeholder="(11) 99999-9999"
-                      value={workerForm.phone}
-                      onChange={(e) => setWorkerForm({...workerForm, phone: e.target.value})}
-                      className="h-11"
-                    />
+                     <Input 
+                       id="worker-phone" 
+                       placeholder="(11) 9 0000-0000"
+                       value={workerForm.phone}
+                       onChange={(e) => {
+                         const maskedValue = phoneMask(e.target.value);
+                         setWorkerForm({...workerForm, phone: maskedValue});
+                       }}
+                       className="h-11"
+                       maxLength={16}
+                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="worker-cpf">CPF</Label>
-                    <Input 
-                      id="worker-cpf" 
-                      placeholder="000.000.000-00"
-                      value={workerForm.cpf}
-                      onChange={(e) => setWorkerForm({...workerForm, cpf: e.target.value})}
-                      className="h-11"
-                    />
+                     <Input 
+                       id="worker-cpf" 
+                       placeholder="000.000.000-00"
+                       value={workerForm.cpf}
+                       onChange={(e) => {
+                         const maskedValue = cpfMask(e.target.value);
+                         setWorkerForm({...workerForm, cpf: maskedValue});
+                       }}
+                       className="h-11"
+                       maxLength={14}
+                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="hourly-rate">Valor por hora (R$)</Label>
