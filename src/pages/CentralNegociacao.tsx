@@ -40,14 +40,32 @@ const CentralNegociacao = () => {
     }
   }, [jobId]);
 
-  const loadNegociacao = async () => {
+  const loadNegociacao = async (tentativa = 1) => {
     setLoading(true);
     try {
-      const data = await fetchNegociacao(jobId);
-      setNegociacao(data);
+      console.log(`Tentativa ${tentativa} de carregar negociação para jobId:`, jobId);
       
-      if (data?.valor_proposto_montador) {
-        setValorContraproposta(data.valor_proposto_montador.toString());
+      const data = await fetchNegociacao(jobId);
+      
+      if (!data && tentativa < 3) {
+        // Se não encontrar na primeira tentativa, tentar novamente após um delay
+        console.log(`Negociação não encontrada, tentando novamente em 2s...`);
+        setTimeout(() => {
+          loadNegociacao(tentativa + 1);
+        }, 2000);
+        return;
+      }
+      
+      if (!data) {
+        console.log('Negociação não encontrada após todas as tentativas');
+        setNegociacao(null);
+      } else {
+        console.log('Negociação carregada com sucesso:', data);
+        setNegociacao(data);
+        
+        if (data?.valor_proposto_montador) {
+          setValorContraproposta(data.valor_proposto_montador.toString());
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar negociação:', error);
@@ -56,6 +74,7 @@ const CentralNegociacao = () => {
         description: "Não foi possível carregar a negociação",
         variant: "destructive"
       });
+      setNegociacao(null);
     } finally {
       setLoading(false);
     }
@@ -166,19 +185,28 @@ const CentralNegociacao = () => {
   if (!negociacao) {
     return (
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-warning mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">Negociação não encontrada</h3>
-          <p className="text-white/80 mb-4">
-            Esta negociação pode ter sido cancelada ou não existe.
-          </p>
-          <Button
-            onClick={() => navigate(isCliente ? "/cliente" : "/montador")}
-            className="bg-gradient-primary"
-          >
-            Voltar ao Dashboard
-          </Button>
-        </div>
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-warning mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Negociação não encontrada</h3>
+            <p className="text-white/80 mb-4">
+              Esta negociação pode ter sido cancelada ou ainda está sendo processada.
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={() => loadNegociacao(1)}
+                variant="outline"
+                className="mr-3"
+              >
+                Tentar novamente
+              </Button>
+              <Button
+                onClick={() => navigate(isCliente ? "/cliente" : "/montador")}
+                className="bg-gradient-primary"
+              >
+                Voltar ao Dashboard
+              </Button>
+            </div>
+          </div>
       </div>
     );
   }

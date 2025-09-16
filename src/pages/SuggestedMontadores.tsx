@@ -8,6 +8,7 @@ import { Star, MapPin, Clock, Users, ArrowLeft, CheckCircle } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
+import { useNegociacoes } from "@/hooks/useNegociacoes";
 
 interface Montador {
   id: string;
@@ -36,6 +37,7 @@ const SuggestedMontadores = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { clienteProfile } = useProfile();
+  const { criarNegociacao } = useNegociacoes();
   
   const [job, setJob] = useState<Job | null>(null);
   const [montadores, setMontadores] = useState<Montador[]>([]);
@@ -142,17 +144,14 @@ const SuggestedMontadores = () => {
     
     setLoadingHire(montadorId);
     try {
-      // Criar negociação ao invés de contratar direto
-      const { error: negociacaoError } = await supabase
-        .from('negociacoes')
-        .insert({
-          job_id: job.id,
-          montador_id: montadorId,
-          cliente_id: clienteProfile.id,
-          status: 'pendente'
-        });
-
-      if (negociacaoError) throw negociacaoError;
+      console.log('Iniciando contratação:', { jobId: job.id, montadorId, clienteId: clienteProfile.id });
+      
+      // Criar negociação usando o hook
+      const negociacao = await criarNegociacao(job.id, montadorId, clienteProfile.id);
+      
+      if (!negociacao) {
+        throw new Error('Falha ao criar negociação');
+      }
 
       // Atualizar job para "em_negociacao"
       const { error: jobError } = await supabase
@@ -163,20 +162,26 @@ const SuggestedMontadores = () => {
         })
         .eq('id', job.id);
 
-      if (jobError) throw jobError;
+      if (jobError) {
+        console.error('Erro ao atualizar job:', jobError);
+        throw jobError;
+      }
 
       toast({
-        title: "Intenção de contratação enviada!",
-        description: "O montador foi notificado e enviará um orçamento em breve."
+        title: "Negociação iniciada!",
+        description: "Você será redirecionado para a central de negociação."
       });
 
-      // Navegar para central de negociação
-      navigate(`/cliente/negociacao/${job.id}`);
+      // Aguardar um pouco antes de navegar para garantir que os dados foram persistidos
+      setTimeout(() => {
+        navigate(`/cliente/negociacao/${job.id}`);
+      }, 1000);
 
     } catch (error: any) {
+      console.error('Erro completo na contratação:', error);
       toast({
-        title: "Erro ao enviar intenção de contratação",
-        description: error.message,
+        title: "Erro ao iniciar negociação",
+        description: error.message || "Tente novamente em alguns instantes.",
         variant: "destructive"
       });
     } finally {

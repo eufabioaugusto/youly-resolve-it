@@ -1,298 +1,127 @@
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ArrowLeft, MessageSquare, DollarSign, Clock, MapPin, Eye } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useNegociacoes } from "@/hooks/useNegociacoes";
-import { 
-  ArrowLeft, 
-  Star, 
-  MapPin, 
-  Calendar, 
-  DollarSign,
-  Clock,
-  CheckCircle,
-  XCircle,
-  MessageSquare,
-  User,
-  Wrench
-} from "lucide-react";
-import { useState, useEffect } from "react";
 
 const CentralNegociacoes = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { profile, clienteProfile } = useProfile();
-  const { negociacoes, loading, refetch, responderOrcamento } = useNegociacoes();
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (clienteProfile) {
-      refetch();
-    }
-  }, [clienteProfile, refetch]);
-
-  const handleAceitarOrcamento = async (negociacaoId: string) => {
-    setActionLoading(negociacaoId);
-    try {
-      await responderOrcamento(negociacaoId, 'aceito');
-      toast({
-        title: "Orçamento aceito!",
-        description: "O montador foi notificado e o trabalho será iniciado."
-      });
-      refetch();
-    } catch (error) {
-      toast({
-        title: "Erro ao aceitar orçamento",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleRecusarOrcamento = async (negociacaoId: string) => {
-    setActionLoading(negociacaoId);
-    try {
-      await responderOrcamento(negociacaoId, 'recusado');
-      toast({
-        title: "Orçamento recusado",
-        description: "O montador foi notificado sobre sua decisão."
-      });
-      refetch();
-    } catch (error) {
-      toast({
-        title: "Erro ao recusar orçamento",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  const { profile } = useProfile();
+  const { negociacoes, loading } = useNegociacoes();
+  
+  const isCliente = profile?.role === 'client';
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pendente":
-        return <Badge variant="outline">Aguardando orçamento</Badge>;
-      case "orcamento_enviado":
-        return <Badge className="bg-warning text-warning-foreground">Orçamento recebido</Badge>;
-      case "aceito":
-        return <Badge className="bg-success text-success-foreground">Aceito</Badge>;
-      case "recusado":
-        return <Badge variant="destructive">Recusado</Badge>;
-      case "contra_proposta":
-        return <Badge className="bg-info text-info-foreground">Contra-proposta</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    const statusConfig = {
+      pendente: { variant: "outline", text: "Aguardando orçamento" },
+      orcamento_enviado: { variant: "default", text: "Orçamento recebido", className: "bg-warning text-warning-foreground" },
+      aceito: { variant: "default", text: "Aceito", className: "bg-success text-success-foreground" },
+      recusado: { variant: "destructive", text: "Recusado" },
+      contra_proposta: { variant: "default", text: "Contra-proposta", className: "bg-info text-info-foreground" }
+    };
+    
+    const config = statusConfig[status] || { variant: "secondary", text: status };
+    
+    return (
+      <Badge variant={config.variant as any} className={config.className}>
+        {config.text}
+      </Badge>
+    );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-lg">Carregando negociações...</div>
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-white text-lg">Carregando negociações...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">YOULY</span>
-          </Link>
-          
-          <Link 
-            to="/cliente" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao Dashboard
-          </Link>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Central de Negociações</h1>
-          <p className="text-muted-foreground">Acompanhe e gerencie suas negociações com montadores</p>
-        </div>
+        <Link 
+          to={isCliente ? "/cliente" : "/montador"}
+          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar ao dashboard
+        </Link>
 
-        {/* Negociações */}
-        <div className="space-y-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <MessageSquare className="w-8 h-8 text-blue-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">Central de Negociações</h1>
+            <p className="text-white/80">
+              Acompanhe todas as suas negociações em andamento
+            </p>
+          </div>
+
           {negociacoes.length === 0 ? (
-            <Card className="shadow-card">
-              <CardContent className="p-8 text-center">
-                <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma negociação encontrada</h3>
+            <Card className="shadow-glow border-0 text-center p-8">
+              <CardContent>
+                <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Nenhuma negociação encontrada</h3>
                 <p className="text-muted-foreground mb-4">
-                  Você ainda não possui negociações ativas. Crie um novo pedido para começar.
+                  {isCliente 
+                    ? "Você ainda não iniciou nenhuma negociação."
+                    : "Você ainda não tem negociações ativas."
+                  }
                 </p>
-                <Link to="/criar-pedido">
-                  <Button className="bg-gradient-primary">Criar Novo Pedido</Button>
-                </Link>
               </CardContent>
             </Card>
           ) : (
-            negociacoes.map((negociacao) => (
-              <Card key={negociacao.id} className="shadow-card">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl mb-2">
-                        {negociacao.jobs?.descricao || 'Trabalho'}
+            <div className="space-y-6">
+              {negociacoes.map((negociacao) => (
+                <Card key={negociacao.id} className="shadow-glow border-0">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">
+                        Negociação {negociacao.id.slice(0, 8)}
                       </CardTitle>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {negociacao.jobs?.endereco?.cidade || 'Local não informado'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(negociacao.created_at)}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          {negociacao.montadores?.profiles?.nome || 'Montador'}
-                        </div>
-                      </div>
+                      {getStatusBadge(negociacao.status)}
                     </div>
-                    {getStatusBadge(negociacao.status)}
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  {/* Informações do montador */}
-                  {negociacao.montadores && (
-                    <div className="mb-4 p-4 bg-muted/50 rounded-lg">
-                      <h4 className="font-medium mb-2">Montador</h4>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <span className="font-medium">
-                          {negociacao.montadores.profiles?.nome || 'Nome não informado'}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-warning text-warning" />
-                          <span className="text-sm">
-                            {negociacao.montadores.avaliacao_media?.toFixed(1) || '0.0'}
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {negociacao.montadores.projetos_realizados || 0} projetos realizados
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Valores propostos */}
-                  {negociacao.status !== 'pendente' && (
-                    <div className="mb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {negociacao.valor_proposto_montador && (
-                          <div className="p-3 border rounded-lg">
-                            <p className="text-sm font-medium mb-1">Proposta do Montador</p>
-                            <p className="text-xl font-bold text-success">
-                              R$ {negociacao.valor_proposto_montador.toFixed(2)}
-                            </p>
-                            {negociacao.observacoes_montador && (
-                              <p className="text-sm text-muted-foreground mt-2">
-                                {negociacao.observacoes_montador}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {negociacao.valor_proposto_cliente && (
-                          <div className="p-3 border rounded-lg">
-                            <p className="text-sm font-medium mb-1">Sua Contra-proposta</p>
-                            <p className="text-xl font-bold text-info">
-                              R$ {negociacao.valor_proposto_cliente.toFixed(2)}
-                            </p>
-                            {negociacao.observacoes_cliente && (
-                              <p className="text-sm text-muted-foreground mt-2">
-                                {negociacao.observacoes_cliente}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator className="my-4" />
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    {negociacao.status === 'orcamento_enviado' && (
-                      <>
-                        <Button 
-                          onClick={() => handleAceitarOrcamento(negociacao.id)}
-                          disabled={actionLoading === negociacao.id}
-                          className="bg-gradient-primary hover:shadow-glow"
-                        >
-                          {actionLoading === negociacao.id ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              Aceitando...
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4" />
-                              Aceitar Orçamento
+                        <Avatar className="w-10 h-10">
+                          <AvatarFallback>N</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">Job ID: {negociacao.job_id}</p>
+                          {negociacao.valor_proposto_montador && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <DollarSign className="w-4 h-4" />
+                              R$ {negociacao.valor_proposto_montador?.toFixed(2)}
                             </div>
                           )}
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          onClick={() => handleRecusarOrcamento(negociacao.id)}
-                          disabled={actionLoading === negociacao.id}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Recusar
-                        </Button>
-                        <Button 
-                          variant="secondary"
-                          onClick={() => navigate(`/cliente/negociacao/${negociacao.job_id}`)}
-                        >
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Contra-proposta
-                        </Button>
-                      </>
-                    )}
-
-                    {negociacao.status === 'pendente' && (
-                      <div className="text-muted-foreground">
-                        <Clock className="w-4 h-4 inline mr-1" />
-                        Aguardando o montador enviar o orçamento
+                        </div>
                       </div>
-                    )}
-
-                    {(negociacao.status === 'aceito' || negociacao.status === 'recusado') && (
-                      <Button 
-                        variant="outline"
-                        onClick={() => navigate(`/cliente/negociacao/${negociacao.job_id}`)}
+                      
+                      <Button
+                        onClick={() => navigate(
+                          isCliente 
+                            ? `/cliente/negociacao/${negociacao.job_id}`
+                            : `/montador/negociacao/${negociacao.job_id}`
+                        )}
+                        className="bg-gradient-primary hover:shadow-glow"
                       >
-                        <MessageSquare className="w-4 h-4 mr-2" />
+                        <Eye className="w-4 h-4 mr-2" />
                         Ver Detalhes
                       </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </div>

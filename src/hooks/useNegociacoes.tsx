@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import { notificarNegociacao } from '@/lib/notifications';
 
 interface Negociacao {
   id: string;
@@ -144,6 +145,8 @@ export const useNegociacoes = () => {
     if (!user) return null;
 
     try {
+      console.log('Buscando negociação para jobId:', jobId);
+      
       const { data, error } = await supabase
         .from('negociacoes')
         .select(`
@@ -153,12 +156,77 @@ export const useNegociacoes = () => {
           clientes(*, profiles(nome))
         `)
         .eq('job_id', jobId)
-        .maybeSingle();
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na consulta de negociação:', error);
+        throw error;
+      }
+      
+      console.log('Negociação encontrada:', data);
       return data;
     } catch (error) {
       console.error('Erro ao buscar negociação:', error);
+      return null;
+    }
+  };
+
+  // Criar nova negociação
+  const criarNegociacao = async (jobId: string, montadorId: string, clienteId: string) => {
+    try {
+      console.log('Criando negociação:', { jobId, montadorId, clienteId });
+      
+      const { data, error } = await supabase
+        .from('negociacoes')
+        .insert({
+          job_id: jobId,
+          montador_id: montadorId,
+          cliente_id: clienteId,
+          status: 'pendente'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('Negociação criada:', data);
+
+      // Buscar dados para notificação
+      const { data: montadorData } = await supabase
+        .from('montadores')
+        .select('user_id')
+        .eq('id', montadorId)
+        .single();
+
+      const { data: jobData } = await supabase
+        .from('jobs')
+        .select('descricao')
+        .eq('id', jobId)
+        .single();
+
+      const { data: clienteData } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', user?.id)
+        .single();
+
+      // Enviar notificação para o montador
+      if (montadorData && jobData && clienteData) {
+        await notificarNegociacao(
+          montadorData.user_id,
+          clienteData.nome,
+          jobData.descricao
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Erro ao criar negociação:', error);
+      toast({
+        title: "Erro ao criar negociação",
+        description: error.message,
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -168,6 +236,7 @@ export const useNegociacoes = () => {
     loading,
     refetch: fetchNegociacoes,
     fetchNegociacao,
+    criarNegociacao,
     enviarOrcamento,
     responderOrcamento,
     aceitarContraproposta,
