@@ -150,6 +150,24 @@ const CreateJob = () => {
     return now.toISOString().split('T')[0];
   };
 
+  // Função para verificar períodos disponíveis para uma data
+  const getAvailablePeriodos = (currentIndex: number, selectedDate: string) => {
+    const allPeriodos = [
+      { value: 'manha', label: 'Manhã (08h–12h)' },
+      { value: 'tarde', label: 'Tarde (13h–18h)' }
+    ];
+
+    if (!selectedDate) return allPeriodos;
+
+    // Pegar todas as outras opções selecionadas (exceto a atual)
+    const otherSelectedOptions = formData.data_opcoes
+      .filter((opcao, index) => index !== currentIndex && opcao.selecionado && opcao.data === selectedDate)
+      .map(opcao => opcao.periodo);
+
+    // Filtrar períodos que já foram selecionados para a mesma data
+    return allPeriodos.filter(periodo => !otherSelectedOptions.includes(periodo.value));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
@@ -352,8 +370,11 @@ const CreateJob = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="manha">Manhã (08h–12h)</SelectItem>
-                            <SelectItem value="tarde">Tarde (13h–18h)</SelectItem>
+                            {getAvailablePeriodos(index, opcao.data).map(periodo => (
+                              <SelectItem key={periodo.value} value={periodo.value}>
+                                {periodo.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
