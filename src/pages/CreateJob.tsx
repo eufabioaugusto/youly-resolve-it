@@ -225,7 +225,7 @@ const CreateJob = () => {
                     <div className="flex items-center gap-1">
                       <InfoIcon className="w-3 h-3 text-destructive" />
                       <p className="text-xs text-muted-foreground">
-                        Insira o valor estimado do produto a ser montado
+                        Valor estimado do produto a ser montado
                       </p>
                     </div>
                   </div>
