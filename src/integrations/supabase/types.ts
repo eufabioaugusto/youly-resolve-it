@@ -402,7 +402,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_first_admin: {
+        Args: {
+          admin_email: string
+          admin_name: string
+          admin_password: string
+        }
+        Returns: Json
+      }
+      is_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      promote_to_admin: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       candidatura_status: "pendente" | "aceito" | "recusado"

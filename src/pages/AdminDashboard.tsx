@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Wrench, 
   Users, 
@@ -18,11 +20,13 @@ import {
   Settings,
   BarChart3,
   FileText,
-  Shield
+  Shield,
+  UserPlus
 } from "lucide-react";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
+  const { users, loading: usersLoading, promoteToAdmin } = useAdmin();
 
   const handleLogout = async () => {
     await signOut();
@@ -251,44 +255,116 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="users" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="shadow-card">
+            <div className="grid gap-4">
+              <Card>
                 <CardHeader>
-                  <CardTitle>Clientes Ativos</CardTitle>
-                  <CardDescription>{stats.activeClients} usuários</CardDescription>
+                  <CardTitle className="flex items-center justify-between">
+                    Gerenciar Usuários
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open('/admin/register', '_blank')}
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Criar Admin
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>
+                    Promova usuários para administradores ou visualize informações dos usuários
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Novos este mês</span>
-                      <Badge variant="secondary">+127</Badge>
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Taxa de retenção</span>
-                      <Badge className="bg-success text-success-foreground">85%</Badge>
+                  ) : (
+                    <div className="space-y-4">
+                      {users.map((user) => (
+                        <div key={user.id} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                          <div className="flex-1">
+                            <p className="font-medium">{user.nome}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {user.role === 'client' ? 'Cliente' : 
+                               user.role === 'montador' ? 'Montador' : 'Administrador'} • 
+                              Cadastrado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={user.role === 'admin' ? 'default' : 'secondary'}
+                              className={user.role === 'admin' ? 'bg-gradient-primary text-primary-foreground' : ''}
+                            >
+                              {user.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
+                              {user.role === 'client' ? 'Cliente' : 
+                               user.role === 'montador' ? 'Montador' : 'Admin'}
+                            </Badge>
+                            {user.role !== 'admin' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => promoteToAdmin(user.user_id)}
+                                className="text-xs"
+                              >
+                                <Shield className="w-3 h-3 mr-1" />
+                                Promover a Admin
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {users.length === 0 && (
+                        <Alert>
+                          <Users className="h-4 w-4" />
+                          <AlertDescription>
+                            Nenhum usuário encontrado no sistema.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>Clientes Ativos</CardTitle>
+                    <CardDescription>{stats.activeClients} usuários</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span>Novos este mês</span>
+                        <Badge variant="secondary">+127</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Taxa de retenção</span>
+                        <Badge className="bg-success text-success-foreground">85%</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>Montadores Verificados</CardTitle>
-                  <CardDescription>{stats.activeWorkers} profissionais</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Pendentes aprovação</span>
-                      <Badge variant="outline">12</Badge>
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle>Montadores Verificados</CardTitle>
+                    <CardDescription>{stats.activeWorkers} profissionais</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span>Pendentes aprovação</span>
+                        <Badge variant="outline">12</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Avaliação média</span>
+                        <Badge className="bg-warning text-warning-foreground">4.8/5</Badge>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>Avaliação média</span>
-                      <Badge className="bg-warning text-warning-foreground">4.8/5</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
           
