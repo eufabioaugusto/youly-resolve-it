@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { useProfile } from './useProfile';
 
 export function useProfileCompletion() {
   const { profile, montadorProfile } = useProfile();
 
-  const isProfileComplete = () => {
+  const isComplete = useMemo(() => {
     if (!profile || !montadorProfile) return false;
 
     // Verificar dados básicos
@@ -27,14 +28,14 @@ export function useProfileCompletion() {
       return false;
     }
 
-    // Verificar chave PIX (será adicionada)
+    // Verificar chave PIX
     if (!montadorProfile.chave_pix) return false;
 
     return true;
-  };
+  }, [profile, montadorProfile]);
 
   return {
-    isComplete: isProfileComplete(),
+    isComplete,
     profile,
     montadorProfile
   };
