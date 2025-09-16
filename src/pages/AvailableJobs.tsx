@@ -45,7 +45,7 @@ const AvailableJobs = () => {
   const [loading, setLoading] = useState(true);
   const [candidaturas, setCandidaturas] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [candidateModalOpen, setCandidateModalOpen] = useState(false);
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
@@ -131,7 +131,7 @@ const AvailableJobs = () => {
       job.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.categoria.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = categoryFilter === '' || job.categoria === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || job.categoria === categoryFilter;
     
     return matchesSearch && matchesCategory && isJobAvailable(job);
   });
@@ -191,7 +191,7 @@ const AvailableJobs = () => {
                       <SelectValue placeholder="Categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="guarda-roupa">Guarda-roupa</SelectItem>
                       <SelectItem value="cama">Cama</SelectItem>
                       <SelectItem value="mesa">Mesa de jantar</SelectItem>
