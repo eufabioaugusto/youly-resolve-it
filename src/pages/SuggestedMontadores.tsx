@@ -59,14 +59,13 @@ const SuggestedMontadores = () => {
       if (jobError) throw jobError;
       setJob(jobData);
 
-      // Buscar montadores ativos  
+      // Buscar montadores ativos que têm especialidades relacionadas ao job
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
         .select('id, user_id, avaliacao_media, projetos_realizados, especialidades')
         .eq('status', 'ativo')
         .order('avaliacao_media', { ascending: false })
-        .order('projetos_realizados', { ascending: false })
-        .limit(3);
+        .order('projetos_realizados', { ascending: false });
 
       if (montadoresError) throw montadoresError;
 
@@ -80,13 +79,22 @@ const SuggestedMontadores = () => {
 
         if (profilesError) throw profilesError;
 
-        // Combinar dados
-        const montadoresWithProfiles = montadoresData.map(montador => ({
+        // Combinar dados e filtrar por especialidades relacionadas ao job
+        let montadoresWithProfiles = montadoresData.map(montador => ({
           ...montador,
           profiles: profilesData?.find(p => p.user_id === montador.user_id) || null
         }));
 
-        setMontadores(montadoresWithProfiles);
+        // Filtrar montadores que têm especialidades relacionadas ao job
+        if (jobData.categoria) {
+          montadoresWithProfiles = montadoresWithProfiles.filter(montador => 
+            montador.especialidades && 
+            montador.especialidades.includes(jobData.categoria)
+          );
+        }
+
+        // Pegar até 3 montadores
+        setMontadores(montadoresWithProfiles.slice(0, 3));
       } else {
         setMontadores([]);
       }

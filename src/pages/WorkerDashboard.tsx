@@ -50,24 +50,55 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
-      const { data, error } = await supabase
+      // Buscar jobs em aberto
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
-        .select(`
-          *,
-          clientes!inner(
-            id,
-            user_id,
-            avaliacao_media,
-            pedidos_total,
-            profiles!inner(nome)
-          )
-        `)
+        .select('*')
         .eq('status', 'aberto')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
-      setAvailableJobs(data || []);
+      if (jobsError) throw jobsError;
+
+      if (jobsData && jobsData.length > 0) {
+        // Buscar dados dos clientes
+        const clienteIds = jobsData.map(job => job.cliente_id);
+        const { data: clientesData, error: clientesError } = await supabase
+          .from('clientes')
+          .select('id, user_id, avaliacao_media, pedidos_total')
+          .in('id', clienteIds);
+
+        if (clientesError) throw clientesError;
+
+        // Buscar nomes dos clientes
+        const userIds = clientesData?.map(cliente => cliente.user_id) || [];
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combinar os dados
+        const jobsWithClientes = jobsData.map(job => {
+          const cliente = clientesData?.find(c => c.id === job.cliente_id);
+          const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
+          
+          return {
+            ...job,
+            clientes: {
+              ...cliente,
+              profiles: {
+                nome: profile?.nome || 'Cliente'
+              }
+            }
+          };
+        });
+
+        setAvailableJobs(jobsWithClientes);
+      } else {
+        setAvailableJobs([]);
+      }
     } catch (error) {
       console.error('Erro ao buscar trabalhos disponíveis:', error);
     }
@@ -77,24 +108,55 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
-      const { data, error } = await supabase
+      // Buscar jobs do montador
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
-        .select(`
-          *,
-          clientes!inner(
-            id,
-            user_id,
-            avaliacao_media,
-            pedidos_total,
-            profiles!inner(nome)
-          )
-        `)
+        .select('*')
         .eq('montador_id', montadorProfile.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
-      setMyJobs(data || []);
+      if (jobsError) throw jobsError;
+
+      if (jobsData && jobsData.length > 0) {
+        // Buscar dados dos clientes
+        const clienteIds = jobsData.map(job => job.cliente_id);
+        const { data: clientesData, error: clientesError } = await supabase
+          .from('clientes')
+          .select('id, user_id, avaliacao_media, pedidos_total')
+          .in('id', clienteIds);
+
+        if (clientesError) throw clientesError;
+
+        // Buscar nomes dos clientes
+        const userIds = clientesData?.map(cliente => cliente.user_id) || [];
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combinar os dados
+        const jobsWithClientes = jobsData.map(job => {
+          const cliente = clientesData?.find(c => c.id === job.cliente_id);
+          const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
+          
+          return {
+            ...job,
+            clientes: {
+              ...cliente,
+              profiles: {
+                nome: profile?.nome || 'Cliente'
+              }
+            }
+          };
+        });
+
+        setMyJobs(jobsWithClientes);
+      } else {
+        setMyJobs([]);
+      }
     } catch (error) {
       console.error('Erro ao buscar meus trabalhos:', error);
     } finally {
