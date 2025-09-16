@@ -10,14 +10,13 @@ export function useProfileCompletion() {
     // Verificar dados básicos
     if (!profile.nome || !profile.telefone || !profile.documento) return false;
     
-    // Verificar endereço
+    // Verificar endereço - removemos a verificação do estado que pode estar faltando
     if (!profile.endereco || 
         !profile.endereco.rua || 
         !profile.endereco.numero || 
         !profile.endereco.bairro || 
         !profile.endereco.cidade || 
-        !profile.endereco.cep || 
-        !profile.endereco.estado) {
+        !profile.endereco.cep) {
       return false;
     }
 
