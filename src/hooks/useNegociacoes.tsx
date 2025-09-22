@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { useProfile } from './useProfile';
 import { useToast } from './use-toast';
 import { notificarNegociacao } from '@/lib/notifications';
+import { notifyNegociacaoUpdate } from '@/lib/notificationsService';
 
 // Cache local para negociações
 const negociacoesCache = new Map<string, any>();
@@ -85,6 +86,17 @@ export const useNegociacoes = () => {
 
       if (error) throw error;
 
+      // Buscar dados da negociação para notificação
+      const { data: negociacao } = await supabase
+        .from('negociacoes')
+        .select('*')
+        .eq('id', negociacaoId)
+        .single();
+
+      if (negociacao) {
+        await notifyNegociacaoUpdate(negociacao, 'orcamento_enviado', valor);
+      }
+
       // Limpar cache para forçar recarregamento
       negociacoesCache.clear();
 
@@ -125,14 +137,24 @@ export const useNegociacoes = () => {
 
       if (error) throw error;
 
+      // Buscar dados da negociação para notificação
+      const { data: negociacao } = await supabase
+        .from('negociacoes')
+        .select('*')
+        .eq('id', negociacaoId)
+        .single();
+
+      if (negociacao) {
+        const valorParaNotificacao = acao === 'contra_proposta' ? valorContraproposta : 
+                                   acao === 'aceito' ? negociacao.valor_proposto_cliente || negociacao.valor_proposto_montador : 
+                                   undefined;
+        
+        const acaoNotificacao = acao === 'aceito' && negociacao.valor_proposto_cliente ? 'aceito_contraproposta' : acao;
+        await notifyNegociacaoUpdate(negociacao, acaoNotificacao, valorParaNotificacao);
+      }
+
       // Se aceito, atualizar status do job para 'aguardando_pagamento'
       if (acao === 'aceito') {
-        const { data: negociacao } = await supabase
-          .from('negociacoes')
-          .select('job_id')
-          .eq('id', negociacaoId)
-          .single();
-
         if (negociacao) {
           const { error: jobError } = await supabase
             .from('jobs')
