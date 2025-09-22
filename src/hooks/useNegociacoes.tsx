@@ -174,11 +174,23 @@ export const useNegociacoes = () => {
         'contra_proposta': 'Contra-proposta enviada'
       };
 
+      // Mensagens específicas baseadas no papel do usuário
+      let description = '';
+      if (acao === 'aceito') {
+        if (profile?.role === 'client') {
+          description = "O trabalho foi confirmado! Proceda com o pagamento.";
+        } else {
+          description = "O trabalho foi confirmado! O cliente foi notificado para efetuar o pagamento.";
+        }
+      } else if (acao === 'recusado') {
+        description = "O trabalho foi liberado para outros montadores";
+      } else {
+        description = "O montador foi notificado da sua contra-proposta";
+      }
+
       toast({
         title: acaoTexto[acao],
-        description: acao === 'aceito' ? "O trabalho foi confirmado!" : 
-                    acao === 'recusado' ? "O trabalho foi liberado para outros montadores" :
-                    "O montador foi notificado da sua contra-proposta"
+        description
       });
 
       return { success: true, acao };

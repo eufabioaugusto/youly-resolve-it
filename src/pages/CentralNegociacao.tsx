@@ -214,8 +214,8 @@ const CentralNegociacao = () => {
       await loadNegociacao();
       setObservacoesContraproposta('');
       
-      // Se aceito, abrir modal de pagamento
-      if (acao === 'aceito' && result?.success) {
+      // Se aceito e é cliente, abrir modal de pagamento
+      if (acao === 'aceito' && result?.success && isCliente) {
         setPagamentoModalOpen(true);
       }
     } catch (error) {
@@ -659,8 +659,19 @@ const CentralNegociacao = () => {
                     <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Negociação Finalizada!</h3>
                     <p className="text-muted-foreground mb-4">
-                      O orçamento foi aceito e o trabalho está confirmado.
+                      {isCliente 
+                        ? "O orçamento foi aceito e o trabalho está confirmado. Proceda com o pagamento." 
+                        : "O orçamento foi aceito e o trabalho está confirmado. O cliente foi notificado para efetuar o pagamento."}
                     </p>
+                    {isCliente && (
+                      <Button
+                        onClick={() => setPagamentoModalOpen(true)}
+                        className="bg-gradient-primary mr-3"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Efetuar Pagamento
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <>
