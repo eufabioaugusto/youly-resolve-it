@@ -145,11 +145,13 @@ const ClientDashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">YOULY</span>
+            <img 
+          src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541291424-Youly-Logo.png" 
+          alt="Youly Logo" 
+          className="h-9 object-contain"
+          />
           </Link>
+          
           
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="icon" className="relative">
