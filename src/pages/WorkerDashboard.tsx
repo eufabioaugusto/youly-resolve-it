@@ -328,9 +328,9 @@ const WorkerDashboard = () => {
                   <h3 className="text-lg font-semibold text-destructive mb-2">
                     Complete seu cadastro para receber trabalhos
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Preencha todos os seus dados para aparecer nas buscas dos clientes e receber propostas de trabalho.
-                  </p>
+                   <p className="text-sm text-muted-foreground mb-4">
+                     Montador Novato: Novo na plataforma, mas verificado e qualificado. Perfeito para começar com projetos simples!
+                   </p>
                   <Link to="/montador/perfil">
                     <Button variant="destructive" size="sm">
                       <CheckCircle className="w-4 h-4 mr-2" />
@@ -449,13 +449,16 @@ const WorkerDashboard = () => {
                                 )}
                               </div>
                             </div>
-                            <div className="text-right">
-                              {job.valor_estimado && (
-                                <p className="text-2xl font-bold text-green-600 mb-1">
-                                  R$ {job.valor_estimado.toFixed(2)}
-                                </p>
-                              )}
-                            </div>
+                             <div className="text-right">
+                               <div className="space-y-1">
+                                 <p className="text-sm font-medium text-muted-foreground">
+                                   Valor: R$ {job.valor_estimado?.toFixed(2) || 'A negociar'}
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   Cliente: {job.clientes?.avaliacao_media?.toFixed(1) || '0.0'} ⭐
+                                 </p>
+                               </div>
+                             </div>
                           </div>
                           
                           <div className="flex justify-between items-center">

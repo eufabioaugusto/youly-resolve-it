@@ -128,8 +128,14 @@ const ClientDashboard = () => {
     switch (status) {
       case "aberto":
         return <Badge variant="outline">Aberto</Badge>;
+      case "aceito":
+        return <Badge className="bg-success text-success-foreground">Aceito</Badge>;
+      case "em_negociacao":
+        return <Badge className="bg-info text-info-foreground">Em negociação</Badge>;
       case "aguardando_pagamento":
-        return <Badge variant="outline">Aguardando pagamento</Badge>;
+        return <Badge className="bg-warning text-warning-foreground">Aguardando pagamento</Badge>;
+      case "pago":
+        return <Badge className="bg-success text-success-foreground">Pago</Badge>;
       case "em_andamento":
         return <Badge className="bg-warning text-warning-foreground">Em andamento</Badge>;
       case "concluido":
@@ -212,9 +218,9 @@ const ClientDashboard = () => {
                 </div>
                 <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center relative">
                   <MessageSquare className="w-6 h-6 text-primary-foreground" />
-                  {unreadCount > 0 && (
+                  {jobs.filter(job => ['em_negociacao', 'aguardando_pagamento'].includes(job.status)).length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                      {jobs.filter(job => ['em_negociacao', 'aguardando_pagamento'].includes(job.status)).length}
                     </span>
                   )}
                 </div>
@@ -320,7 +326,7 @@ const ClientDashboard = () => {
                       >
                         Ver detalhes
                       </Button>
-                      {job.status === 'em_negociacao' ? (
+                      {job.status === 'em_negociacao' || job.status === 'aguardando_pagamento' ? (
                         <Button 
                           onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
                           className="bg-gradient-primary hover:shadow-glow"

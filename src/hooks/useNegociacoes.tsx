@@ -125,6 +125,24 @@ export const useNegociacoes = () => {
 
       if (error) throw error;
 
+      // Se aceito, atualizar status do job para 'aguardando_pagamento'
+      if (acao === 'aceito') {
+        const { data: negociacao } = await supabase
+          .from('negociacoes')
+          .select('job_id')
+          .eq('id', negociacaoId)
+          .single();
+
+        if (negociacao) {
+          const { error: jobError } = await supabase
+            .from('jobs')
+            .update({ status: 'aguardando_pagamento' })
+            .eq('id', negociacao.job_id);
+
+          if (jobError) throw jobError;
+        }
+      }
+
       // Limpar cache para forçar recarregamento
       negociacoesCache.clear();
 
@@ -141,14 +159,14 @@ export const useNegociacoes = () => {
                     "O montador foi notificado da sua contra-proposta"
       });
 
-      return true;
+      return { success: true, acao };
     } catch (error: any) {
       toast({
         title: "Erro",
         description: error.message,
         variant: "destructive"
       });
-      return false;
+      return { success: false };
     }
   };
 

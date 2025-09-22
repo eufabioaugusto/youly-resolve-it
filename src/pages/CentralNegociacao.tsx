@@ -141,7 +141,7 @@ const CentralNegociacao = () => {
     try {
       const valorContra = acao === 'contra_proposta' ? parseFloat(valorContraproposta) : undefined;
       
-      await responderOrcamento(
+      const result = await responderOrcamento(
         negociacao.id, 
         acao, 
         valorContra,
@@ -161,6 +161,11 @@ const CentralNegociacao = () => {
       
       await loadNegociacao();
       setObservacoesContraproposta('');
+      
+      // Se aceito, abrir modal de pagamento
+      if (acao === 'aceito' && result?.success) {
+        setPagamentoModalOpen(true);
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -286,10 +291,16 @@ const CentralNegociacao = () => {
                       <MapPin className="w-4 h-4" />
                       {negociacao.jobs?.endereco?.cidade}, {negociacao.jobs?.endereco?.estado}
                     </div>
-                    {negociacao.jobs?.valor_estimado && (
+                    {negociacao.jobs?.valor_estimado && !negociacao.valor_proposto_montador && (
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />
                         Valor estimado: R$ {negociacao.jobs.valor_estimado.toFixed(2)}
+                      </div>
+                    )}
+                    {negociacao.valor_proposto_montador && (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4" />
+                        Orçamento: R$ {negociacao.valor_proposto_montador.toFixed(2)}
                       </div>
                     )}
                   </div>
@@ -624,11 +635,11 @@ const CentralNegociacao = () => {
           <PagamentoModal
             open={pagamentoModalOpen}
             onOpenChange={setPagamentoModalOpen}
-            jobId={negociacao.job?.id || ''}
-            montadorId={negociacao.montador?.id || ''}
+            jobId={negociacao.job_id || ''}
+            montadorId={negociacao.montador_id || ''}
             valor={negociacao.valor_proposto_montador || negociacao.valor_proposto_cliente || 0}
-            jobDescricao={negociacao.job?.descricao || ''}
-            montadorNome={negociacao.montador?.nome || ''}
+            jobDescricao={negociacao.jobs?.descricao || ''}
+            montadorNome={negociacao.montadores?.profiles?.nome || ''}
           />
         )}
       </div>
