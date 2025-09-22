@@ -20,12 +20,12 @@ const Index = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-  <img 
-    src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758540706926-Youly-Logo.png" 
-    alt="Youly Logo" 
-    className="h-8 object-contain"
-  />
-</div>
+          <img 
+          src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541095488-Youly-Logo.png" 
+          alt="Youly Logo" 
+          className="h-8 object-contain"
+          />
+          </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link to="#" className="text-sm hover:text-primary transition-colors">Como funciona</Link>
             <Link to="#" className="text-sm hover:text-primary transition-colors">Para empresas</Link>
