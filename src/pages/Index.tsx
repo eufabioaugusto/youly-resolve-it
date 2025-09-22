@@ -19,12 +19,13 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold"><img src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758540706926-Youly-Logo.png"></span>
-          </div>
+          <div className="flex items-center gap-2">
+  <img 
+    src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758540706926-Youly-Logo.png" 
+    alt="Youly Logo" 
+    className="h-8 object-contain"
+  />
+</div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link to="#" className="text-sm hover:text-primary transition-colors">Como funciona</Link>
             <Link to="#" className="text-sm hover:text-primary transition-colors">Para empresas</Link>
