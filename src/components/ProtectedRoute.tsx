@@ -24,7 +24,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
   if (authLoading || profileLoading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-96 shadow-glow border-0">
           <CardContent className="p-8 text-center">
             <div className="flex items-center justify-center mb-4">
