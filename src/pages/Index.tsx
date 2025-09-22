@@ -23,7 +23,7 @@ const Index = () => {
           <img 
           src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541095488-Youly-Logo.png" 
           alt="Youly Logo" 
-          className="h-8 object-contain"
+          className="h-9 object-contain"
           />
           </div>
           <nav className="hidden md:flex items-center space-x-6">
