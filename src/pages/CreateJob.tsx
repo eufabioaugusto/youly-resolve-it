@@ -9,9 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { Wrench, ArrowLeft, Upload, Calendar, Loader2, InfoIcon } from "lucide-react";
+import { ProductImageUpload } from "@/components/ProductImageUpload";
+import { Wrench, ArrowLeft, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
-import ProductImageUpload from "@/components/ProductImageUpload";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -349,6 +349,13 @@ const CreateJob = () => {
                 <ProductImageUpload
                   images={formData.imagens_produtos}
                   onImagesChange={(images) => setFormData({ ...formData, imagens_produtos: images })}
+                />
+
+                {/* Product Images Upload */}
+                <ProductImageUpload
+                  images={formData.imagens_produtos || []}
+                  onImagesChange={(images) => setFormData({ ...formData, imagens_produtos: images })}
+                  maxImages={7}
                 />
 
                 {/* Datas disponíveis */}
