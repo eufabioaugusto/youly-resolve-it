@@ -260,15 +260,11 @@ const ClientDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">
-                    R$ {jobs.reduce((total, job) => {
-                      // Calcular economia baseada em valor estimado vs preço médio de mercado
-                      const economia = job.valor_estimado ? job.valor_estimado * 0.15 : 0; // 15% de economia média
-                      return total + economia;
-                    }, 0).toFixed(2)}
+                    {jobs.filter(job => job.status === 'concluido').length}
                   </h3>
-                  <p className="text-sm text-muted-foreground">Total economizado</p>
+                  <p className="text-sm text-muted-foreground">Jobs concluídos</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-success" />
+                <CheckCircle className="w-8 h-8 text-success" />
               </div>
             </CardContent>
           </Card>
