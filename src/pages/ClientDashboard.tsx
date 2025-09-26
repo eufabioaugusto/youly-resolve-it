@@ -193,16 +193,30 @@ const ClientDashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Link to="/criar-pedido">
-  <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
-    <CardContent className="p-6 bg-red-50">
-      <div className="flex items-center justify-between">
+          <Link to="/criar-pedido" aria-label="Criar novo pedido">
+  <Card className="group relative overflow-hidden rounded-xl bg-white shadow-card hover:shadow-elegant transition-all cursor-pointer">
+    {/* Halo sutil no canto direito (efeito premium sem pesar) */}
+    <span className="pointer-events-none absolute -right-10 top-1/2 h-40 w-40 -translate-y-1/2 
+                     rounded-full bg-gradient-to-tr from-rose-500/15 to-transparent blur-2xl 
+                     opacity-60 group-hover:opacity-80 transition-opacity" />
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between gap-6">
         <div>
-          <h3 className="font-semibold text-lg text-red-600">Novo Pedido</h3>
+          <h3 className="font-semibold text-lg text-slate-900 transition-colors group-hover:text-rose-600">
+            Novo Pedido
+          </h3>
           <p className="text-sm text-muted-foreground">Solicitar montagem</p>
         </div>
-        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-          <Plus className="w-6 h-6 text-white" />
+
+        {/* Botão redondo com micro-interação */}
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center 
+                          transition-all group-hover:bg-rose-600 group-hover:scale-105">
+            <Plus className="w-6 h-6 text-rose-600 transition-colors group-hover:text-white" />
+          </div>
+          {/* anel suave, sem “borda de caixa” */}
+          <span className="absolute inset-0 rounded-full ring-1 ring-rose-300/30 
+                           group-hover:ring-rose-400/40 pointer-events-none" />
         </div>
       </div>
     </CardContent>
