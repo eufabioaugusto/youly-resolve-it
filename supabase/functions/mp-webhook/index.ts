@@ -109,10 +109,10 @@ serve(async (req) => {
 
     return new Response('OK', { status: 200 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro no webhook:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error?.message || 'Erro interno' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500

@@ -223,18 +223,17 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro detalhado no checkout:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+      message: error?.message || 'Erro desconhecido',
+      stack: error?.stack,
+      name: error?.name
     });
     
     return new Response(
       JSON.stringify({ 
         error: 'Erro interno do servidor',
-        message: error.message,
-        debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        message: error?.message || 'Erro desconhecido'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
