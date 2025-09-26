@@ -179,14 +179,14 @@ const CreateJob = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
         </Link>
         
         <div className="max-w-2xl mx-auto">
-          <Card className="shadow-glow border-0">
+          <Card className="shadow-glow border-0 bg-gray-50">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">
                 <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">

@@ -210,7 +210,7 @@ const MontadorProfile = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/montador" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
@@ -226,7 +226,7 @@ const MontadorProfile = () => {
 
           <div className="grid gap-6">
             {/* Perfil Básico */}
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-4">
                   <PhotoUpload
@@ -308,7 +308,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Endereço */}
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
@@ -376,7 +376,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Especialidades */}
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
@@ -415,7 +415,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Informações de Recebimento */}
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
@@ -446,7 +446,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Botão Salvar */}
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardContent className="p-6">
                 <div className="flex justify-end">
                   <Button 

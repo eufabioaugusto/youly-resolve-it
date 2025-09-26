@@ -279,7 +279,7 @@ const JobCandidates = () => {
 
         <div className="max-w-4xl mx-auto">
           {/* Informações do Job */}
-          <Card className="mb-6 shadow-glow border-0">
+          <Card className="mb-6 shadow-glow border-0 bg-gray-50">
             <CardHeader>
               <CardTitle className="text-xl">{job.descricao}</CardTitle>
               <CardDescription>
@@ -326,7 +326,7 @@ const JobCandidates = () => {
             </div>
 
             {candidaturas.length === 0 ? (
-              <Card className="shadow-glow border-0">
+              <Card className="shadow-glow border-0 bg-gray-50">
                 <CardContent className="p-8 text-center">
                   <p className="text-muted-foreground">
                     Ainda não há candidaturas para este pedido.

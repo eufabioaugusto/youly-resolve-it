@@ -270,7 +270,7 @@ const ClientDashboard = () => {
 </Link>
 
 
-          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer" onClick={() => navigate('/cliente/negociacoes')}>
+          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer bg-gray-50" onClick={() => navigate('/cliente/negociacoes')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -289,7 +289,7 @@ const ClientDashboard = () => {
             </CardContent>
           </Card>
 
-            <Card className="shadow-card">
+            <Card className="shadow-card bg-gray-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -301,7 +301,7 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card bg-gray-50">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -317,7 +317,7 @@ const ClientDashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <Card className="shadow-card">
+        <Card className="shadow-card bg-gray-50">
           <CardHeader>
             <CardTitle>Meus Pedidos</CardTitle>
             <CardDescription>Acompanhe o status dos seus pedidos</CardDescription>

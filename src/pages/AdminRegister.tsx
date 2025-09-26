@@ -106,7 +106,7 @@ export default function AdminRegister() {
   if (adminExists === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-96 shadow-glow border-0">
+        <Card className="w-96 shadow-glow border-0 bg-gray-50">
           <CardContent className="p-8 text-center">
             <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center animate-pulse mx-auto mb-4">
               <Shield className="w-6 h-6 text-primary-foreground" />
@@ -121,7 +121,7 @@ export default function AdminRegister() {
   if (adminExists) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-glow border-0">
+        <Card className="w-full max-w-md shadow-glow border-0 bg-gray-50">
           <CardHeader className="text-center">
             <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
               <Shield className="w-6 h-6 text-primary-foreground" />
@@ -161,7 +161,7 @@ export default function AdminRegister() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-glow border-0">
+      <Card className="w-full max-w-md shadow-glow border-0 bg-gray-50">
         <CardHeader className="text-center">
           <Button 
             variant="ghost" 

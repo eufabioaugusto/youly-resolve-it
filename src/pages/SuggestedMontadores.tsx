@@ -240,7 +240,7 @@ const SuggestedMontadores = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center text-muted-foreground">
           <p>Pedido não encontrado</p>
-          <Link to="/cliente" className="text-white/80 hover:text-white mt-4 inline-block">
+          <Link to="/cliente" className="text-destructive hover:text-destructive/80 mt-4 inline-block">
             Voltar ao dashboard
           </Link>
         </div>
@@ -253,7 +253,7 @@ const SuggestedMontadores = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
@@ -272,7 +272,7 @@ const SuggestedMontadores = () => {
           </div>
 
           {/* Job Summary */}
-          <Card className="shadow-glow border-0 mb-8">
+          <Card className="shadow-glow border-0 mb-8 bg-gray-50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
@@ -317,7 +317,7 @@ const SuggestedMontadores = () => {
             </h2>
             
             {montadores.length === 0 ? (
-              <Card className="shadow-glow border-0 text-center p-8">
+              <Card className="shadow-glow border-0 bg-gray-50 text-center p-8">
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
                     Ainda não há montadores disponíveis em sua região.

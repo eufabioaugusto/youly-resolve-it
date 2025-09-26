@@ -324,7 +324,7 @@ const CentralNegociacao = () => {
           </div>
 
           {/* Informações do Job */}
-          <Card className="shadow-glow border-0 mb-6">
+          <Card className="shadow-glow border-0 mb-6 bg-gray-50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
@@ -373,7 +373,7 @@ const CentralNegociacao = () => {
           </Card>
 
           {/* Informações do Montador/Cliente */}
-          <Card className="shadow-glow border-0 mb-6">
+          <Card className="shadow-glow border-0 mb-6 bg-gray-50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {isCliente ? "Montador" : "Cliente"}
@@ -432,7 +432,7 @@ const CentralNegociacao = () => {
 
           {/* Histórico de Propostas */}
           {(negociacao.valor_proposto_montador || negociacao.valor_proposto_cliente) && (
-            <Card className="shadow-glow border-0 mb-6">
+            <Card className="shadow-glow border-0 mb-6 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <History className="w-5 h-5" />
@@ -479,7 +479,7 @@ const CentralNegociacao = () => {
 
           {/* Ações - Montador */}
           {isMontador && negociacao.status === 'pendente' && (
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
@@ -535,7 +535,7 @@ const CentralNegociacao = () => {
 
           {/* Ações - Cliente */}
           {isCliente && negociacao.status === 'orcamento_enviado' && (
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle>Responder Orçamento</CardTitle>
                 <CardDescription>
@@ -613,7 +613,7 @@ const CentralNegociacao = () => {
 
           {/* Ações - Montador responder contra-proposta */}
           {isMontador && negociacao.status === 'contra_proposta' && (
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardHeader>
                 <CardTitle>Responder Contra-proposta</CardTitle>
                 <CardDescription>
@@ -652,7 +652,7 @@ const CentralNegociacao = () => {
 
           {/* Status Final */}
           {(negociacao.status === 'aceito' || negociacao.status === 'recusado') && (
-            <Card className="shadow-glow border-0">
+            <Card className="shadow-glow border-0 bg-gray-50">
               <CardContent className="p-8 text-center">
                 {negociacao.status === 'aceito' ? (
                   <>

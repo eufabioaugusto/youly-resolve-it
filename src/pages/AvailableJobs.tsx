@@ -157,7 +157,7 @@ const AvailableJobs = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/montador" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
@@ -170,7 +170,7 @@ const AvailableJobs = () => {
           </div>
 
           {/* Filtros */}
-          <Card className="mb-6 shadow-glow border-0">
+          <Card className="mb-6 shadow-glow border-0 bg-gray-50">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
@@ -208,7 +208,7 @@ const AvailableJobs = () => {
           {/* Lista de Jobs */}
           <div className="grid gap-6">
             {filteredJobs.length === 0 ? (
-              <Card className="shadow-glow border-0">
+              <Card className="shadow-glow border-0 bg-gray-50">
                 <CardContent className="p-8 text-center">
                   <p className="text-muted-foreground">
                     {jobs.length === 0 

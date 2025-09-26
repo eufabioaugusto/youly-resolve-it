@@ -174,7 +174,7 @@ const ClientProfile = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
