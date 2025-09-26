@@ -401,6 +401,7 @@ const ClientDashboard = () => {
                         <Button 
                           onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
                           className="bg-gradient-primary hover:shadow-glow"
+                          size="sm"
                         >
                           Ver Negociação
                         </Button>
