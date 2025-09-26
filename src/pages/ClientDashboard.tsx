@@ -90,12 +90,23 @@ const ClientDashboard = () => {
           .select('job_id')
           .in('job_id', jobsData.map(j => j.id));
 
+        // Buscar negociações para cada job
+        const { data: negociacoes } = await supabase
+          .from('negociacoes')
+          .select('job_id, status, valor_proposto_montador, valor_final')
+          .in('job_id', jobsData.map(j => j.id));
+
         // Combinar os dados
-        const jobsWithData = jobsData.map(job => ({
-          ...job,
-          montador: job.montador_id ? montadorData.find(m => m.id === job.montador_id) : null,
-          candidaturas_count: candidaturas?.filter(c => c.job_id === job.id).length || 0
-        }));
+        const jobsWithData = jobsData.map(job => {
+          const jobNegociacoes = negociacoes?.filter(n => n.job_id === job.id) || [];
+          
+          return {
+            ...job,
+            montador: job.montador_id ? montadorData.find(m => m.id === job.montador_id) : null,
+            candidaturas_count: candidaturas?.filter(c => c.job_id === job.id).length || 0,
+            negociacoes: jobNegociacoes
+          };
+        });
 
         setJobs(jobsWithData);
       } else {
@@ -120,6 +131,50 @@ const ClientDashboard = () => {
     } finally {
       setLoggingOut(false);
     }
+  };
+
+  const getOrcamentoInfo = (job: any) => {
+    const negociacoes = job.negociacoes || [];
+    
+    // Se há orçamento aceito/aprovado, mostrar valor final
+    const aprovada = negociacoes.find(n => n.status === 'aceito');
+    if (aprovada) {
+      return {
+        texto: 'Orçamento aprovado',
+        valor: aprovada.valor_final || aprovada.valor_proposto_montador,
+        classe: 'text-success font-bold'
+      };
+    }
+    
+    // Se há orçamentos enviados, mostrar o melhor (menor valor)
+    const orcamentosEnviados = negociacoes.filter(n => 
+      n.status === 'orcamento_enviado' && n.valor_proposto_montador
+    );
+    
+    if (orcamentosEnviados.length > 0) {
+      const melhorOrcamento = Math.min(...orcamentosEnviados.map(n => n.valor_proposto_montador));
+      return {
+        texto: 'Melhor orçamento',
+        valor: melhorOrcamento,
+        classe: 'text-primary font-bold'
+      };
+    }
+    
+    // Se há negociações em andamento mas sem orçamento ainda
+    if (negociacoes.length > 0) {
+      return {
+        texto: 'Orçamento em preparação',
+        valor: null,
+        classe: 'text-warning font-medium'
+      };
+    }
+    
+    // Nenhuma negociação ainda
+    return {
+      texto: 'Aguardando orçamentos',
+      valor: null,
+      classe: 'text-muted-foreground font-medium'
+    };
   };
 
   const getStatusBadge = (status: string) => {
@@ -308,9 +363,23 @@ const ClientDashboard = () => {
                         )}
                         <div className="flex items-center justify-between">
                           {getStatusBadge(job.status)}
-                          {job.valor_estimado && (
-                            <span className="font-bold text-lg">R$ {job.valor_estimado}</span>
-                          )}
+                          <div className="text-right">
+                            {(() => {
+                              const orcamentoInfo = getOrcamentoInfo(job);
+                              return (
+                                <div className="flex flex-col items-end">
+                                  <span className={`text-sm ${orcamentoInfo.classe}`}>
+                                    {orcamentoInfo.texto}
+                                  </span>
+                                  {orcamentoInfo.valor && (
+                                    <span className="font-bold text-lg">
+                                      R$ {orcamentoInfo.valor.toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                     </div>
