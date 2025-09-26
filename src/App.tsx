@@ -33,12 +33,12 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <AuthProvider>
-          <div className="fixed top-4 right-4 z-50">
-            <NotificationCenter />
-          </div>
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <div className="fixed top-4 right-4 z-50">
+              <NotificationCenter />
+            </div>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
