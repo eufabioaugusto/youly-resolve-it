@@ -17,9 +17,59 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { jobId, montadorId, valor, clienteEmail, clienteNome, clienteId } = await req.json();
+    
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      console.error('Erro ao parsear JSON:', e);
+      return new Response(
+        JSON.stringify({ error: 'Formato JSON inválido' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
 
-    console.log('Criando checkout MP:', { jobId, montadorId, valor, clienteEmail, clienteId });
+    const { jobId, montadorId, valor, clienteEmail, clienteNome, clienteId } = requestBody;
+
+    console.log('Dados recebidos:', {
+      jobId,
+      montadorId,
+      valor,
+      clienteEmail,
+      clienteNome,
+      clienteId,
+      hasAccessToken: !!mercadoPagoAccessToken
+    });
+
+    if (!jobId || !montadorId || !valor || !clienteId) {
+      console.error('Parâmetros obrigatórios ausentes:', {
+        jobId: !!jobId,
+        montadorId: !!montadorId,
+        valor: !!valor,
+        clienteId: !!clienteId
+      });
+      return new Response(
+        JSON.stringify({ error: 'Parâmetros obrigatórios ausentes' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    if (!mercadoPagoAccessToken) {
+      console.error('Token do Mercado Pago não configurado');
+      return new Response(
+        JSON.stringify({ error: 'Configuração do pagamento incompleta' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
+    }
 
     // Buscar dados do job e montador
     const { data: jobData, error: jobError } = await supabase
@@ -28,11 +78,15 @@ serve(async (req) => {
       .eq('id', jobId)
       .single();
 
+    console.log('Job data:', { jobData, jobError });
+
     const { data: montadorData, error: montadorError } = await supabase
       .from('montadores')
       .select('id')
       .eq('id', montadorId)
       .single();
+
+    console.log('Montador data:', { montadorData, montadorError });
 
     const { data: clienteData, error: clienteError } = await supabase
       .from('clientes')
@@ -40,16 +94,46 @@ serve(async (req) => {
       .eq('id', clienteId)
       .single();
 
+    console.log('Cliente data:', { clienteData, clienteError });
+
+    if (jobError || montadorError || clienteError) {
+      console.error('Erros nas consultas:', {
+        jobError,
+        montadorError, 
+        clienteError
+      });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Erro ao buscar dados',
+          details: { jobError, montadorError, clienteError }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404
+        }
+      );
+    }
+
     if (!jobData || !montadorData || !clienteData) {
       console.error('Dados não encontrados:', {
-        jobError,
-        montadorError,
-        clienteError,
         jobData: !!jobData,
         montadorData: !!montadorData,
         clienteData: !!clienteData
       });
-      throw new Error('Dados não encontrados');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Dados não encontrados',
+          details: {
+            job: !!jobData,
+            montador: !!montadorData,
+            cliente: !!clienteData
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404
+        }
+      );
     }
 
     // Criar pagamento no banco
@@ -140,9 +224,18 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Erro no checkout:', error);
+    console.error('Erro detalhado no checkout:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: 'Erro interno do servidor',
+        message: error.message,
+        debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
