@@ -145,7 +145,7 @@ serve(async (req) => {
         cliente_id: clienteData.id,
         valor_total: valor,
         status: 'pendente',
-        metodo: 'mercado_pago'
+        metodo: 'cartao'  // Changed from 'mercado_pago' to 'cartao'
       })
       .select()
       .single();
@@ -155,7 +155,7 @@ serve(async (req) => {
       throw pagamentoError;
     }
 
-    // Criar preferência no Mercado Pago
+    // Criar preferência no Mercado Pago  
     const preferenceData = {
       items: [
         {
@@ -164,25 +164,25 @@ serve(async (req) => {
           description: `Categoria: ${jobData.categoria}`,
           quantity: 1,
           currency_id: 'BRL',
-          unit_price: parseFloat(valor.toString())
+          unit_price: Number(valor)
         }
       ],
       payer: {
         name: clienteNome,
         email: clienteEmail
       },
-      payment_methods: {
-        excluded_payment_types: [],
-        installments: 12
-      },
       back_urls: {
-        success: `${req.headers.get('origin')}/pagamento/sucesso?payment_id={payment_id}&status={status}`,
-        failure: `${req.headers.get('origin')}/pagamento/falha?payment_id={payment_id}&status={status}`,
-        pending: `${req.headers.get('origin')}/pagamento/pendente?payment_id={payment_id}&status={status}`
+        success: `${req.headers.get('origin')}/pagamento/sucesso`,
+        failure: `${req.headers.get('origin')}/pagamento/falha`,
+        pending: `${req.headers.get('origin')}/pagamento/pendente`
       },
       auto_return: 'approved',
       external_reference: pagamento.id,
-      notification_url: `${supabaseUrl}/functions/v1/mp-webhook`
+      notification_url: `${supabaseUrl}/functions/v1/mp-webhook`,
+      payment_methods: {
+        excluded_payment_types: [],
+        installments: 12
+      }
     };
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
