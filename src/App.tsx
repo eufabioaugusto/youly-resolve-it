@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NotificationCenter from "@/components/NotificationCenter";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -36,9 +35,6 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div className="fixed top-4 right-4 z-50">
-              <NotificationCenter />
-            </div>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />

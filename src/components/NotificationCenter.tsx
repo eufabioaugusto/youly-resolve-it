@@ -9,7 +9,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
 
-const NotificationCenter = () => {
+interface NotificationCenterProps {
+  variant?: 'floating' | 'header';
+}
+
+const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) => {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationsRealtime();
   const [open, setOpen] = useState(false);
@@ -71,12 +75,18 @@ const NotificationCenter = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="w-5 h-5" />
+        <Button 
+          variant="ghost" 
+          size={variant === 'header' ? 'icon' : 'sm'} 
+          className="relative"
+        >
+          <Bell className={variant === 'header' ? 'w-4 h-4' : 'w-5 h-5'} />
           {unreadCount > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+              className={`absolute -top-1 -right-1 rounded-full p-0 flex items-center justify-center text-xs ${
+                variant === 'header' ? 'h-5 w-5' : 'h-5 w-5'
+              }`}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>

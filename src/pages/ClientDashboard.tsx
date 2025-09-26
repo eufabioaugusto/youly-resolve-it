@@ -17,19 +17,17 @@ import {
   Calendar,
   DollarSign,
   User,
-  Bell,
   LogOut,
   Users,
   MessageSquare
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNotifications } from "@/hooks/useNotifications";
 import JobDetailsModal from "@/components/JobDetailsModal";
+import NotificationCenter from "@/components/NotificationCenter";
 
 const ClientDashboard = () => {
   const { signOut } = useAuth();
   const { profile, clienteProfile } = useProfile();
-  const { notifications, unreadCount, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,14 +158,7 @@ const ClientDashboard = () => {
           
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Button>
+            <NotificationCenter variant="header" />
             <Link to="/cliente/perfil">
               <Button variant="ghost" size="icon">
                 <User className="w-4 h-4" />
