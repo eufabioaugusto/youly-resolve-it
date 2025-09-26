@@ -263,19 +263,19 @@ const CentralNegociacao = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-white text-lg">Carregando negociação...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground text-lg">Carregando negociação...</div>
       </div>
     );
   }
 
   if (!negociacao) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-warning mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Negociação não encontrada</h3>
-            <p className="text-white/80 mb-4">
+            <h3 className="text-xl font-semibold text-foreground mb-2">Negociação não encontrada</h3>
+            <p className="text-muted-foreground mb-4">
               Esta negociação pode ter sido cancelada ou ainda está sendo processada.
             </p>
             <div className="space-y-3">
@@ -299,11 +299,11 @@ const CentralNegociacao = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to={isCliente ? "/cliente" : "/montador"}
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
@@ -311,11 +311,11 @@ const CentralNegociacao = () => {
 
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <MessageSquare className="w-8 h-8 text-blue-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-destructive/10 rounded-full mb-4">
+              <MessageSquare className="w-8 h-8 text-destructive" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Central de Negociação</h1>
-            <p className="text-white/80 mb-4">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Central de Negociação</h1>
+            <p className="text-muted-foreground mb-4">
               Negocie diretamente {isCliente ? 'com o montador' : 'com o cliente'} sobre preço e detalhes do serviço
             </p>
             <div className="flex justify-center">

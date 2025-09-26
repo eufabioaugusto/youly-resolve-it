@@ -35,18 +35,18 @@ const CentralNegociacoes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-white text-lg">Carregando negociações...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground text-lg">Carregando negociações...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to={isCliente ? "/cliente" : "/montador"}
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
@@ -54,11 +54,11 @@ const CentralNegociacoes = () => {
 
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <MessageSquare className="w-8 h-8 text-blue-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-destructive/10 rounded-full mb-4">
+              <MessageSquare className="w-8 h-8 text-destructive" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Central de Negociações</h1>
-            <p className="text-white/80">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Central de Negociações</h1>
+            <p className="text-muted-foreground">
               Acompanhe todas as suas negociações em andamento
             </p>
           </div>

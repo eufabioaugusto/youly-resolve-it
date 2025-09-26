@@ -226,8 +226,8 @@ const SuggestedMontadores = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p>Buscando os melhores montadores para você...</p>
         </div>
@@ -237,8 +237,8 @@ const SuggestedMontadores = () => {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
           <p>Pedido não encontrado</p>
           <Link to="/cliente" className="text-white/80 hover:text-white mt-4 inline-block">
             Voltar ao dashboard
@@ -249,7 +249,7 @@ const SuggestedMontadores = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
@@ -396,8 +396,8 @@ const SuggestedMontadores = () => {
                           )}
                           
                           {montador.projetos_realizados === 0 && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <p className="text-sm text-blue-800">
+                            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+                              <p className="text-sm text-muted-foreground">
                                 <strong>Montador Novato:</strong> Novo na plataforma, mas verificado e qualificado. 
                                 Perfeito para começar com projetos simples!
                               </p>

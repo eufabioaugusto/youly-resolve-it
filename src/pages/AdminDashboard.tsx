@@ -147,7 +147,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Montadores</p>
                   <h3 className="text-2xl font-bold">{stats.totalMontadores}</h3>
                 </div>
-                <Users className="w-8 h-8 text-blue-500" />
+                <Users className="w-8 h-8 text-destructive" />
               </div>
               <div className="text-sm text-muted-foreground mt-2">
                 {stats.activeMontadores} ativos
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Volume processado</span>
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-destructive">
                         {formatCurrency(stats.valorTotalMovimentado)}
                       </span>
                     </div>
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
                       <span>Sistema operacional</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-destructive rounded-full"></div>
                       <span>Pagamentos funcionando</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">

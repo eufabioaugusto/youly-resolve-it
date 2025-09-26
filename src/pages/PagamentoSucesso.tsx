@@ -75,11 +75,11 @@ export default function PagamentoSucesso() {
             )}
 
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">
+              <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg">
+                <h4 className="font-medium text-destructive mb-2">
                   Próximos passos:
                 </h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+                <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• O montador iniciará o trabalho conforme acordado</li>
                   <li>• O valor ficará retido por 3 dias para garantia</li>
                   <li>• Após a conclusão, o pagamento será liberado</li>

@@ -278,8 +278,8 @@ const WorkerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p>Carregando dashboard...</p>
         </div>
@@ -382,7 +382,7 @@ const WorkerDashboard = () => {
                     {montadorProfile?.projetos_realizados || 0}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-blue-600" />
+                <TrendingUp className="h-8 w-8 text-destructive" />
               </div>
             </CardContent>
           </Card>
