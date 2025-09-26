@@ -41,6 +41,22 @@ export function usePagamentos() {
       return null;
     }
 
+    // Buscar clienteId
+    const { data: clienteData } = await supabase
+      .from('clientes')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!clienteData) {
+      toast({
+        title: "Erro",
+        description: "Cliente não encontrado",
+        variant: "destructive"
+      });
+      return null;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('mp-create-checkout', {
@@ -49,7 +65,8 @@ export function usePagamentos() {
           montadorId,
           valor,
           clienteEmail: user.email,
-          clienteNome: profile.nome
+          clienteNome: profile.nome,
+          clienteId: clienteData.id
         }
       });
 

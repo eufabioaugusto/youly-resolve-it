@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCircle, Clock, DollarSign, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNotificationsRealtime } from "@/hooks/useNotificationsRealtime";
 
 const NotificationCenter = () => {
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationsRealtime();
   const [open, setOpen] = useState(false);
 
@@ -42,8 +44,28 @@ const NotificationCenter = () => {
     return date.toLocaleDateString('pt-BR');
   };
 
-  const handleNotificationClick = async (notificationId: string) => {
-    await markAsRead(notificationId);
+  const handleNotificationClick = async (notification: any) => {
+    await markAsRead(notification.id);
+    
+    // Navegar baseado no tipo da notificação
+    switch (notification.tipo) {
+      case 'negociacao':
+        navigate('/central-negociacoes');
+        break;
+      case 'job':
+        navigate('/available-jobs');
+        break;
+      case 'pagamento':
+        navigate('/central-negociacoes');
+        break;
+      case 'saque':
+        navigate('/worker-dashboard');
+        break;
+      default:
+        break;
+    }
+    
+    setOpen(false);
   };
 
   return (
@@ -99,7 +121,7 @@ const NotificationCenter = () => {
                         className={`p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
                           !notification.lida ? 'bg-primary/5 border-l-2 border-l-primary' : ''
                         }`}
-                        onClick={() => handleNotificationClick(notification.id)}
+                        onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="flex items-start gap-3">
                           {getNotificationIcon(notification.tipo)}

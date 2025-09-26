@@ -17,30 +17,38 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { jobId, montadorId, valor, clienteEmail, clienteNome } = await req.json();
+    const { jobId, montadorId, valor, clienteEmail, clienteNome, clienteId } = await req.json();
 
-    console.log('Criando checkout MP:', { jobId, montadorId, valor, clienteEmail });
+    console.log('Criando checkout MP:', { jobId, montadorId, valor, clienteEmail, clienteId });
 
     // Buscar dados do job e montador
-    const { data: jobData } = await supabase
+    const { data: jobData, error: jobError } = await supabase
       .from('jobs')
       .select('descricao, categoria')
       .eq('id', jobId)
       .single();
 
-    const { data: montadorData } = await supabase
+    const { data: montadorData, error: montadorError } = await supabase
       .from('montadores')
       .select('id')
       .eq('id', montadorId)
       .single();
 
-    const { data: clienteData } = await supabase
+    const { data: clienteData, error: clienteError } = await supabase
       .from('clientes')
       .select('id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .eq('id', clienteId)
       .single();
 
     if (!jobData || !montadorData || !clienteData) {
+      console.error('Dados não encontrados:', {
+        jobError,
+        montadorError,
+        clienteError,
+        jobData: !!jobData,
+        montadorData: !!montadorData,
+        clienteData: !!clienteData
+      });
       throw new Error('Dados não encontrados');
     }
 
