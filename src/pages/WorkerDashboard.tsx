@@ -329,7 +329,7 @@ const WorkerDashboard = () => {
                     Complete seu cadastro para receber trabalhos
                   </h3>
                    <p className="text-sm text-muted-foreground mb-4">
-                     Montador Novato: Novo na plataforma, mas verificado e qualificado. Perfeito para começar com projetos simples!
+                     Nota: Novo na plataforma, mas verificado e qualificado. Perfeito para começar com projetos simples!
                    </p>
                   <Link to="/montador/perfil">
                     <Button variant="destructive" size="sm">
