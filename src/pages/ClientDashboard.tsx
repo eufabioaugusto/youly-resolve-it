@@ -199,7 +199,7 @@ const ClientDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -270,7 +270,7 @@ const ClientDashboard = () => {
 </Link>
 
 
-          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer bg-gray-50" onClick={() => navigate('/cliente/negociacoes')}>
+          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer bg-white" onClick={() => navigate('/cliente/negociacoes')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -289,7 +289,7 @@ const ClientDashboard = () => {
             </CardContent>
           </Card>
 
-            <Card className="shadow-card bg-gray-50">
+            <Card className="shadow-card bg-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -301,7 +301,7 @@ const ClientDashboard = () => {
               </CardContent>
             </Card>
 
-          <Card className="shadow-card bg-gray-50">
+          <Card className="shadow-card bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -317,7 +317,7 @@ const ClientDashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <Card className="shadow-card bg-gray-50">
+        <Card className="shadow-card bg-white">
           <CardHeader>
             <CardTitle>Meus Pedidos</CardTitle>
             <CardDescription>Acompanhe o status dos seus pedidos</CardDescription>
@@ -337,7 +337,7 @@ const ClientDashboard = () => {
                 </div>
               ) : (
                 jobs.map((job) => (
-                  <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors">
+                  <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors bg-white">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>

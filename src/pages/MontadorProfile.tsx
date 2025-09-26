@@ -206,7 +206,7 @@ const MontadorProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/montador" 
@@ -226,7 +226,7 @@ const MontadorProfile = () => {
 
           <div className="grid gap-6">
             {/* Perfil Básico */}
-            <Card className="shadow-glow border-0 bg-gray-50">
+            <Card className="shadow-glow border-0 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-4">
                   <PhotoUpload
@@ -308,7 +308,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Endereço */}
-            <Card className="shadow-glow border-0 bg-gray-50">
+            <Card className="shadow-glow border-0 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
@@ -376,7 +376,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Especialidades */}
-            <Card className="shadow-glow border-0 bg-gray-50">
+            <Card className="shadow-glow border-0 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
@@ -415,7 +415,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Informações de Recebimento */}
-            <Card className="shadow-glow border-0 bg-gray-50">
+            <Card className="shadow-glow border-0 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
@@ -446,7 +446,7 @@ const MontadorProfile = () => {
             </Card>
 
             {/* Botão Salvar */}
-            <Card className="shadow-glow border-0 bg-gray-50">
+            <Card className="shadow-glow border-0 bg-white">
               <CardContent className="p-6">
                 <div className="flex justify-end">
                   <Button 

@@ -175,7 +175,7 @@ const CreateJob = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
@@ -186,7 +186,7 @@ const CreateJob = () => {
         </Link>
         
         <div className="max-w-2xl mx-auto">
-          <Card className="shadow-glow border-0 bg-gray-50">
+          <Card className="shadow-glow border-0 bg-white">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">
                 <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">

@@ -42,7 +42,7 @@ const CentralNegociacoes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to={isCliente ? "/cliente" : "/montador"}
@@ -64,7 +64,7 @@ const CentralNegociacoes = () => {
           </div>
 
           {negociacoes.length === 0 ? (
-            <Card className="shadow-glow border-0 bg-gray-50 text-center p-8">
+            <Card className="shadow-glow border-0 bg-white text-center p-8">
               <CardContent>
                 <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Nenhuma negociação encontrada</h3>
@@ -79,7 +79,7 @@ const CentralNegociacoes = () => {
           ) : (
             <div className="space-y-6">
               {negociacoes.map((negociacao) => (
-                <Card key={negociacao.id} className="shadow-glow border-0 bg-gray-50">
+                <Card key={negociacao.id} className="shadow-glow border-0 bg-white">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">

@@ -249,7 +249,7 @@ const SuggestedMontadores = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
@@ -272,7 +272,7 @@ const SuggestedMontadores = () => {
           </div>
 
           {/* Job Summary */}
-          <Card className="shadow-glow border-0 mb-8 bg-gray-50">
+          <Card className="shadow-glow border-0 mb-8 bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
@@ -317,7 +317,7 @@ const SuggestedMontadores = () => {
             </h2>
             
             {montadores.length === 0 ? (
-              <Card className="shadow-glow border-0 bg-gray-50 text-center p-8">
+              <Card className="shadow-glow border-0 bg-white text-center p-8">
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
                     Ainda não há montadores disponíveis em sua região.

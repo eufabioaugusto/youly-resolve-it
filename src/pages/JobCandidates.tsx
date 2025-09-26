@@ -267,7 +267,7 @@ const JobCandidates = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
@@ -279,7 +279,7 @@ const JobCandidates = () => {
 
         <div className="max-w-4xl mx-auto">
           {/* Informações do Job */}
-          <Card className="mb-6 shadow-glow border-0 bg-gray-50">
+          <Card className="mb-6 shadow-glow border-0 bg-white">
             <CardHeader>
               <CardTitle className="text-xl">{job.descricao}</CardTitle>
               <CardDescription>
@@ -326,7 +326,7 @@ const JobCandidates = () => {
             </div>
 
             {candidaturas.length === 0 ? (
-              <Card className="shadow-glow border-0 bg-gray-50">
+              <Card className="shadow-glow border-0 bg-white">
                 <CardContent className="p-8 text-center">
                   <p className="text-muted-foreground">
                     Ainda não há candidaturas para este pedido.
