@@ -178,6 +178,7 @@ export type Database = {
           descricao: string
           endereco: Json
           id: string
+          imagens_produtos: string[] | null
           montador_id: string | null
           nota_fiscal: string | null
           status: Database["public"]["Enums"]["job_status"] | null
@@ -192,6 +193,7 @@ export type Database = {
           descricao: string
           endereco: Json
           id?: string
+          imagens_produtos?: string[] | null
           montador_id?: string | null
           nota_fiscal?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null
@@ -206,6 +208,7 @@ export type Database = {
           descricao?: string
           endereco?: Json
           id?: string
+          imagens_produtos?: string[] | null
           montador_id?: string | null
           nota_fiscal?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null

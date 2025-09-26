@@ -11,6 +11,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, ArrowLeft, Upload, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
+import ProductImageUpload from "@/components/ProductImageUpload";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -35,7 +36,8 @@ const CreateJob = () => {
       { data: '', periodo: 'tarde', selecionado: false },
       { data: '', periodo: 'manha', selecionado: false }
     ],
-    valor_estimado: ''
+    valor_estimado: '',
+    imagens_produtos: [] as string[]
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,7 +67,8 @@ const CreateJob = () => {
           categoria: formData.categoria,
           endereco: formData.endereco,
           data_opcoes: opcoesSelecionadas,
-          valor_estimado: parseFloat(formData.valor_estimado) || null
+          valor_estimado: parseFloat(formData.valor_estimado) || null,
+          imagens_produtos: formData.imagens_produtos
         })
         .select()
         .single();
@@ -341,6 +344,12 @@ const CreateJob = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Imagens do produto */}
+                <ProductImageUpload
+                  images={formData.imagens_produtos}
+                  onImagesChange={(images) => setFormData({ ...formData, imagens_produtos: images })}
+                />
 
                 {/* Datas disponíveis */}
                 <div className="space-y-4">
