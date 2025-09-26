@@ -398,7 +398,7 @@ const SuggestedMontadores = () => {
                           {montador.projetos_realizados === 0 && (
                             <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
                               <p className="text-sm text-muted-foreground">
-                                <strong>Montador Novato:</strong> Novo na plataforma, mas verificado e qualificado. 
+                                <strong>Nota:</strong> Novo na plataforma, mas verificado e qualificado. 
                                 Perfeito para começar com projetos simples!
                               </p>
                             </div>
