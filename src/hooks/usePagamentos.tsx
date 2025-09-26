@@ -42,16 +42,19 @@ export function usePagamentos() {
     }
 
     // Buscar clienteId
-    const { data: clienteData } = await supabase
+    const { data: clienteData, error: clienteError } = await supabase
       .from('clientes')
       .select('id')
       .eq('user_id', user.id)
       .single();
 
-    if (!clienteData) {
+    console.log('Cliente data:', { clienteData, clienteError });
+
+    if (clienteError || !clienteData) {
+      console.error('Erro ao buscar cliente:', clienteError);
       toast({
         title: "Erro",
-        description: "Cliente não encontrado",
+        description: "Cliente não encontrado. Verifique seu perfil.",
         variant: "destructive"
       });
       return null;
