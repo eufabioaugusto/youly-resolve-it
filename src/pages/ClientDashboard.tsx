@@ -194,15 +194,15 @@ const ClientDashboard = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Link to="/criar-pedido">
-  <Card className="shadow-lg hover:shadow-xl transition-all cursor-pointer">
-    <CardContent className="p-6 bg-red-600 text-white">
+  <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer">
+    <CardContent className="p-6 bg-red-50">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-lg">Novo Pedido</h3>
-          <p className="text-sm opacity-90">Solicitar montagem</p>
+          <h3 className="font-semibold text-lg text-red-600">Novo Pedido</h3>
+          <p className="text-sm text-muted-foreground">Solicitar montagem</p>
         </div>
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-          <Plus className="w-6 h-6 text-red-600" />
+        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+          <Plus className="w-6 h-6 text-white" />
         </div>
       </div>
     </CardContent>
