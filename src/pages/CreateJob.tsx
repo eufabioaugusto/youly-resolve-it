@@ -347,12 +347,6 @@ const CreateJob = () => {
 
                 {/* Imagens do produto */}
                 <ProductImageUpload
-                  images={formData.imagens_produtos}
-                  onImagesChange={(images) => setFormData({ ...formData, imagens_produtos: images })}
-                />
-
-                {/* Product Images Upload */}
-                <ProductImageUpload
                   images={formData.imagens_produtos || []}
                   onImagesChange={(images) => setFormData({ ...formData, imagens_produtos: images })}
                   maxImages={7}
