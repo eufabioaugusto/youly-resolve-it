@@ -72,7 +72,7 @@ const Index = () => {
 
       {/* ======================= HERO (Impact + imagem) ======================= */}
       <section className="relative overflow-hidden bg-gradient-hero text-white">
-        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-[40%_60%] items-center gap-12">
+        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 items-center gap-12">
           {/* Lado esquerdo: texto */}
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-5">
@@ -171,7 +171,7 @@ const Index = () => {
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="rounded-2xl bg-gradient-to-r from-[#ea8375] to-[#ff2b35] p-6 md:p-10 text-white">
-            <div className="grid md:grid-cols-[40%_60%] gap-8 items-center">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+1.000</div>
                 <div className="text-2xl md:text-3xl font-semibold mt-2">móveis já montados pela rede YOULY</div>
