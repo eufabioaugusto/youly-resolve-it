@@ -170,7 +170,7 @@ const Index = () => {
       {/* ======================= 2) BANNER CENTRAL (stat grande) ======================= */}
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="rounded-2xl bg-gradient-to-r from-[#E53935] to-[#FF7043] p-6 md:p-10 text-white">
+          <div className="rounded-2xl bg-gradient-to-r from-[#ea8375] to-[#ff2b35] p-6 md:p-10 text-white">
             <div className="grid md:grid-cols-[40%_60%] gap-8 items-center">
               <div>
                 <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+1.000</div>
@@ -238,7 +238,7 @@ const Index = () => {
 
       {/* ======================= 4) SESSÃO GRADIENTE – 3 BENEFÍCIOS ======================= */}
       <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#5B9BFF] via-[#7B6CFF] to-[#D64FFF] opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#ff2b35] via-[#ff6c6c] to-[#ff4f4f] opacity-90" />
         <div className="relative container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-white mb-4">
             O jeito mais rápido e seguro de montar seus móveis
