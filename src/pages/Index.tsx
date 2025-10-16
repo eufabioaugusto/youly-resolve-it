@@ -300,7 +300,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-2xl overflow-hidden h-72 md:h-96">
               <img
-                src="/imagens/how-1.png"
+                src="/images/how-1.png"
                 alt="Descreva seu projeto"
                 className="w-full h-full object-cover rounded-2xl"
               />
@@ -345,7 +345,7 @@ const Index = () => {
             </div>
             <div className="order-1 md:order-2 rounded-2xl overflow-hidden h-72 md:h-96">
               <img
-                src="/imagens/how-2.png"
+                src="/images/how-2.png"
                 alt="Escolha seu montador"
                 className="w-full h-full object-cover rounded-2xl"
               />
@@ -355,11 +355,7 @@ const Index = () => {
           {/* Passo 3: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-2xl overflow-hidden h-72 md:h-96">
-              <img
-                src="/imagens/how-3.png"
-                alt="Serviço realizado"
-                className="w-full h-full object-cover rounded-2xl"
-              />
+              <img src="/images/how-3.png" alt="Serviço realizado" className="w-full h-full object-cover rounded-2xl" />
             </div>
             <div>
               <Badge variant="secondary" className="mb-3">
