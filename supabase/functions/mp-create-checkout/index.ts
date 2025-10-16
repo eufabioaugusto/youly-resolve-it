@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const mercadoPagoAccessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN')!;
 
@@ -16,7 +17,38 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // SECURITY FIX: Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authentication' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
+    // Create client with user's JWT (not service role) for authorization checks
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get authenticated user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Invalid authentication:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
     
     let requestBody;
     try {
@@ -38,21 +70,26 @@ serve(async (req) => {
       jobId,
       montadorId,
       valor,
-      clienteEmail,
-      clienteNome,
       clienteId,
-      hasAccessToken: !!mercadoPagoAccessToken
+      userId: user.id
     });
 
     if (!jobId || !montadorId || !valor || !clienteId) {
-      console.error('Parâmetros obrigatórios ausentes:', {
-        jobId: !!jobId,
-        montadorId: !!montadorId,
-        valor: !!valor,
-        clienteId: !!clienteId
-      });
+      console.error('Parâmetros obrigatórios ausentes');
       return new Response(
         JSON.stringify({ error: 'Parâmetros obrigatórios ausentes' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    // SECURITY FIX: Validate valor is positive
+    if (typeof valor !== 'number' || valor <= 0) {
+      console.error('Invalid valor:', valor);
+      return new Response(
+        JSON.stringify({ error: 'Valor inválido - deve ser número positivo' }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400
@@ -71,42 +108,20 @@ serve(async (req) => {
       );
     }
 
-    // Buscar dados do job e montador
-    const { data: jobData, error: jobError } = await supabase
-      .from('jobs')
-      .select('descricao, categoria')
-      .eq('id', jobId)
-      .single();
+    // Use service role for data fetching
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Job data:', { jobData, jobError });
-
-    const { data: montadorData, error: montadorError } = await supabase
-      .from('montadores')
-      .select('id')
-      .eq('id', montadorId)
-      .single();
-
-    console.log('Montador data:', { montadorData, montadorError });
-
+    // SECURITY FIX: Verify user owns this clienteId
     const { data: clienteData, error: clienteError } = await supabase
       .from('clientes')
-      .select('id')
+      .select('id, user_id')
       .eq('id', clienteId)
       .single();
 
-    console.log('Cliente data:', { clienteData, clienteError });
-
-    if (jobError || montadorError || clienteError) {
-      console.error('Erros nas consultas:', {
-        jobError,
-        montadorError, 
-        clienteError
-      });
+    if (clienteError || !clienteData) {
+      console.error('Cliente not found:', clienteError);
       return new Response(
-        JSON.stringify({ 
-          error: 'Erro ao buscar dados',
-          details: { jobError, montadorError, clienteError }
-        }),
+        JSON.stringify({ error: 'Cliente não encontrado' }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 404
@@ -114,21 +129,86 @@ serve(async (req) => {
       );
     }
 
-    if (!jobData || !montadorData || !clienteData) {
-      console.error('Dados não encontrados:', {
-        jobData: !!jobData,
-        montadorData: !!montadorData,
-        clienteData: !!clienteData
+    // SECURITY FIX: Verify authenticated user owns this cliente
+    if (user.id !== clienteData.user_id) {
+      console.error('User does not own this cliente', {
+        userId: user.id,
+        clienteUserId: clienteData.user_id
       });
       return new Response(
-        JSON.stringify({ 
-          error: 'Dados não encontrados',
-          details: {
-            job: !!jobData,
-            montador: !!montadorData,
-            cliente: !!clienteData
+        JSON.stringify({ error: 'Unauthorized - Este cliente não pertence a você' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403
+        }
+      );
+    }
+
+    // SECURITY FIX: Verify job belongs to this cliente and fetch job data
+    const { data: jobData, error: jobError } = await supabase
+      .from('jobs')
+      .select('descricao, categoria, cliente_id, valor_estimado, status')
+      .eq('id', jobId)
+      .single();
+
+    if (jobError || !jobData) {
+      console.error('Job not found:', jobError);
+      return new Response(
+        JSON.stringify({ error: 'Job não encontrado' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404
+        }
+      );
+    }
+
+    // SECURITY FIX: Verify job belongs to this cliente
+    if (jobData.cliente_id !== clienteId) {
+      console.error('Job does not belong to cliente', {
+        jobClienteId: jobData.cliente_id,
+        requestClienteId: clienteId
+      });
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Este job não pertence a você' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403
+        }
+      );
+    }
+
+    // SECURITY FIX: Validate valor matches job's valor_estimado (allow small variance for negotiation)
+    if (jobData.valor_estimado) {
+      const variance = Math.abs(valor - jobData.valor_estimado) / jobData.valor_estimado;
+      if (variance > 0.5) { // Allow 50% variance for negotiation
+        console.error('Valor differs too much from estimated', {
+          requestedValor: valor,
+          estimatedValor: jobData.valor_estimado
+        });
+        return new Response(
+          JSON.stringify({ 
+            error: 'Valor muito diferente do estimado',
+            details: 'O valor solicitado difere muito do valor estimado do job'
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
           }
-        }),
+        );
+      }
+    }
+
+    // Verify montador exists
+    const { data: montadorData, error: montadorError } = await supabase
+      .from('montadores')
+      .select('id')
+      .eq('id', montadorId)
+      .single();
+
+    if (montadorError || !montadorData) {
+      console.error('Montador not found:', montadorError);
+      return new Response(
+        JSON.stringify({ error: 'Montador não encontrado' }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 404
@@ -145,7 +225,7 @@ serve(async (req) => {
         cliente_id: clienteData.id,
         valor_total: valor,
         status: 'pendente',
-        metodo: 'cartao'  // Changed from 'mercado_pago' to 'cartao'
+        metodo: 'cartao'
       })
       .select()
       .single();

@@ -60,6 +60,13 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "candidaturas_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       carteira: {
@@ -102,6 +109,13 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: true
             referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: true
+            referencedRelation: "montadores_public"
             referencedColumns: ["id"]
           },
         ]
@@ -228,6 +242,13 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: false
             referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores_public"
             referencedColumns: ["id"]
           },
         ]
@@ -367,6 +388,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "negociacoes_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "negociacoes_pagamento_id_fkey"
             columns: ["pagamento_id"]
             isOneToOne: false
@@ -479,6 +507,13 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pagamentos_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -556,11 +591,95 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "saques_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores_public"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      montadores_public: {
+        Row: {
+          avaliacao_media: number | null
+          badges: string[] | null
+          created_at: string | null
+          especialidades: string[] | null
+          foto_perfil_url: string | null
+          horas_trabalhadas: number | null
+          id: string | null
+          is_premium: boolean | null
+          nivel_gamificacao: string | null
+          preco_hora: number | null
+          projetos_realizados: number | null
+          status: string | null
+          total_avaliacoes: number | null
+          total_valor_movimentado: number | null
+          user_id: string | null
+        }
+        Insert: {
+          avaliacao_media?: number | null
+          badges?: string[] | null
+          created_at?: string | null
+          especialidades?: string[] | null
+          foto_perfil_url?: string | null
+          horas_trabalhadas?: number | null
+          id?: string | null
+          is_premium?: boolean | null
+          nivel_gamificacao?: string | null
+          preco_hora?: number | null
+          projetos_realizados?: number | null
+          status?: string | null
+          total_avaliacoes?: number | null
+          total_valor_movimentado?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          avaliacao_media?: number | null
+          badges?: string[] | null
+          created_at?: string | null
+          especialidades?: string[] | null
+          foto_perfil_url?: string | null
+          horas_trabalhadas?: number | null
+          id?: string | null
+          is_premium?: boolean | null
+          nivel_gamificacao?: string | null
+          preco_hora?: number | null
+          projetos_realizados?: number | null
+          status?: string | null
+          total_avaliacoes?: number | null
+          total_valor_movimentado?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_first_admin: {
@@ -570,6 +689,13 @@ export type Database = {
           admin_password: string
         }
         Returns: Json
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin: {
         Args: { user_uuid?: string }
@@ -594,6 +720,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "client" | "montador"
       candidatura_status: "pendente" | "aceito" | "recusado"
       job_status:
         | "aberto"
@@ -734,6 +861,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "client", "montador"],
       candidatura_status: ["pendente", "aceito", "recusado"],
       job_status: [
         "aberto",
