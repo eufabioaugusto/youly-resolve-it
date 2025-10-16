@@ -34,7 +34,7 @@ const Index = () => {
         </div>
       </header>
 
-      {/* HERO — estilo impact (degradê full, headline forte, CTAs duplos, chips/estatísticas) */}
+      {/* ======================= HERO (Impact style) ======================= */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="relative container mx-auto px-4 py-20 md:py-28">
@@ -72,7 +72,7 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Chips/mini cards de prova social no hero */}
+            {/* Chips de prova social no hero */}
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
                 <div className="text-2xl font-bold">1000+</div>
@@ -90,7 +90,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Elementos decorativos “bolhas” tipo impact */}
+        {/* Bolhas decorativas */}
         <div className="pointer-events-none absolute -right-20 top-20 hidden md:block">
           <div className="size-44 rounded-full bg-white/10 backdrop-blur-sm" />
         </div>
@@ -99,210 +99,264 @@ const Index = () => {
         </div>
       </section>
 
-      {/* BARRA DE CONFIANÇA — estilo faixa simples (dados chave) */}
-      <section className="py-10 bg-muted/30 border-b">
+      {/* ======================= 1) SCROLL DE MARCAS ======================= */}
+      <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="text-sm text-muted-foreground">Cobertura</div>
-              <div className="font-semibold flex items-center justify-center gap-2">
-                <MapPin className="w-4 h-4" /> Principais capitais
+          <div className="overflow-x-auto whitespace-nowrap no-scrollbar py-2">
+            {/* Duplicado para dar sensação de carrossel longo */}
+            <div className="inline-flex items-center gap-10 opacity-70">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Ikea_logo.svg" alt="IKEA" className="h-8" />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/8/8f/Tok&Stok_logo.png"
+                alt="Tok&Stok"
+                className="h-6"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/6/6a/Magalu_logo_2021.svg"
+                alt="Magalu"
+                className="h-6"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/59/Amazon_logo.svg"
+                alt="Amazon"
+                className="h-6"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/4/44/Casas_Bahia_logo_2018.png"
+                alt="Casas Bahia"
+                className="h-6"
+              />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Etna_logo.svg" alt="Etna" className="h-6" />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/2/21/Leroy_Merlin-Logo.svg"
+                alt="Leroy"
+                className="h-6"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================= 2) BANNER CENTRAL (stat grande) ======================= */}
+      <section className="py-12 md:py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="rounded-2xl bg-gradient-to-r from-[#E53935] to-[#FF7043] p-6 md:p-10 text-white">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+5.000</div>
+                <div className="text-2xl md:text-3xl font-semibold mt-2">móveis já montados pela rede YOULY</div>
+                <p className="mt-4 text-white/90">
+                  Garantia de 30 dias em todos os serviços. Segurança, velocidade e avaliação real.
+                </p>
               </div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Agendamento</div>
-              <div className="font-semibold">3 opções de data/hora</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Garantia</div>
-              <div className="font-semibold">30 dias em todos os serviços</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Atendimento</div>
-              <div className="font-semibold flex items-center justify-center gap-2">
-                <Smartphone className="w-4 h-4" /> 100% online
+              {/* mock visual tipo “dashboard” */}
+              <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4">
+                <div className="h-40 md:h-48 rounded-lg bg-white/20" />
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="h-16 rounded-lg bg-white/20" />
+                  <div className="h-16 rounded-lg bg-white/20" />
+                  <div className="h-16 rounded-lg bg-white/20" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BENEFÍCIOS — grid 2x2 com cards elevados, ícones grandes */}
-      <section className="py-24 bg-background">
+      {/* ======================= 3) BOX CTA 2 PÚBLICOS ======================= */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-16">Por que escolher a YOULY?</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">Escolha como quer usar a YOULY</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 flex gap-6">
+              <CardContent className="p-8 flex flex-col md:flex-row items-center gap-6">
                 <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center shrink-0">
-                  <Shield className="w-8 h-8 text-primary-foreground" />
+                  <Users className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Segurança garantida</h3>
-                  <p className="text-muted-foreground">
-                    Todos os montadores são verificados e têm documentação completa. Você contrata com tranquilidade.
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">Sou Cliente</h3>
+                  <p className="text-muted-foreground mt-1">
+                    Encontre um montador verificado, compare propostas e ative a garantia.
                   </p>
                 </div>
+                <Button asChild className="bg-gradient-primary">
+                  <Link to="/register?type=client">Quero contratar</Link>
+                </Button>
               </CardContent>
             </Card>
 
             <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 flex gap-6">
+              <CardContent className="p-8 flex flex-col md:flex-row items-center gap-6">
                 <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center shrink-0">
-                  <Star className="w-8 h-8 text-primary-foreground" />
+                  <Wrench className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Avaliações reais</h3>
-                  <p className="text-muted-foreground">
-                    Sistema transparente de avaliações e histórico de serviços para você escolher com confiança.
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">Sou Montador</h3>
+                  <p className="text-muted-foreground mt-1">
+                    Receba trabalhos na sua região, com pagamentos seguros e avaliações reais.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 flex gap-6">
-                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center shrink-0">
-                  <Clock className="w-8 h-8 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Agilidade</h3>
-                  <p className="text-muted-foreground">
-                    Agende em até 3 opções de data e horário, com confirmação rápida e comunicação dentro da plataforma.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 flex gap-6">
-                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-8 h-8 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Garantia ativa</h3>
-                  <p className="text-muted-foreground">
-                    30 dias de garantia em todos os serviços realizados. Se precisar, a gente resolve.
-                  </p>
-                </div>
+                <Button asChild variant="outline" className="hover:bg-primary/10">
+                  <Link to="/register?type=worker">Quero trabalhar</Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* COMO FUNCIONA — cards numerados estilo “flow” */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-16">Como funciona</h2>
+      {/* ======================= 4) SESSÃO GRADIENTE – 3 BENEFÍCIOS ======================= */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#5B9BFF] via-[#7B6CFF] to-[#D64FFF] opacity-90" />
+        <div className="relative container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center text-white mb-4">
+            O jeito mais rápido e seguro de montar seus móveis
+          </h2>
+          <p className="text-white/90 text-center mb-12">
+            Você escolhe o profissional, acompanha tudo e ainda tem garantia.
+          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="shadow-card hover:shadow-elegant transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-white rounded-2xl border-0">
               <CardContent className="p-8">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-2xl font-bold text-primary">1</span>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                  <Shield className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Descreva seu projeto</h3>
+                <h3 className="text-xl font-semibold mb-2">Verificação e confiança</h3>
                 <p className="text-muted-foreground">
-                  Conte sobre o móvel que precisa montar, envie a nota fiscal e escolha até 3 opções de data.
+                  Profissionais checados e avaliações públicas — você contrata com segurança.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card hover:shadow-elegant transition-all">
+            <Card className="bg-white rounded-2xl border-0">
               <CardContent className="p-8">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-2xl font-bold text-primary">2</span>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                  <Clock className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Escolha seu montador</h3>
+                <h3 className="text-xl font-semibold mb-2">Agilidade real</h3>
                 <p className="text-muted-foreground">
-                  Receba propostas de profissionais verificados ou convide diretamente quem preferir.
+                  Agende entre 3 opções de data/horário e acompanhe tudo pelo app/web.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card hover:shadow-elegant transition-all">
+            <Card className="bg-white rounded-2xl border-0">
               <CardContent className="p-8">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-2xl font-bold text-primary">3</span>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                  <CheckCircle className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Serviço realizado</h3>
+                <h3 className="text-xl font-semibold mb-2">Garantia de 30 dias</h3>
                 <p className="text-muted-foreground">
-                  Pagamento seguro, execução profissional e garantia de 30 dias ativada.
+                  Serviço com garantia ativada após a conclusão. Precisou? A gente resolve.
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* CTA inline abaixo do fluxo, estilo impact */}
-          <div className="text-center mt-12">
-            <Button size="lg" className="bg-gradient-primary hover:shadow-glow" asChild>
-              <Link to="/register?type=client">Começar agora</Link>
+          <div className="text-center mt-10">
+            <Button size="lg" variant="secondary" asChild>
+              <Link to="/register?type=client">Explorar serviços</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* RESULTADOS — blocos de ROI (números grandes) */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 text-center">
-                <div className="text-4xl font-extrabold text-primary mb-2">+46%</div>
-                <div className="font-semibold">Mais rapidez na contratação</div>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Processo simples reduz tempo de espera e retrabalho.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 text-center">
-                <div className="text-4xl font-extrabold text-primary mb-2">22%</div>
-                <div className="font-semibold">Menos imprevistos</div>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Documentação e avaliações minimizam surpresas na execução.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-card hover:shadow-elegant transition-all">
-              <CardContent className="p-8 text-center">
-                <div className="text-4xl font-extrabold text-primary mb-2">4.9★</div>
-                <div className="font-semibold">Satisfação média</div>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Atendimento humanizado e garantia ativa pós-serviço.
-                </p>
-              </CardContent>
-            </Card>
+      {/* ======================= 5) 3 SESSÕES SIDE-BY-SIDE (imagem + texto alternado) ======================= */}
+      <section className="py-24">
+        <div className="container mx-auto px-4 space-y-20">
+          {/* Passo 1: Imagem + Texto */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-2xl bg-muted h-72 md:h-96">
+              {/* Placeholder visual (substituível por imagem real depois) */}
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
+            </div>
+            <div>
+              <Badge variant="secondary" className="mb-3">
+                Passo 1
+              </Badge>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3">Descreva seu projeto</h3>
+              <p className="text-muted-foreground mb-6">
+                Informe o tipo de móvel, suba a nota fiscal e defina até 3 datas/horários preferidos.
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" /> Atendimento na sua região
+                </div>
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" /> Processo 100% online
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Passo 2: Texto + Imagem */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="order-2 md:order-1">
+              <Badge variant="secondary" className="mb-3">
+                Passo 2
+              </Badge>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3">Escolha seu montador</h3>
+              <p className="text-muted-foreground mb-6">
+                Compare propostas, veja avaliações reais e convide diretamente quem você preferir.
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4" /> Avaliações transparentes
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" /> Profissionais verificados
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2 rounded-2xl bg-muted h-72 md:h-96">
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
+            </div>
+          </div>
+
+          {/* Passo 3: Imagem + Texto */}
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-2xl bg-muted h-72 md:h-96">
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
+            </div>
+            <div>
+              <Badge variant="secondary" className="mb-3">
+                Passo 3
+              </Badge>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3">Serviço realizado</h3>
+              <p className="text-muted-foreground mb-6">
+                Pagamento seguro na plataforma, execução profissional e garantia de 30 dias ativada.
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" /> Garantia ativa
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" /> Agendamento rápido
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA FINAL — banner em degradê forte, estilo impact */}
-      <section className="py-24 bg-gradient-hero">
+      {/* ======================= 6) PRÉ-FOOTER (CTA curto) ======================= */}
+      <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">Pronto para começar?</h2>
-          <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-            Junte-se a milhares de pessoas que já resolveram suas necessidades com a YOULY.
-          </p>
+          <h3 className="text-2xl md:text-3xl font-bold mb-3">Pronto para resolver hoje?</h3>
+          <p className="text-muted-foreground mb-8">Leva menos de 2 minutos para publicar seu projeto.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" className="bg-gradient-primary" asChild>
               <Link to="/register?type=client">Contratar agora</Link>
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-primary"
-              asChild
-            >
-              <Link to="/register?type=worker">Trabalhar conosco</Link>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/register?type=worker">Quero trabalhar</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ======================= 7) FOOTER (atual) ======================= */}
       <footer className="border-t bg-card/50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
