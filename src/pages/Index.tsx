@@ -3,8 +3,44 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Users, Shield, Star, CheckCircle, Clock, MapPin, Smartphone } from "lucide-react";
+import { useEffect, useRef } from "react";
+
+const logos = [
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png",
+  "https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png",
+  "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png",
+  "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg",
+  "https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png",
+];
 
 const Index = () => {
+  // Carrossel infinito suave (JS) — sem flicker e sem style-jsx
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    let x = 0;
+    const speed = 0.5; // ajuste fino de velocidade
+
+    const animate = () => {
+      x -= speed;
+      const width = track.scrollWidth / 2; // metade (porque duplicamos os logos)
+      if (Math.abs(x) >= width) x = 0;
+      track.style.transform = `translateX(${x}px)`;
+      frameRef.current = requestAnimationFrame(animate);
+    };
+
+    frameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -34,16 +70,16 @@ const Index = () => {
         </div>
       </header>
 
-      {/* ======================= HERO (Impact style) ======================= */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="relative container mx-auto px-4 py-20 md:py-28">
+      {/* ======================= HERO (Impact + imagem) ======================= */}
+      <section className="relative overflow-hidden bg-gradient-hero text-white">
+        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 items-center gap-12">
+          {/* Lado esquerdo: texto */}
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-5">
               🚀 Nova plataforma de serviços
             </Badge>
 
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
               Chamou. <span className="opacity-90">Resolveu.</span>
             </h1>
 
@@ -62,7 +98,7 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="text-white border-white hover:bg-white hover:text-primary"
+                className="bg-transparent text-white border-white hover:bg-white/10"
                 asChild
               >
                 <Link to="/register?type=worker" className="flex items-center gap-2">
@@ -88,6 +124,17 @@ const Index = () => {
               </div>
             </div>
           </div>
+
+          {/* Lado direito: imagem (garante renderização) */}
+          <div className="relative">
+            <img
+              src="https://img.freepik.com/fotos-gratis/carpinteiro-cortando-placa-de-mdf-dentro-da-oficina_23-2149451056.jpg?t=st=1760628316~exp=1760631916~hmac=b0c11758baa34f7f58507f4388bd74ff1e6a5aaa0fb4e7308c8ef6f5656b42bf&w=2000"
+              alt="Montador profissional"
+              className="w-full h-[360px] md:h-[480px] object-cover rounded-2xl shadow-xl"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
 
         {/* Bolhas decorativas */}
@@ -99,63 +146,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ======================= 1) SCROLL DE MARCAS ======================= */}
+      {/* ======================= 1) SCROLL DE MARCAS (loop infinito) ======================= */}
       <section className="py-8 bg-white">
         <div className="container mx-auto px-4 relative overflow-hidden">
-          <div className="absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-white to-transparent z-10" />
-          <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-white to-transparent z-10" />
+          <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-white to-transparent z-10" />
+          <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white to-transparent z-10" />
 
-          <div className="logos-slider flex gap-12 animate-scroll">
-            {[
-              "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png",
-              "https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png",
-              "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
-              "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
-              "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png",
-              "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg",
-              "https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png",
-            ]
-              .concat([
-                // duplica pra loop perfeito
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png",
-                "https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png",
-                "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png",
-                "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg",
-                "https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png",
-              ])
-              .map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`Logo ${i}`}
-                  className="h-10 md:h-12 object-contain opacity-80 hover:opacity-100 hover:scale-105 transition-transform duration-300"
-                />
-              ))}
+          {/* trilho duplicado para loop */}
+          <div className="will-change-transform" ref={trackRef} style={{ display: "flex", gap: "2.5rem" }}>
+            {[...logos, ...logos].map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={`Logo ${i}`}
+                className="h-4 md:h-6 object-contain opacity-80 hover:opacity-100 hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            ))}
           </div>
         </div>
-
-        <style jsx>{`
-    @keyframes scroll {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(-50%);
-      }
-    }
-
-    .logos-slider {
-      display: flex;
-      width: max-content;
-      animation: scroll 40s linear infinite;
-    }
-
-    .logos-slider:hover {
-      animation-play-state: paused;
-    }
-  `}</style>
       </section>
 
       {/* ======================= 2) BANNER CENTRAL (stat grande) ======================= */}
@@ -283,13 +292,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ======================= 5) 3 SESSÕES SIDE-BY-SIDE (imagem + texto alternado) ======================= */}
+      {/* ======================= 5) 3 SESSÕES SIDE-BY-SIDE ======================= */}
       <section className="py-24">
         <div className="container mx-auto px-4 space-y-20">
           {/* Passo 1: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="rounded-2xl bg-muted h-72 md:h-96">
-              {/* Placeholder visual (substituível por imagem real depois) */}
               <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
             </div>
             <div>
