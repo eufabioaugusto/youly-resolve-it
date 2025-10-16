@@ -105,30 +105,38 @@ const Index = () => {
           <div className="overflow-x-auto whitespace-nowrap no-scrollbar py-2">
             {/* Duplicado para dar sensação de carrossel longo */}
             <div className="inline-flex items-center gap-10 opacity-70">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Ikea_logo.svg" alt="IKEA" className="h-8" />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png"
+                alt="IKEA"
+                className="h-8"
+              />
               <img
                 src="https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png"
                 alt="Tok&Stok"
                 className="h-6"
               />
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/6/6a/Magalu_logo_2021.svg"
+                src="https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png"
                 alt="Magalu"
                 className="h-6"
               />
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/5/59/Amazon_logo.svg"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png"
                 alt="Amazon"
                 className="h-6"
               />
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/4/44/Casas_Bahia_logo_2018.png"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png"
                 alt="Casas Bahia"
                 className="h-6"
               />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Etna_logo.svg" alt="Etna" className="h-6" />
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/2/21/Leroy_Merlin-Logo.svg"
+                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg"
+                alt="Etna"
+                className="h-6"
+              />
+              <img
+                src="https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png"
                 alt="Leroy"
                 className="h-6"
               />
