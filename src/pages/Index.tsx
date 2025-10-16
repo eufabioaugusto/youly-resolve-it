@@ -475,7 +475,7 @@ const Index = () => {
           </div>
 
           <div className="border-t pt-8 mt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 YOULY. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} YOULY. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
