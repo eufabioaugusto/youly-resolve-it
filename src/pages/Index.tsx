@@ -101,7 +101,7 @@ const Index = () => {
                 className="bg-transparent text-white border-white hover:bg-white/10"
                 asChild
               >
-                <Link to="/register?type=worker" className="flex items-center gap-2 hover:text-white/10">
+                <Link to="/register?type=worker" className="flex items-center gap-2 hover:text-white/2">
                   <Wrench className="w-5 h-5" />
                   Quero trabalhar
                 </Link>
