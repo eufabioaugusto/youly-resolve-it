@@ -72,7 +72,7 @@ const Index = () => {
 
       {/* ======================= HERO (Impact + imagem) ======================= */}
       <section className="relative overflow-hidden bg-gradient-hero text-white">
-        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 items-center gap-12">
+        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-[40%_60%] items-center gap-12">
           {/* Lado esquerdo: texto */}
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-5">
