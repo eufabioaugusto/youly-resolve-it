@@ -130,7 +130,7 @@ const Index = () => {
             <img
               src="/images/hero-youly-1.png"
               alt="Montador profissional"
-              className="w-full object-cover shadow-xl"
+              className="w-full object-cover"
               loading="eager"
               referrerPolicy="no-referrer"
             />
