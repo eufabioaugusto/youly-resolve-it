@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wrench, Users, Shield, Star, CheckCircle, Clock, MapPin, Smartphone } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Wrench, Users, Shield, Star, CheckCircle, Clock, MapPin, Smartphone, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const logos = [
   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png",
@@ -16,6 +17,8 @@ const logos = [
 ];
 
 const Index = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   // Carrossel infinito suave (JS) — sem flicker e sem style-jsx
   const trackRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -53,6 +56,8 @@ const Index = () => {
               className="h-9 object-contain"
             />
           </div>
+          
+          {/* Desktop Menu */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link to="#" className="text-sm hover:text-primary transition-colors">
               Como funciona
@@ -67,6 +72,45 @@ const Index = () => {
               <Link to="/register">Cadastrar</Link>
             </Button>
           </nav>
+
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col space-y-6 mt-8">
+                <Link 
+                  to="#" 
+                  className="text-lg hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Como funciona
+                </Link>
+                <Link 
+                  to="#" 
+                  className="text-lg hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Para empresas
+                </Link>
+                <Link 
+                  to="/login" 
+                  className="text-lg hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Entrar
+                </Link>
+                <Button variant="outline" asChild>
+                  <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                    Cadastrar
+                  </Link>
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
