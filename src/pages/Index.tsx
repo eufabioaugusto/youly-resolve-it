@@ -182,7 +182,7 @@ const Index = () => {
               {/* mock visual tipo “dashboard” */}
               <div className="relative">
                 <img
-                  src="/images/hero-youly-1.png"
+                  src="/images/hero-youly-2.png"
                   alt="Montador profissional"
                   className="w-full object-cover"
                   loading="eager"
