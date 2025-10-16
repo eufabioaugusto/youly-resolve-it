@@ -128,7 +128,7 @@ const Index = () => {
           {/* Lado direito: imagem (garante renderização) */}
           <div className="relative">
             <img
-              src="https://img.freepik.com/fotos-gratis/carpinteiro-cortando-placa-de-mdf-dentro-da-oficina_23-2149451056.jpg?t=st=1760628316~exp=1760631916~hmac=b0c11758baa34f7f58507f4388bd74ff1e6a5aaa0fb4e7308c8ef6f5656b42bf&w=2000"
+              src="public/images/hero-youly-1.png"
               alt="Montador profissional"
               className="w-full h-[360px] md:h-[480px] object-cover rounded-2xl shadow-xl"
               loading="eager"
