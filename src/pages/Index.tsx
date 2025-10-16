@@ -180,13 +180,15 @@ const Index = () => {
                 </p>
               </div>
               {/* mock visual tipo “dashboard” */}
-              <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4">
-                <div className="h-40 md:h-48 rounded-lg bg-white/20" />
-                <div className="mt-3 grid grid-cols-3 gap-3">
-                  <div className="h-16 rounded-lg bg-white/20" />
-                  <div className="h-16 rounded-lg bg-white/20" />
-                  <div className="h-16 rounded-lg bg-white/20" />
-                </div>
+              <div className="relative">
+            <img
+              src="/images/hero-youly-2.png"
+              alt="Montador profissional"
+              className="w-full object-cover"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
+          </div>
               </div>
             </div>
           </div>
