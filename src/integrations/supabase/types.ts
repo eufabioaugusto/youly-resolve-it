@@ -60,13 +60,6 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "candidaturas_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: false
-            referencedRelation: "montadores_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       carteira: {
@@ -109,13 +102,6 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: true
             referencedRelation: "montadores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "carteira_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: true
-            referencedRelation: "montadores_public"
             referencedColumns: ["id"]
           },
         ]
@@ -242,13 +228,6 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: false
             referencedRelation: "montadores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jobs_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: false
-            referencedRelation: "montadores_public"
             referencedColumns: ["id"]
           },
         ]
@@ -388,13 +367,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "negociacoes_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: false
-            referencedRelation: "montadores_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "negociacoes_pagamento_id_fkey"
             columns: ["pagamento_id"]
             isOneToOne: false
@@ -507,13 +479,6 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "pagamentos_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: false
-            referencedRelation: "montadores_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profiles: {
@@ -591,13 +556,6 @@ export type Database = {
             referencedRelation: "montadores"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "saques_montador_id_fkey"
-            columns: ["montador_id"]
-            isOneToOne: false
-            referencedRelation: "montadores_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -626,60 +584,7 @@ export type Database = {
       }
     }
     Views: {
-      montadores_public: {
-        Row: {
-          avaliacao_media: number | null
-          badges: string[] | null
-          created_at: string | null
-          especialidades: string[] | null
-          foto_perfil_url: string | null
-          horas_trabalhadas: number | null
-          id: string | null
-          is_premium: boolean | null
-          nivel_gamificacao: string | null
-          preco_hora: number | null
-          projetos_realizados: number | null
-          status: string | null
-          total_avaliacoes: number | null
-          total_valor_movimentado: number | null
-          user_id: string | null
-        }
-        Insert: {
-          avaliacao_media?: number | null
-          badges?: string[] | null
-          created_at?: string | null
-          especialidades?: string[] | null
-          foto_perfil_url?: string | null
-          horas_trabalhadas?: number | null
-          id?: string | null
-          is_premium?: boolean | null
-          nivel_gamificacao?: string | null
-          preco_hora?: number | null
-          projetos_realizados?: number | null
-          status?: string | null
-          total_avaliacoes?: number | null
-          total_valor_movimentado?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          avaliacao_media?: number | null
-          badges?: string[] | null
-          created_at?: string | null
-          especialidades?: string[] | null
-          foto_perfil_url?: string | null
-          horas_trabalhadas?: number | null
-          id?: string | null
-          is_premium?: boolean | null
-          nivel_gamificacao?: string | null
-          preco_hora?: number | null
-          projetos_realizados?: number | null
-          status?: string | null
-          total_avaliacoes?: number | null
-          total_valor_movimentado?: number | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       create_first_admin: {
