@@ -298,14 +298,8 @@ const Index = () => {
         <div className="container mx-auto px-4 space-y-20">
           {/* Passo 1: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
-              <Image
-                src="/imagens/how-1.png"
-                alt="Descreva seu projeto"
-                fill
-                className="object-cover rounded-2xl"
-                priority
-              />
+            <div className="rounded-2xl bg-muted h-72 md:h-96">
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
             </div>
             <div>
               <Badge variant="secondary" className="mb-3">
@@ -345,15 +339,15 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <div className="order-1 md:order-2 relative rounded-2xl overflow-hidden h-72 md:h-96">
-              <Image src="/imagens/how-2.png" alt="Escolha seu montador" fill className="object-cover rounded-2xl" />
+            <div className="order-1 md:order-2 rounded-2xl bg-muted h-72 md:h-96">
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
             </div>
           </div>
 
           {/* Passo 3: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
-              <Image src="/imagens/how-3.png" alt="Serviço realizado" fill className="object-cover rounded-2xl" />
+            <div className="rounded-2xl bg-muted h-72 md:h-96">
+              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
             </div>
             <div>
               <Badge variant="secondary" className="mb-3">
