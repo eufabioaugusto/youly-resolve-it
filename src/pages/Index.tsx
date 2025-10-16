@@ -298,9 +298,13 @@ const Index = () => {
         <div className="container mx-auto px-4 space-y-20">
           {/* Passo 1: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-2xl bg-muted h-72 md:h-96">
-              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
-            </div>
+            <img
+              src="/images/how-1.png"
+              alt="Montador profissional"
+              className="w-full object-cover"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
             <div>
               <Badge variant="secondary" className="mb-3">
                 Passo 1
@@ -339,16 +343,24 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <div className="order-1 md:order-2 rounded-2xl bg-muted h-72 md:h-96">
-              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
-            </div>
+            <img
+              src="/images/how-2.png"
+              alt="Montador profissional"
+              className="w-full object-cover"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
           </div>
 
           {/* Passo 3: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-2xl bg-muted h-72 md:h-96">
-              <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5" />
-            </div>
+            <img
+              src="/images/how-3.png"
+              alt="Montador profissional"
+              className="w-full object-cover"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
             <div>
               <Badge variant="secondary" className="mb-3">
                 Passo 3
