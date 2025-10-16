@@ -128,9 +128,9 @@ const Index = () => {
           {/* Lado direito: imagem (garante renderização) */}
           <div className="relative">
             <img
-              src="public/images/hero-youly-1.png"
+              src="/images/hero-youly-1.png"
               alt="Montador profissional"
-              className="w-full h-[360px] md:h-[480px] object-cover rounded-2xl shadow-xl"
+              className="w-full h-[360px] md:h-[480px] object-cover shadow-xl"
               loading="eager"
               referrerPolicy="no-referrer"
             />
