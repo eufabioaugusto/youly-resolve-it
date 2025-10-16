@@ -111,11 +111,11 @@ const Index = () => {
             {/* Chips de prova social no hero */}
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">1000+</div>
+                <div className="text-2xl font-bold">500+</div>
                 <div className="text-sm opacity-90">Montadores verificados</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">5000+</div>
+                <div className="text-2xl font-bold">1000+</div>
                 <div className="text-sm opacity-90">Móveis montados</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
@@ -173,7 +173,7 @@ const Index = () => {
           <div className="rounded-2xl bg-gradient-to-r from-[#E53935] to-[#FF7043] p-6 md:p-10 text-white">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
-                <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+5.000</div>
+                <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+1.000</div>
                 <div className="text-2xl md:text-3xl font-semibold mt-2">móveis já montados pela rede YOULY</div>
                 <p className="mt-4 text-white/90">
                   Garantia de 30 dias em todos os serviços. Segurança, velocidade e avaliação real.
