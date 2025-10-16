@@ -298,13 +298,15 @@ const Index = () => {
         <div className="container mx-auto px-4 space-y-20">
           {/* Passo 1: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <img
-              src="/images/how-1.png"
-              alt="Montador profissional"
-              className="w-full object-cover"
-              loading="eager"
-              referrerPolicy="no-referrer"
-            />
+            <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
+              <Image
+                src="/imagens/how-1.png"
+                alt="Descreva seu projeto"
+                fill
+                className="object-cover rounded-2xl"
+                priority
+              />
+            </div>
             <div>
               <Badge variant="secondary" className="mb-3">
                 Passo 1
@@ -343,24 +345,16 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <img
-              src="/images/how-2.png"
-              alt="Montador profissional"
-              className="w-full object-cover"
-              loading="eager"
-              referrerPolicy="no-referrer"
-            />
+            <div className="order-1 md:order-2 relative rounded-2xl overflow-hidden h-72 md:h-96">
+              <Image src="/imagens/how-2.png" alt="Escolha seu montador" fill className="object-cover rounded-2xl" />
+            </div>
           </div>
 
           {/* Passo 3: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <img
-              src="/images/how-3.png"
-              alt="Montador profissional"
-              className="w-full object-cover"
-              loading="eager"
-              referrerPolicy="no-referrer"
-            />
+            <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
+              <Image src="/imagens/how-3.png" alt="Serviço realizado" fill className="object-cover rounded-2xl" />
+            </div>
             <div>
               <Badge variant="secondary" className="mb-3">
                 Passo 3
