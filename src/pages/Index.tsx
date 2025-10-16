@@ -98,10 +98,10 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-transparent text-white border-white hover:bg-white/10"
+                className="bg-transparent text-white border-white hover:bg-white/10 hover:text-white/90 transition-colors duration-200"
                 asChild
               >
-                <Link to="/register?type=worker" className="flex items-center gap-2 hover:text-white/2">
+                <Link to="/register?type=worker" className="flex items-center gap-2">
                   <Wrench className="w-5 h-5" />
                   Quero trabalhar
                 </Link>
