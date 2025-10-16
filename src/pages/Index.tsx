@@ -3,8 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Users, Shield, Star, CheckCircle, Clock, MapPin, Smartphone } from "lucide-react";
+import { useEffect } from "react";
 
 const Index = () => {
+  // Auto-scroll suave nas logos
+  useEffect(() => {
+    const scrollArea = document.querySelector(".logo-scroll");
+    if (!scrollArea) return;
+    let scrollAmount = 0;
+    const scrollSpeed = 0.5;
+
+    const scroll = () => {
+      scrollAmount += scrollSpeed;
+      if (scrollAmount >= scrollArea.scrollWidth / 2) scrollAmount = 0;
+      scrollArea.scrollLeft = scrollAmount;
+      requestAnimationFrame(scroll);
+    };
+    scroll();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -34,16 +51,16 @@ const Index = () => {
         </div>
       </header>
 
-      {/* ======================= HERO (Impact style) ======================= */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="relative container mx-auto px-4 py-20 md:py-28">
+      {/* ======================= HERO (Impact + imagem) ======================= */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/90 to-primary-dark/80 text-white">
+        <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 items-center gap-12">
+          {/* Lado esquerdo: texto */}
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-5">
               🚀 Nova plataforma de serviços
             </Badge>
 
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
               Chamou. <span className="opacity-90">Resolveu.</span>
             </h1>
 
@@ -74,19 +91,29 @@ const Index = () => {
 
             {/* Chips de prova social no hero */}
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">1000+</div>
-                <div className="text-sm opacity-90">Montadores verificados</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">5000+</div>
-                <div className="text-sm opacity-90">Móveis montados</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">4.9★</div>
-                <div className="text-sm opacity-90">Avaliação média</div>
-              </div>
+              {[
+                { num: "1000+", txt: "Montadores verificados" },
+                { num: "5000+", txt: "Móveis montados" },
+                { num: "4.9★", txt: "Avaliação média" },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white hover:scale-[1.03] transition-transform"
+                >
+                  <div className="text-2xl font-bold">{item.num}</div>
+                  <div className="text-sm opacity-90">{item.txt}</div>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* Lado direito: imagem */}
+          <div className="relative hidden md:block">
+            <img
+              src="https://img.freepik.com/fotos-gratis/carpinteiro-cortando-placa-de-mdf-dentro-da-oficina_23-2149451056.jpg?t=st=1760628316~exp=1760631916~hmac=b0c11758baa34f7f58507f4388bd74ff1e6a5aaa0fb4e7308c8ef6f5656b42bf&w=2000"
+              alt="Montador profissional"
+              className="rounded-2xl shadow-xl animate-fade-up"
+            />
           </div>
         </div>
 
@@ -102,45 +129,23 @@ const Index = () => {
       {/* ======================= 1) SCROLL DE MARCAS ======================= */}
       <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
-          <div className="overflow-x-auto whitespace-nowrap no-scrollbar py-2">
-            {/* Duplicado para dar sensação de carrossel longo */}
-            <div className="inline-flex items-center gap-10 opacity-70">
+          <div className="logo-scroll overflow-x-auto whitespace-nowrap no-scrollbar py-2 flex items-center gap-10 opacity-80 hover:opacity-100 transition-opacity">
+            {[
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png",
+              "https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png",
+              "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png",
+              "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg",
+              "https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png",
+            ].map((src, i) => (
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/2560px-Ikea_logo.svg.png"
-                alt="IKEA"
-                className="h-8"
+                key={i}
+                src={src}
+                alt={`Logo ${i}`}
+                className="h-8 md:h-10 object-contain hover:scale-105 transition-transform"
               />
-              <img
-                src="https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png"
-                alt="Tok&Stok"
-                className="h-6"
-              />
-              <img
-                src="https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png"
-                alt="Magalu"
-                className="h-6"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png"
-                alt="Amazon"
-                className="h-6"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png"
-                alt="Casas Bahia"
-                className="h-6"
-              />
-              <img
-                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg"
-                alt="Etna"
-                className="h-6"
-              />
-              <img
-                src="https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png"
-                alt="Leroy"
-                className="h-6"
-              />
-            </div>
+            ))}
           </div>
         </div>
       </section>
