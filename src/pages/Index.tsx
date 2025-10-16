@@ -107,7 +107,7 @@ const Index = () => {
             <div className="inline-flex items-center gap-10 opacity-70">
               <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Ikea_logo.svg" alt="IKEA" className="h-8" />
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/8/8f/Tok&Stok_logo.png"
+                src="https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png"
                 alt="Tok&Stok"
                 className="h-6"
               />
