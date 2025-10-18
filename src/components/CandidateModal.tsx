@@ -68,7 +68,7 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
         throw error;
       }
 
-      console.log('Candidatura enviada com sucesso!');
+      console.log('Candidatura enviada com sucesso! Chamando onSuccess...');
       
       // Atualizar estado primeiro
       onSuccess();
@@ -78,6 +78,7 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
         description: "O cliente será notificado sobre sua proposta."
       });
 
+      console.log('Fechando modal...');
       // Fechar modal e limpar campos
       onOpenChange(false);
       setProposta('');

@@ -87,18 +87,26 @@ const AvailableJobs = () => {
   };
 
   const fetchCandidaturas = async () => {
-    if (!montadorProfile) return;
+    if (!montadorProfile) {
+      console.log('fetchCandidaturas: montadorProfile não disponível');
+      return;
+    }
 
     try {
+      console.log('Buscando candidaturas para montador_id:', montadorProfile.id);
       const { data, error } = await supabase
         .from('candidaturas')
         .select('job_id')
         .eq('montador_id', montadorProfile.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na query de candidaturas:', error);
+        throw error;
+      }
       
       const jobIds = data?.map(c => c.job_id) || [];
-      console.log('Candidaturas carregadas:', jobIds);
+      console.log('Candidaturas encontradas do servidor:', jobIds);
+      console.log('Total de candidaturas:', jobIds.length);
       setCandidaturas(jobIds);
     } catch (error) {
       console.error('Erro ao buscar candidaturas:', error);
@@ -112,16 +120,21 @@ const AvailableJobs = () => {
 
   const handleCandidaturaSuccess = async () => {
     if (selectedJob) {
-      console.log('Adicionando job às candidaturas:', selectedJob.id);
+      console.log('Candidatura enviada para job:', selectedJob.id);
       // Atualizar estado local imediatamente
       setCandidaturas(prev => {
-        const updated = [...prev, selectedJob.id];
-        console.log('Candidaturas atualizadas:', updated);
-        return updated;
+        if (!prev.includes(selectedJob.id)) {
+          const updated = [...prev, selectedJob.id];
+          console.log('Estado local atualizado. Candidaturas:', updated);
+          return updated;
+        }
+        return prev;
       });
     }
-    // Refresh candidaturas do servidor para garantir sincronização
-    await fetchCandidaturas();
+    // Buscar candidaturas do servidor após um pequeno delay para garantir que o banco foi atualizado
+    setTimeout(async () => {
+      await fetchCandidaturas();
+    }, 500);
   };
 
   const isJobAvailable = (job: Job) => {
