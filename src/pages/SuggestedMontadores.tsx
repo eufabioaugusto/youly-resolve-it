@@ -330,79 +330,79 @@ const SuggestedMontadores = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {montadores.map((montador) => (
-                  <Card key={montador.id} className="shadow-glow border-0">
+                  <Card key={montador.id} className="shadow-glow border-0 bg-white">
                     <CardContent className="p-6">
-                      <div className="flex items-start gap-6">
-                        <Avatar className="w-16 h-16">
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        {/* Avatar */}
+                        <Avatar className="w-20 h-20">
                           <AvatarImage
                             src={montador.foto_perfil_url || ""}
                             alt={`Foto de ${montador.profiles?.nome || "Montador"}`}
                           />
-                          <AvatarFallback className="bg-gradient-primary text-white text-lg font-bold">
+                          <AvatarFallback className="bg-gradient-primary text-white text-xl font-bold">
                             {getInitials(montador.profiles?.nome || "MT")}
                           </AvatarFallback>
                         </Avatar>
 
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h3 className="text-xl font-bold mb-1">{montador.profiles?.nome || "Montador"}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                  <span>{montador.avaliacao_media.toFixed(1)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Users className="w-4 h-4" />
-                                  <span>{montador.projetos_realizados} projetos</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  <span className="font-semibold text-primary">
-                                    R$ {montador.preco_hora?.toFixed(2) || "50,00"}/hora
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
+                        {/* Nome */}
+                        <h3 className="text-lg font-bold text-foreground">{montador.profiles?.nome || "Montador"}</h3>
 
-                            <Button
-                              onClick={() => handleHireMontador(montador.id)}
-                              disabled={loadingHire === montador.id}
-                              className="bg-gradient-primary hover:shadow-glow"
-                            >
-                              {loadingHire === montador.id ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  Contratando...
-                                </div>
-                              ) : (
-                                "Iniciar Negociação"
-                              )}
-                            </Button>
+                        {/* Stats em coluna */}
+                        <div className="w-full space-y-2">
+                          <div className="flex items-center justify-center gap-1 text-sm">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-foreground">{montador.avaliacao_media.toFixed(1)}</span>
                           </div>
-
-                          {montador.especialidades && montador.especialidades.length > 0 && (
-                            <div className="mb-4">
-                              <p className="text-sm font-medium mb-2">Especialidades:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {montador.especialidades.map((especialidade, index) => (
-                                  <Badge key={index} variant="secondary">
-                                    {especialidade}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {montador.projetos_realizados === 0 && (
-                            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
-                              <p className="text-sm text-muted-foreground">
-                                <strong>Nota:</strong> Novo na plataforma, mas verificado e qualificado. Perfeito para
-                                começar com projetos simples!
-                              </p>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                            <Users className="w-4 h-4" />
+                            <span>{montador.projetos_realizados} projetos</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-1 text-sm">
+                            <Clock className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-primary">
+                              R$ {montador.preco_hora?.toFixed(2) || "50,00"}/hora
+                            </span>
+                          </div>
                         </div>
+
+                        {/* Especialidades */}
+                        {montador.especialidades && montador.especialidades.length > 0 && (
+                          <div className="w-full">
+                            <p className="text-xs font-medium mb-2 text-muted-foreground">Especialidades:</p>
+                            <div className="flex flex-wrap justify-center gap-1">
+                              {montador.especialidades.slice(0, 3).map((especialidade, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {especialidade}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Nota para novos */}
+                        {montador.projetos_realizados === 0 && (
+                          <div className="w-full bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground">
+                              <strong className="text-foreground">Nota:</strong> Novo na plataforma, mas verificado e qualificado. Perfeito para começar com projetos simples!
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Botão */}
+                        <Button
+                          onClick={() => handleHireMontador(montador.id)}
+                          disabled={loadingHire === montador.id}
+                          className="w-full bg-gradient-primary hover:shadow-glow"
+                        >
+                          {loadingHire === montador.id ? (
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Contratando...
+                            </div>
+                          ) : (
+                            "Iniciar Negociação"
+                          )}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
