@@ -63,12 +63,15 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
 
       if (error) throw error;
 
+      // Atualizar estado primeiro
+      onSuccess();
+      
       toast({
         title: "Candidatura enviada!",
         description: "O cliente será notificado sobre sua proposta."
       });
 
-      onSuccess();
+      // Fechar modal e limpar campos
       onOpenChange(false);
       setProposta('');
       setObservacoes('');

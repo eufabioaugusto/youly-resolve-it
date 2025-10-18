@@ -107,11 +107,13 @@ const AvailableJobs = () => {
     setCandidateModalOpen(true);
   };
 
-  const handleCandidaturaSuccess = () => {
+  const handleCandidaturaSuccess = async () => {
     if (selectedJob) {
+      // Atualizar estado local imediatamente
       setCandidaturas(prev => [...prev, selectedJob.id]);
     }
-    fetchCandidaturas(); // Refresh candidaturas
+    // Refresh candidaturas do servidor para garantir sincronização
+    await fetchCandidaturas();
   };
 
   const isJobAvailable = (job: Job) => {
