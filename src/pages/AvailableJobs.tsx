@@ -51,7 +51,9 @@ const AvailableJobs = () => {
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 useEffect montadorProfile mudou:', montadorProfile);
     if (montadorProfile) {
+      console.log('✅ Montador profile disponível, iniciando buscas...');
       fetchJobs();
       fetchCandidaturas();
 
@@ -67,13 +69,14 @@ const AvailableJobs = () => {
             filter: `montador_id=eq.${montadorProfile.id}`
           },
           (payload) => {
-            console.log('Nova candidatura detectada:', payload);
+            console.log('🔔 Nova candidatura detectada via Realtime:', payload);
             fetchCandidaturas(); // Recarregar candidaturas do banco
           }
         )
         .subscribe();
 
       return () => {
+        console.log('🧹 Limpando canal Realtime');
         supabase.removeChannel(channel);
       };
     }
@@ -110,26 +113,35 @@ const AvailableJobs = () => {
 
   const fetchCandidaturas = async () => {
     if (!montadorProfile) {
-      console.log('fetchCandidaturas: montadorProfile não disponível');
+      console.log('❌ fetchCandidaturas: montadorProfile não disponível');
       return;
     }
 
     try {
-      console.log('Buscando candidaturas do banco para montador_id:', montadorProfile.id);
+      console.log('🔍 INICIANDO BUSCA DE CANDIDATURAS');
+      console.log('🆔 Montador Profile ID:', montadorProfile.id);
+      console.log('👤 User ID do montador:', montadorProfile.user_id);
+      
       const { data, error } = await supabase
         .from('candidaturas')
-        .select('job_id')
+        .select('job_id, montador_id, status, proposta')
         .eq('montador_id', montadorProfile.id);
 
+      console.log('📦 Resposta bruta do Supabase:', { data, error });
+
       if (error) {
-        console.error('Erro na query de candidaturas:', error);
+        console.error('❌ Erro na query de candidaturas:', error);
         throw error;
       }
       
       const jobIds = data?.map(c => c.job_id) || [];
-      console.log('✅ Candidaturas do banco:', jobIds);
-      console.log('📊 Total:', jobIds.length);
+      console.log('✅ Job IDs encontrados:', jobIds);
+      console.log('📊 Total de candidaturas:', jobIds.length);
+      console.log('🎯 Candidaturas completas:', data);
+      
       setCandidaturas(jobIds);
+      
+      console.log('✔️ Estado atualizado com:', jobIds);
     } catch (error) {
       console.error('❌ Erro ao buscar candidaturas:', error);
     }
@@ -337,7 +349,12 @@ const AvailableJobs = () => {
                         Ver detalhes
                       </Button>
                       <Button 
-                        onClick={() => openCandidateModal(job)}
+                        onClick={() => {
+                          console.log('🖱️ Clique no botão do job:', job.id);
+                          console.log('📋 Array de candidaturas atual:', candidaturas);
+                          console.log('🔍 Job está na lista?', candidaturas.includes(job.id));
+                          openCandidateModal(job);
+                        }}
                         disabled={candidaturas.includes(job.id)}
                         className="flex-1 bg-gradient-primary hover:shadow-glow"
                       >
