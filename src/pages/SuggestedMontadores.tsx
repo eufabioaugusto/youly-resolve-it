@@ -315,7 +315,7 @@ const SuggestedMontadores = () => {
 
           {/* Suggested Montadores */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">Montadores Recomendados</h2>
+            <h2 className="text-2xl font-bold text-black text-center mb-6">Montadores Recomendados</h2>
 
             {montadores.length === 0 ? (
               <Card className="shadow-glow border-0 bg-white text-center p-8">
