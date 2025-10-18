@@ -149,9 +149,38 @@ const JobCandidates = () => {
     }
   };
 
-  const handleAcceptCandidate = async (candidaturaId: string, montadorId: string, selectedDate: any) => {
+  const handleAcceptCandidate = async (candidaturaId: string, montadorId: string, selectedDate: any, proposta?: number) => {
+    if (!job || !clienteProfile) return;
+
     try {
-      // Iniciar transação - aceitar candidatura e atualizar job
+      // 1. Criar negociação com valor da proposta
+      const { data: negociacaoData, error: negociacaoError } = await supabase
+        .from('negociacoes')
+        .insert({
+          job_id: job.id,
+          montador_id: montadorId,
+          cliente_id: clienteProfile.id,
+          valor_final: proposta || job.valor_estimado,
+          status: 'aceito'
+        })
+        .select()
+        .single();
+
+      if (negociacaoError) throw negociacaoError;
+
+      // 2. Atualizar job para aguardar pagamento
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({ 
+          montador_id: montadorId,
+          status: 'aguardando_pagamento',
+          data_opcoes: [selectedDate]
+        })
+        .eq('id', jobId);
+
+      if (jobError) throw jobError;
+
+      // 3. Aceitar candidatura escolhida
       const { error: candidaturaError } = await supabase
         .from('candidaturas')
         .update({ status: 'aceito' })
@@ -159,19 +188,7 @@ const JobCandidates = () => {
 
       if (candidaturaError) throw candidaturaError;
 
-      // Atualizar job com montador e data escolhida
-      const { error: jobError } = await supabase
-        .from('jobs')
-        .update({ 
-          montador_id: montadorId,
-          status: 'em_andamento',
-          data_opcoes: [selectedDate] // Manter apenas a data escolhida
-        })
-        .eq('id', jobId);
-
-      if (jobError) throw jobError;
-
-      // Rejeitar outras candidaturas
+      // 4. Rejeitar outras candidaturas
       const { error: rejectError } = await supabase
         .from('candidaturas')
         .update({ status: 'recusado' })
@@ -180,12 +197,30 @@ const JobCandidates = () => {
 
       if (rejectError) throw rejectError;
 
+      // 5. Criar notificação para o montador
+      const { data: montadorData } = await supabase
+        .from('montadores')
+        .select('user_id')
+        .eq('id', montadorId)
+        .single();
+
+      if (montadorData) {
+        await supabase
+          .from('notificacoes')
+          .insert({
+            user_id: montadorData.user_id,
+            tipo: 'negociacao',
+            mensagem: `Sua candidatura foi aceita! O cliente selecionou a data ${new Date(selectedDate.data).toLocaleDateString('pt-BR')} - ${selectedDate.periodo === 'manha' ? 'Manhã' : 'Tarde'}. Aguarde o pagamento para confirmar o trabalho.`
+          });
+      }
+
       toast({
         title: "Candidatura aceita!",
-        description: "O montador foi selecionado e notificado."
+        description: "Redirecionando para pagamento..."
       });
 
-      navigate('/cliente');
+      // Redirecionar para página de negociação/pagamento
+      navigate(`/cliente/negociacao/${job.id}`);
     } catch (error: any) {
       toast({
         title: "Erro ao aceitar candidatura",
@@ -478,7 +513,7 @@ const JobCandidates = () => {
                                 key={index}
                                 variant="outline"
                                 className="justify-start h-auto p-3"
-                                onClick={() => handleAcceptCandidate(candidatura.id, candidatura.montadores.id, opcao)}
+                                onClick={() => handleAcceptCandidate(candidatura.id, candidatura.montadores.id, opcao, candidatura.proposta)}
                               >
                                 <div className="flex items-center gap-2">
                                   <CheckCircle className="w-4 h-4" />

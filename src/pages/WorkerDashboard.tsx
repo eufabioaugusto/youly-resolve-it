@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import JobDetailsModal from "@/components/JobDetailsModal";
 import CandidateModal from "@/components/CandidateModal";
+import NotificationCenter from "@/components/NotificationCenter";
 import { 
   Star, 
   MapPin, 
@@ -337,7 +338,8 @@ const WorkerDashboard = () => {
               Encontre novos trabalhos ou acompanhe seus serviços.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <NotificationCenter variant="header" />
             <Link to="/montador/perfil">
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
