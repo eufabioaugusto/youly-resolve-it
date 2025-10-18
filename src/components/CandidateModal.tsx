@@ -51,6 +51,8 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
 
     setLoading(true);
     try {
+      console.log('Enviando candidatura:', { job_id: job.id, montador_id: montadorProfile.id });
+      
       const { error } = await supabase
         .from('candidaturas')
         .insert({
@@ -61,8 +63,13 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
           status: 'pendente'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao inserir candidatura:', error);
+        throw error;
+      }
 
+      console.log('Candidatura enviada com sucesso!');
+      
       // Atualizar estado primeiro
       onSuccess();
       
@@ -76,9 +83,10 @@ const CandidateModal = ({ job, open, onOpenChange, onSuccess }: CandidateModalPr
       setProposta('');
       setObservacoes('');
     } catch (error: any) {
+      console.error('Erro completo:', error);
       toast({
         title: "Erro ao enviar candidatura",
-        description: error.message,
+        description: error.message || "Você já se candidatou a este trabalho",
         variant: "destructive"
       });
     } finally {

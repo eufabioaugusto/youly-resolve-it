@@ -96,7 +96,10 @@ const AvailableJobs = () => {
         .eq('montador_id', montadorProfile.id);
 
       if (error) throw error;
-      setCandidaturas(data?.map(c => c.job_id) || []);
+      
+      const jobIds = data?.map(c => c.job_id) || [];
+      console.log('Candidaturas carregadas:', jobIds);
+      setCandidaturas(jobIds);
     } catch (error) {
       console.error('Erro ao buscar candidaturas:', error);
     }
@@ -109,8 +112,13 @@ const AvailableJobs = () => {
 
   const handleCandidaturaSuccess = async () => {
     if (selectedJob) {
+      console.log('Adicionando job às candidaturas:', selectedJob.id);
       // Atualizar estado local imediatamente
-      setCandidaturas(prev => [...prev, selectedJob.id]);
+      setCandidaturas(prev => {
+        const updated = [...prev, selectedJob.id];
+        console.log('Candidaturas atualizadas:', updated);
+        return updated;
+      });
     }
     // Refresh candidaturas do servidor para garantir sincronização
     await fetchCandidaturas();
