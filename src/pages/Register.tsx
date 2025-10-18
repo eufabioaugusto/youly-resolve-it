@@ -101,7 +101,9 @@ const Register = () => {
       role: 'montador', 
       nome: workerForm.name,
       telefone: removeMask(workerForm.phone),
-      documento: removeMask(workerForm.cpf)
+      documento: removeMask(workerForm.cpf),
+      preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
+      bio: workerForm.bio
     });
     
     if (error) {
