@@ -39,7 +39,7 @@ const SuggestedMontadores = () => {
   const { toast } = useToast();
   const { clienteProfile } = useProfile();
   const { criarNegociacao } = useNegociacoes();
-  
+
   const [job, setJob] = useState<Job | null>(null);
   const [montadores, setMontadores] = useState<Montador[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,71 +54,71 @@ const SuggestedMontadores = () => {
   const fetchJobAndMontadores = async () => {
     try {
       // Buscar o job criado
-      const { data: jobData, error: jobError } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', jobId)
-        .single();
+      const { data: jobData, error: jobError } = await supabase.from("jobs").select("*").eq("id", jobId).single();
 
       if (jobError) throw jobError;
       setJob(jobData);
 
       // Buscar montadores ativos que têm especialidades relacionadas ao job
       const { data: montadoresData, error: montadoresError } = await supabase
-        .from('montadores')
-        .select('id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url')
-        .eq('status', 'ativo')
-        .order('avaliacao_media', { ascending: false })
-        .order('projetos_realizados', { ascending: false });
+        .from("montadores")
+        .select("id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url")
+        .eq("status", "ativo")
+        .order("avaliacao_media", { ascending: false })
+        .order("projetos_realizados", { ascending: false });
 
       if (montadoresError) throw montadoresError;
 
       // Buscar profiles dos montadores
       if (montadoresData && montadoresData.length > 0) {
-        const userIds = montadoresData.map(m => m.user_id);
+        const userIds = montadoresData.map((m) => m.user_id);
         const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, nome')
-          .in('user_id', userIds);
+          .from("profiles")
+          .select("user_id, nome")
+          .in("user_id", userIds);
 
         if (profilesError) throw profilesError;
 
         // Combinar dados e filtrar por especialidades relacionadas ao job
-        let montadoresWithProfiles = montadoresData.map(montador => {
-          const profile = profilesData?.find(p => p.user_id === montador.user_id);
+        let montadoresWithProfiles = montadoresData.map((montador) => {
+          const profile = profilesData?.find((p) => p.user_id === montador.user_id);
           return {
             ...montador,
-            profiles: profile || { nome: 'Montador' }
+            profiles: profile || { nome: "Montador" },
           };
         });
 
         // Filtrar montadores que têm especialidades relacionadas ao job
         if (jobData.categoria) {
-          montadoresWithProfiles = montadoresWithProfiles.filter(montador => {
+          montadoresWithProfiles = montadoresWithProfiles.filter((montador) => {
             if (!montador.especialidades) return false;
-            
+
             const jobCategoria = jobData.categoria.toLowerCase();
-            return montador.especialidades.some(esp => {
+            return montador.especialidades.some((esp) => {
               const especialidade = esp.toLowerCase();
-              return especialidade.includes(jobCategoria) || 
-                     jobCategoria.includes(especialidade) ||
-                     (jobCategoria === 'mesa' && especialidade === 'mesa') ||
-                     (jobCategoria === 'guarda-roupa' && especialidade === 'guarda-roupa') ||
-                     (jobCategoria === 'cama' && especialidade === 'cama') ||
-                     (jobCategoria === 'estante' && especialidade === 'estante');
+              return (
+                especialidade.includes(jobCategoria) ||
+                jobCategoria.includes(especialidade) ||
+                (jobCategoria === "mesa" && especialidade === "mesa") ||
+                (jobCategoria === "guarda-roupa" && especialidade === "guarda-roupa") ||
+                (jobCategoria === "cama" && especialidade === "cama") ||
+                (jobCategoria === "estante" && especialidade === "estante")
+              );
             });
           });
         }
 
         // Se não há montadores com especialidades específicas, mostrar todos os ativos (máximo 3)
         if (montadoresWithProfiles.length === 0) {
-          montadoresWithProfiles = montadoresData.map(montador => {
-            const profile = profilesData?.find(p => p.user_id === montador.user_id);
-            return {
-              ...montador,
-              profiles: profile || { nome: 'Montador' }
-            };
-          }).slice(0, 3);
+          montadoresWithProfiles = montadoresData
+            .map((montador) => {
+              const profile = profilesData?.find((p) => p.user_id === montador.user_id);
+              return {
+                ...montador,
+                profiles: profile || { nome: "Montador" },
+              };
+            })
+            .slice(0, 3);
         } else {
           // Pegar até 3 montadores especializados
           montadoresWithProfiles = montadoresWithProfiles.slice(0, 3);
@@ -127,13 +127,12 @@ const SuggestedMontadores = () => {
       } else {
         setMontadores([]);
       }
-
     } catch (error: any) {
-      console.error('Erro ao buscar dados:', error);
+      console.error("Erro ao buscar dados:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os dados",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -142,66 +141,65 @@ const SuggestedMontadores = () => {
 
   const handleHireMontador = async (montadorId: string) => {
     if (!job || !clienteProfile) return;
-    
+
     setLoadingHire(montadorId);
     try {
-      console.log('Iniciando contratação:', { jobId: job.id, montadorId, clienteId: clienteProfile.id });
-      
+      console.log("Iniciando contratação:", { jobId: job.id, montadorId, clienteId: clienteProfile.id });
+
       // Verificar se já existe uma negociação para este job
       const { data: existingNegociacao, error: checkError } = await supabase
-        .from('negociacoes')
-        .select('id')
-        .eq('job_id', job.id)
+        .from("negociacoes")
+        .select("id")
+        .eq("job_id", job.id)
         .maybeSingle();
 
       if (checkError) {
-        console.error('Erro ao verificar negociação existente:', checkError);
+        console.error("Erro ao verificar negociação existente:", checkError);
         throw checkError;
       }
 
       if (existingNegociacao) {
-        console.log('Negociação já existe, redirecionando...');
+        console.log("Negociação já existe, redirecionando...");
         navigate(`/cliente/negociacao/${job.id}`);
         return;
       }
-      
+
       // Criar negociação usando o hook
       const negociacao = await criarNegociacao(job.id, montadorId, clienteProfile.id);
-      
+
       if (!negociacao) {
-        throw new Error('Falha ao criar negociação');
+        throw new Error("Falha ao criar negociação");
       }
 
       // Atualizar job para "em_negociacao"
       const { error: jobError } = await supabase
-        .from('jobs')
-        .update({ 
-          status: 'em_negociacao',
-          montador_id: montadorId
+        .from("jobs")
+        .update({
+          status: "em_negociacao",
+          montador_id: montadorId,
         })
-        .eq('id', job.id);
+        .eq("id", job.id);
 
       if (jobError) {
-        console.error('Erro ao atualizar job:', jobError);
+        console.error("Erro ao atualizar job:", jobError);
         throw jobError;
       }
 
       toast({
         title: "Negociação iniciada!",
-        description: "Você será redirecionado para a central de negociação."
+        description: "Você será redirecionado para a central de negociação.",
       });
 
       // Aguardar mais tempo antes de navegar
       setTimeout(() => {
         navigate(`/cliente/negociacao/${job.id}`, { replace: true });
       }, 2000);
-
     } catch (error: any) {
-      console.error('Erro completo na contratação:', error);
+      console.error("Erro completo na contratação:", error);
       toast({
         title: "Erro ao iniciar negociação",
         description: error.message || "Tente novamente em alguns instantes.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingHire(null);
@@ -209,18 +207,23 @@ const SuggestedMontadores = () => {
   };
 
   const getInitials = (nome: string) => {
-    return nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return nome
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const formatPeriodo = (periodo: string) => {
-    return periodo === 'manha' ? 'Manhã (08h-12h)' : 'Tarde (13h-18h)';
+    return periodo === "manha" ? "Manhã (08h-12h)" : "Tarde (13h-18h)";
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit'
+    return new Date(dateStr).toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
     });
   };
 
@@ -251,8 +254,8 @@ const SuggestedMontadores = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <Link 
-          to="/cliente" 
+        <Link
+          to="/cliente"
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -265,8 +268,8 @@ const SuggestedMontadores = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4">
               <CheckCircle className="w-8 h-8 text-green-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Pedido criado com sucesso!</h1>
-            <p className="text-white/80 mb-6">
+            <h1 className="text-3xl font-bold text-black mb-2">Pedido criado com sucesso!</h1>
+            <p className="text-black/80 mb-6">
               Montadores próximos foram notificados. Aqui estão 3 montadores recomendados para seu projeto:
             </p>
           </div>
@@ -296,7 +299,7 @@ const SuggestedMontadores = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <strong className="text-sm">Datas disponíveis:</strong>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -312,19 +315,15 @@ const SuggestedMontadores = () => {
 
           {/* Suggested Montadores */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">
-              Montadores Recomendados
-            </h2>
-            
+            <h2 className="text-2xl font-bold text-white text-center mb-6">Montadores Recomendados</h2>
+
             {montadores.length === 0 ? (
               <Card className="shadow-glow border-0 bg-white text-center p-8">
                 <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Ainda não há montadores disponíveis em sua região.
-                  </p>
+                  <p className="text-muted-foreground mb-4">Ainda não há montadores disponíveis em sua região.</p>
                   <p className="text-sm text-muted-foreground">
-                    Seu pedido foi enviado e montadores poderão se candidatar através da plataforma.
-                    Você será notificado assim que houver candidaturas.
+                    Seu pedido foi enviado e montadores poderão se candidatar através da plataforma. Você será
+                    notificado assim que houver candidaturas.
                   </p>
                 </CardContent>
               </Card>
@@ -335,21 +334,19 @@ const SuggestedMontadores = () => {
                     <CardContent className="p-6">
                       <div className="flex items-start gap-6">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage 
-                            src={montador.foto_perfil_url || ""} 
-                            alt={`Foto de ${montador.profiles?.nome || 'Montador'}`}
+                          <AvatarImage
+                            src={montador.foto_perfil_url || ""}
+                            alt={`Foto de ${montador.profiles?.nome || "Montador"}`}
                           />
                           <AvatarFallback className="bg-gradient-primary text-white text-lg font-bold">
-                            {getInitials(montador.profiles?.nome || 'MT')}
+                            {getInitials(montador.profiles?.nome || "MT")}
                           </AvatarFallback>
                         </Avatar>
-                        
+
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-4">
                             <div>
-                              <h3 className="text-xl font-bold mb-1">
-                                {montador.profiles?.nome || 'Montador'}
-                              </h3>
+                              <h3 className="text-xl font-bold mb-1">{montador.profiles?.nome || "Montador"}</h3>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -361,12 +358,14 @@ const SuggestedMontadores = () => {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-4 h-4" />
-                                  <span className="font-semibold text-primary">R$ {montador.preco_hora?.toFixed(2) || '50,00'}/hora</span>
+                                  <span className="font-semibold text-primary">
+                                    R$ {montador.preco_hora?.toFixed(2) || "50,00"}/hora
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                            
-                            <Button 
+
+                            <Button
                               onClick={() => handleHireMontador(montador.id)}
                               disabled={loadingHire === montador.id}
                               className="bg-gradient-primary hover:shadow-glow"
@@ -376,12 +375,12 @@ const SuggestedMontadores = () => {
                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                   Contratando...
                                 </div>
-                               ) : (
-                                 "Iniciar Negociação"
-                               )}
+                              ) : (
+                                "Iniciar Negociação"
+                              )}
                             </Button>
                           </div>
-                          
+
                           {montador.especialidades && montador.especialidades.length > 0 && (
                             <div className="mb-4">
                               <p className="text-sm font-medium mb-2">Especialidades:</p>
@@ -394,12 +393,12 @@ const SuggestedMontadores = () => {
                               </div>
                             </div>
                           )}
-                          
+
                           {montador.projetos_realizados === 0 && (
                             <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3">
                               <p className="text-sm text-muted-foreground">
-                                <strong>Nota:</strong> Novo na plataforma, mas verificado e qualificado. 
-                                Perfeito para começar com projetos simples!
+                                <strong>Nota:</strong> Novo na plataforma, mas verificado e qualificado. Perfeito para
+                                começar com projetos simples!
                               </p>
                             </div>
                           )}
