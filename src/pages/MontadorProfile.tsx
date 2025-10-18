@@ -17,7 +17,7 @@ import axios from "axios";
 
 const especialidadesDisponiveis = [
   "guarda-roupa",
-  "mesa", 
+  "mesa",
   "cama",
   "estante",
   "rack",
@@ -25,13 +25,13 @@ const especialidadesDisponiveis = [
   "escrivaninha",
   "comoda",
   "sapateira",
-  "outros"
+  "outros",
 ];
 
 const MontadorProfile = () => {
   const { profile, montadorProfile, loading, refetch } = useProfile();
   const { toast } = useToast();
-  
+
   // Form states
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -46,9 +46,9 @@ const MontadorProfile = () => {
     bairro: "",
     cidade: "",
     cep: "",
-    estado: ""
+    estado: "",
   });
-  
+
   const [saving, setSaving] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
 
@@ -61,7 +61,7 @@ const MontadorProfile = () => {
       setEspecialidades(montadorProfile.especialidades || []);
       setChavePix(montadorProfile.chave_pix || "");
       setFotoPerfil(montadorProfile.foto_perfil_url || null);
-      
+
       if (profile.endereco) {
         setEndereco(profile.endereco);
       }
@@ -69,49 +69,47 @@ const MontadorProfile = () => {
   }, [profile, montadorProfile]);
 
   const handleEspecialidadeToggle = (especialidade: string) => {
-    setEspecialidades(prev => 
-      prev.includes(especialidade) 
-        ? prev.filter(e => e !== especialidade)
-        : [...prev, especialidade]
+    setEspecialidades((prev) =>
+      prev.includes(especialidade) ? prev.filter((e) => e !== especialidade) : [...prev, especialidade],
     );
   };
 
   const fetchAddressByCep = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, '');
+    const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
 
     setLoadingCep(true);
     try {
       const response = await axios.get(`https://viacep.com.br/ws/${cleanCep}/json/`);
       if (response.data && !response.data.erro) {
-        setEndereco(prev => ({
+        setEndereco((prev) => ({
           ...prev,
           rua: response.data.logradouro || prev.rua,
           bairro: response.data.bairro || prev.bairro,
           cidade: response.data.localidade || prev.cidade,
           estado: response.data.uf || prev.estado,
-          cep: cleanCep
+          cep: cleanCep,
         }));
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      console.error("Erro ao buscar CEP:", error);
     } finally {
       setLoadingCep(false);
     }
   };
 
   const handleCepChange = (value: string) => {
-    const masked = value.replace(/\D/g, '').replace(/(\d{5})(\d{1,3})/, '$1-$2');
-    setEndereco(prev => ({ ...prev, cep: masked }));
-    
-    if (value.replace(/\D/g, '').length === 8) {
+    const masked = value.replace(/\D/g, "").replace(/(\d{5})(\d{1,3})/, "$1-$2");
+    setEndereco((prev) => ({ ...prev, cep: masked }));
+
+    if (value.replace(/\D/g, "").length === 8) {
       fetchAddressByCep(value);
     }
   };
 
   const handleSave = async () => {
     if (!profile?.user_id) return;
-    
+
     // Validações
     if (!nome.trim()) {
       toast({ title: "Nome é obrigatório", variant: "destructive" });
@@ -141,49 +139,48 @@ const MontadorProfile = () => {
       toast({ title: "Chave PIX é obrigatória", variant: "destructive" });
       return;
     }
-    
+
     setSaving(true);
     try {
       // Atualizar perfil geral
       const { error: profileError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           nome,
           telefone: phoneMask(telefone),
           documento: cpfMask(documento),
           endereco,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', profile.user_id);
+        .eq("user_id", profile.user_id);
 
       if (profileError) throw profileError;
 
       // Atualizar perfil específico do montador
       const { error: montadorError } = await supabase
-        .from('montadores')
+        .from("montadores")
         .update({
           preco_hora: precoHora ? parseFloat(precoHora) : null,
           especialidades,
           chave_pix: chavePix,
           foto_perfil_url: fotoPerfil,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', profile.user_id);
+        .eq("user_id", profile.user_id);
 
       if (montadorError) throw montadorError;
 
       toast({
         title: "Perfil atualizado!",
-        description: "Suas informações foram salvas com sucesso."
+        description: "Suas informações foram salvas com sucesso.",
       });
 
       refetch();
-
     } catch (error: any) {
       toast({
         title: "Erro ao salvar",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -191,7 +188,12 @@ const MontadorProfile = () => {
   };
 
   const getInitials = (nome: string) => {
-    return nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return nome
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   if (loading) {
@@ -208,8 +210,8 @@ const MontadorProfile = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <Link 
-          to="/montador" 
+        <Link
+          to="/montador"
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -218,10 +220,8 @@ const MontadorProfile = () => {
 
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Minha Conta</h1>
-            <p className="text-white/80">
-              Mantenha suas informações atualizadas para receber mais trabalhos
-            </p>
+            <h1 className="text-3xl font-bold text-dark mb-2">Minha Conta</h1>
+            <p className="text-dark/80">Mantenha suas informações atualizadas para receber mais trabalhos</p>
           </div>
 
           <div className="grid gap-6">
@@ -232,7 +232,7 @@ const MontadorProfile = () => {
                   <PhotoUpload
                     currentPhotoUrl={fotoPerfil || undefined}
                     onPhotoUpdate={setFotoPerfil}
-                    userId={profile?.user_id || ''}
+                    userId={profile?.user_id || ""}
                     fallbackInitials={getInitials(nome)}
                     size="md"
                   />
@@ -240,26 +240,23 @@ const MontadorProfile = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <h2 className="text-2xl font-bold">Informações Básicas</h2>
                       {montadorProfile && (
-                        <NivelBadge 
-                          nivel={montadorProfile.nivel_gamificacao || 'Bronze'} 
+                        <NivelBadge
+                          nivel={montadorProfile.nivel_gamificacao || "Bronze"}
                           isPremium={montadorProfile.is_premium || false}
                         />
                       )}
                     </div>
-                    <p className="text-muted-foreground">
-                      Dados pessoais e profissionais
-                    </p>
+                    <p className="text-muted-foreground">Dados pessoais e profissionais</p>
                     {montadorProfile && (
                       <div className="text-sm text-muted-foreground mt-2">
-                        {montadorProfile.projetos_realizados || 0} projetos • 
-                        {montadorProfile.total_avaliacoes || 0} avaliações • 
-                        R$ {(montadorProfile.total_valor_movimentado || 0).toFixed(2)} movimentado
+                        {montadorProfile.projetos_realizados || 0} projetos •{montadorProfile.total_avaliacoes || 0}{" "}
+                        avaliações • R$ {(montadorProfile.total_valor_movimentado || 0).toFixed(2)} movimentado
                       </div>
                     )}
                   </div>
                 </CardTitle>
               </CardHeader>
-                
+
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -322,7 +319,7 @@ const MontadorProfile = () => {
                     <Input
                       id="rua"
                       value={endereco.rua}
-                      onChange={(e) => setEndereco(prev => ({ ...prev, rua: e.target.value }))}
+                      onChange={(e) => setEndereco((prev) => ({ ...prev, rua: e.target.value }))}
                       placeholder="Nome da rua"
                     />
                   </div>
@@ -331,7 +328,7 @@ const MontadorProfile = () => {
                     <Input
                       id="numero"
                       value={endereco.numero}
-                      onChange={(e) => setEndereco(prev => ({ ...prev, numero: e.target.value }))}
+                      onChange={(e) => setEndereco((prev) => ({ ...prev, numero: e.target.value }))}
                       placeholder="123"
                     />
                   </div>
@@ -340,7 +337,7 @@ const MontadorProfile = () => {
                     <Input
                       id="bairro"
                       value={endereco.bairro}
-                      onChange={(e) => setEndereco(prev => ({ ...prev, bairro: e.target.value }))}
+                      onChange={(e) => setEndereco((prev) => ({ ...prev, bairro: e.target.value }))}
                       placeholder="Nome do bairro"
                     />
                   </div>
@@ -349,7 +346,7 @@ const MontadorProfile = () => {
                     <Input
                       id="cidade"
                       value={endereco.cidade}
-                      onChange={(e) => setEndereco(prev => ({ ...prev, cidade: e.target.value }))}
+                      onChange={(e) => setEndereco((prev) => ({ ...prev, cidade: e.target.value }))}
                       placeholder="Nome da cidade"
                     />
                   </div>
@@ -388,23 +385,21 @@ const MontadorProfile = () => {
                   <p className="text-sm text-muted-foreground">
                     Selecione suas áreas de atuação. Isso ajuda os clientes a encontrarem o profissional certo.
                   </p>
-                  
+
                   <div className="flex flex-wrap gap-2">
                     {especialidadesDisponiveis.map((especialidade) => (
-                      <Badge 
+                      <Badge
                         key={especialidade}
                         variant={especialidades.includes(especialidade) ? "default" : "outline"}
                         className="cursor-pointer transition-colors"
                         onClick={() => handleEspecialidadeToggle(especialidade)}
                       >
                         {especialidade}
-                        {especialidades.includes(especialidade) && (
-                          <X className="w-3 h-3 ml-1" />
-                        )}
+                        {especialidades.includes(especialidade) && <X className="w-3 h-3 ml-1" />}
                       </Badge>
                     ))}
                   </div>
-                  
+
                   {especialidades.length === 0 && (
                     <p className="text-sm text-orange-600">
                       Selecione pelo menos uma especialidade para aparecer nos resultados de busca.
@@ -427,7 +422,7 @@ const MontadorProfile = () => {
                   <p className="text-sm text-muted-foreground">
                     Informe sua chave PIX para receber os pagamentos dos trabalhos realizados.
                   </p>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="chave_pix">Chave PIX *</Label>
                     <Input
@@ -437,9 +432,7 @@ const MontadorProfile = () => {
                       placeholder="Digite sua chave PIX (CPF, e-mail, telefone ou chave aleatória)"
                       required
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Pode ser CPF, e-mail, telefone ou chave aleatória
-                    </p>
+                    <p className="text-xs text-muted-foreground">Pode ser CPF, e-mail, telefone ou chave aleatória</p>
                   </div>
                 </div>
               </CardContent>
@@ -449,7 +442,7 @@ const MontadorProfile = () => {
             <Card className="shadow-glow border-0 bg-white">
               <CardContent className="p-6">
                 <div className="flex justify-end">
-                  <Button 
+                  <Button
                     onClick={handleSave}
                     disabled={saving}
                     className="bg-gradient-primary hover:shadow-glow min-w-[120px]"
