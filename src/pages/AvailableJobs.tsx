@@ -54,6 +54,28 @@ const AvailableJobs = () => {
     if (montadorProfile) {
       fetchJobs();
       fetchCandidaturas();
+
+      // Configurar listener de realtime para candidaturas
+      const channel = supabase
+        .channel('candidaturas-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'candidaturas',
+            filter: `montador_id=eq.${montadorProfile.id}`
+          },
+          (payload) => {
+            console.log('Nova candidatura detectada:', payload);
+            fetchCandidaturas(); // Recarregar candidaturas do banco
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [montadorProfile]);
 
@@ -93,7 +115,7 @@ const AvailableJobs = () => {
     }
 
     try {
-      console.log('Buscando candidaturas para montador_id:', montadorProfile.id);
+      console.log('Buscando candidaturas do banco para montador_id:', montadorProfile.id);
       const { data, error } = await supabase
         .from('candidaturas')
         .select('job_id')
@@ -105,11 +127,11 @@ const AvailableJobs = () => {
       }
       
       const jobIds = data?.map(c => c.job_id) || [];
-      console.log('Candidaturas encontradas do servidor:', jobIds);
-      console.log('Total de candidaturas:', jobIds.length);
+      console.log('✅ Candidaturas do banco:', jobIds);
+      console.log('📊 Total:', jobIds.length);
       setCandidaturas(jobIds);
     } catch (error) {
-      console.error('Erro ao buscar candidaturas:', error);
+      console.error('❌ Erro ao buscar candidaturas:', error);
     }
   };
 
@@ -119,22 +141,9 @@ const AvailableJobs = () => {
   };
 
   const handleCandidaturaSuccess = async () => {
-    if (selectedJob) {
-      console.log('Candidatura enviada para job:', selectedJob.id);
-      // Atualizar estado local imediatamente
-      setCandidaturas(prev => {
-        if (!prev.includes(selectedJob.id)) {
-          const updated = [...prev, selectedJob.id];
-          console.log('Estado local atualizado. Candidaturas:', updated);
-          return updated;
-        }
-        return prev;
-      });
-    }
-    // Buscar candidaturas do servidor após um pequeno delay para garantir que o banco foi atualizado
-    setTimeout(async () => {
-      await fetchCandidaturas();
-    }, 500);
+    console.log('Candidatura enviada com sucesso, buscando do banco...');
+    // Buscar candidaturas diretamente do banco de dados
+    await fetchCandidaturas();
   };
 
   const isJobAvailable = (job: Job) => {
