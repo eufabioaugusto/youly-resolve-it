@@ -44,6 +44,7 @@ const WorkerDashboard = () => {
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [carteira, setCarteira] = useState(null);
+  const [candidaturas, setCandidaturas] = useState<string[]>([]); // IDs dos jobs que o montador já se candidatou
   const [loadingData, setLoadingData] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -58,6 +59,7 @@ const WorkerDashboard = () => {
       fetchAvailableJobs();
       fetchMyJobs();
       fetchCarteira();
+      fetchCandidaturas(); // Buscar candidaturas do banco
     }
   }, [montadorProfile]);
 
@@ -220,6 +222,39 @@ const WorkerDashboard = () => {
     }
   };
 
+  const fetchCandidaturas = async () => {
+    if (!montadorProfile) {
+      console.log('❌ fetchCandidaturas: montadorProfile não disponível');
+      return;
+    }
+
+    try {
+      console.log('🔍 BUSCANDO CANDIDATURAS DO BANCO');
+      console.log('🆔 Montador ID:', montadorProfile.id);
+      
+      const { data, error } = await supabase
+        .from('candidaturas')
+        .select('job_id, montador_id, status, proposta')
+        .eq('montador_id', montadorProfile.id);
+
+      console.log('📦 Resposta do Supabase candidaturas:', { data, error });
+
+      if (error) {
+        console.error('❌ Erro na query de candidaturas:', error);
+        throw error;
+      }
+      
+      const jobIds = data?.map(c => c.job_id) || [];
+      console.log('✅ Job IDs com candidatura:', jobIds);
+      console.log('📊 Total de candidaturas:', jobIds.length);
+      console.log('🎯 Candidaturas completas:', data);
+      
+      setCandidaturas(jobIds);
+    } catch (error) {
+      console.error('❌ Erro ao buscar candidaturas:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
@@ -244,8 +279,10 @@ const WorkerDashboard = () => {
     setCandidateModalOpen(true);
   };
 
-  const handleCandidaturaSuccess = () => {
-    fetchAvailableJobs(); // Refresh the jobs list
+  const handleCandidaturaSuccess = async () => {
+    console.log('✅ Candidatura enviada com sucesso, atualizando do banco...');
+    await fetchCandidaturas(); // Buscar candidaturas atualizadas do banco
+    await fetchAvailableJobs(); // Refresh the jobs list
     toast({
       title: "Candidatura enviada!",
       description: "O cliente foi notificado sobre sua proposta."
@@ -447,6 +484,9 @@ const WorkerDashboard = () => {
                                 {job.categoria && (
                                   <Badge variant="outline">{job.categoria}</Badge>
                                 )}
+                                {candidaturas.includes(job.id) && (
+                                  <Badge variant="secondary">Candidatura enviada</Badge>
+                                )}
                               </div>
                             </div>
                              <div className="text-right">
@@ -481,11 +521,26 @@ const WorkerDashboard = () => {
                                 >
                                   Ver Negociação
                                 </Button>
+                              ) : candidaturas.includes(job.id) ? (
+                                <Button 
+                                  disabled
+                                  variant="secondary"
+                                  size="sm"
+                                >
+                                  Candidatura Enviada
+                                </Button>
                               ) : (
                                 <Button 
-                                  onClick={() => handleOpenCandidateModal(job)}
+                                  onClick={() => {
+                                    console.log('🖱️ Clique em Candidatar-se');
+                                    console.log('🎯 Job ID:', job.id);
+                                    console.log('📋 Candidaturas atuais:', candidaturas);
+                                    console.log('✅ Já candidatado?', candidaturas.includes(job.id));
+                                    handleOpenCandidateModal(job);
+                                  }}
                                   disabled={loadingJobId === job.id}
                                   className="bg-gradient-primary hover:shadow-glow"
+                                  size="sm"
                                 >
                                   {loadingJobId === job.id ? 'Candidatando...' : 'Candidatar-se'}
                                 </Button>
