@@ -18,7 +18,7 @@ const logos = [
 
 const Index = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // Carrossel infinito suave (JS) — sem flicker e sem style-jsx
   const trackRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -56,7 +56,7 @@ const Index = () => {
               className="h-9 object-contain"
             />
           </div>
-          
+
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link to="#" className="text-sm hover:text-primary transition-colors">
@@ -82,22 +82,22 @@ const Index = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col space-y-6 mt-8">
-                <Link 
-                  to="#" 
+                <Link
+                  to="#"
                   className="text-lg hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Como funciona
                 </Link>
-                <Link 
-                  to="#" 
+                <Link
+                  to="#"
                   className="text-lg hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Para empresas
                 </Link>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="text-lg hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -342,7 +342,7 @@ const Index = () => {
         <div className="container mx-auto px-4 space-y-20">
           {/* Passo 1: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-2xl overflow-hidden h-72 md:h-96">
+            <div className="rounded-2xl overflow-hidden h-72 md:h-96 shadow-lg">
               <img
                 src="/images/how-1.png"
                 alt="Descreva seu projeto"
@@ -387,7 +387,7 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <div className="order-1 md:order-2 rounded-2xl overflow-hidden h-72 md:h-96">
+            <div className="order-1 md:order-2 rounded-2xl overflow-hidden h-72 md:h-96 shadow-lg">
               <img
                 src="/images/how-2.png"
                 alt="Escolha seu montador"
@@ -398,7 +398,7 @@ const Index = () => {
 
           {/* Passo 3: Imagem + Texto */}
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="rounded-2xl overflow-hidden h-72 md:h-96">
+            <div className="rounded-2xl overflow-hidden h-72 md:h-96 shadow-lg">
               <img src="/images/how-3.png" alt="Serviço realizado" className="w-full h-full object-cover rounded-2xl" />
             </div>
             <div>
