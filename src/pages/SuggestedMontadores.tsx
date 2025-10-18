@@ -328,7 +328,7 @@ const SuggestedMontadores = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {montadores.map((montador) => (
                   <Card key={montador.id} className="shadow-glow border-0">
                     <CardContent className="p-6">
