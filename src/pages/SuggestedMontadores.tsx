@@ -59,7 +59,7 @@ const SuggestedMontadores = () => {
       if (jobError) throw jobError;
       setJob(jobData);
 
-      // Buscar montadores ativos que têm especialidades relacionadas ao job
+      // Buscar montadores ativos
       const { data: montadoresData, error: montadoresError } = await supabase
         .from("montadores")
         .select("id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url")
@@ -67,21 +67,34 @@ const SuggestedMontadores = () => {
         .order("avaliacao_media", { ascending: false })
         .order("projetos_realizados", { ascending: false });
 
-      if (montadoresError) throw montadoresError;
+      if (montadoresError) {
+        console.error("Erro ao buscar montadores:", montadoresError);
+        throw montadoresError;
+      }
+
+      console.log("Montadores carregados:", montadoresData);
 
       // Buscar profiles dos montadores
       if (montadoresData && montadoresData.length > 0) {
         const userIds = montadoresData.map((m) => m.user_id);
+        console.log("User IDs para buscar profiles:", userIds);
+        
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("user_id, nome")
           .in("user_id", userIds);
 
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error("Erro ao buscar profiles:", profilesError);
+          throw profilesError;
+        }
+
+        console.log("Profiles carregados:", profilesData);
 
         // Combinar dados e filtrar por especialidades relacionadas ao job
         let montadoresWithProfiles = montadoresData.map((montador) => {
           const profile = profilesData?.find((p) => p.user_id === montador.user_id);
+          console.log(`Montador ${montador.id} - Profile encontrado:`, profile);
           return {
             ...montador,
             profiles: profile || { nome: "Montador" },
