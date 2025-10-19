@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Save, MapPin, User, Phone, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Save, MapPin, User, CreditCard } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +33,8 @@ const ClientProfile = () => {
   
   const [saving, setSaving] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [pagamentos, setPagamentos] = useState<any[]>([]);
+  const [loadingPagamentos, setLoadingPagamentos] = useState(true);
 
   useEffect(() => {
     if (profile) {
@@ -48,6 +52,43 @@ const ClientProfile = () => {
       }
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (clienteProfile) {
+      loadPagamentos();
+    }
+  }, [clienteProfile]);
+
+  const loadPagamentos = async () => {
+    if (!clienteProfile) return;
+    
+    setLoadingPagamentos(true);
+    try {
+      const { data, error } = await supabase
+        .from('pagamentos')
+        .select(`
+          *,
+          jobs (descricao, categoria),
+          montadores (
+            id,
+            user_id,
+            profiles:user_id (nome)
+          )
+        `)
+        .eq('cliente_id', clienteProfile.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      
+      console.log('📊 [ClientProfile] Pagamentos carregados:', data);
+      setPagamentos(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar pagamentos:', error);
+    } finally {
+      setLoadingPagamentos(false);
+    }
+  };
 
   const fetchAddressByCep = async (cepValue: string) => {
     const cleanCep = cepValue.replace(/\D/g, "");
@@ -312,6 +353,97 @@ const ClientProfile = () => {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Histórico de Pagamentos
+              </CardTitle>
+              <CardDescription>
+                Últimos 10 pagamentos realizados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingPagamentos ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : pagamentos.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum pagamento realizado ainda
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Job</TableHead>
+                      <TableHead>Montador</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-center">Método</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagamentos.map((pagamento) => (
+                      <TableRow key={pagamento.id}>
+                        <TableCell className="text-sm">
+                          {new Date(pagamento.created_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-[200px]">
+                            <p className="text-sm font-medium truncate">
+                              {pagamento.jobs?.descricao}
+                            </p>
+                            {pagamento.jobs?.categoria && (
+                              <p className="text-xs text-muted-foreground">
+                                {pagamento.jobs.categoria}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {pagamento.montadores?.profiles?.nome || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          R$ {pagamento.valor_total.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant={
+                              pagamento.status === 'pago'
+                                ? 'default'
+                                : pagamento.status === 'pendente'
+                                ? 'secondary'
+                                : 'destructive'
+                            }
+                          >
+                            {pagamento.status === 'pago' ? 'Pago' : 
+                             pagamento.status === 'pendente' ? 'Pendente' : 
+                             'Rejeitado'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center text-sm capitalize">
+                          {pagamento.metodo || 'N/A'}
+                          {pagamento.installments > 1 && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({pagamento.installments}x)
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 

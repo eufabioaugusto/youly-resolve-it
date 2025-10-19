@@ -298,7 +298,7 @@ export function AdminFinanceiro() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="aprovado">Aprovados</SelectItem>
+                <SelectItem value="pago">Pagos</SelectItem>
                 <SelectItem value="pendente">Pendentes</SelectItem>
                 <SelectItem value="rejeitado">Rejeitados</SelectItem>
               </SelectContent>
@@ -336,14 +336,14 @@ export function AdminFinanceiro() {
                   <TableCell className="text-center">
                     <Badge
                       variant={
-                        pagamento.status === 'aprovado'
+                        pagamento.status === 'pago'
                           ? 'default'
                           : pagamento.status === 'pendente'
                           ? 'secondary'
                           : 'destructive'
                       }
                     >
-                      {pagamento.status}
+                      {pagamento.status === 'pago' ? 'Pago' : pagamento.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
