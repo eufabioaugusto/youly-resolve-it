@@ -14,6 +14,7 @@ export type LogCategory =
   | 'evaluation'
   | 'notification'
   | 'wallet'
+  | 'email'
   | 'system';
 
 interface LogEntry {
