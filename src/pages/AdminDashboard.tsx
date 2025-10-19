@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,21 +14,18 @@ import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { 
   Users, 
   DollarSign, 
-  TrendingUp, 
-  CheckCircle,
+  TrendingUp,
   Package,
   LogOut,
   Activity,
   Wrench,
-  Clock,
-  Award,
-  Shield
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [currentSection, setCurrentSection] = useState("overview");
   const [stats, setStats] = useState({
     totalJobs: 0,
     activeJobs: 0,
@@ -99,197 +97,203 @@ export default function AdminDashboard() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Wrench className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Gestão da Plataforma YOULY</p>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              disabled={loggingOut}
-            >
-              {loggingOut ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-              ) : (
-                <LogOut className="w-4 h-4" />
-              )}
-            </Button>
+  const renderContent = () => {
+    switch (currentSection) {
+      case "users":
+        return <AdminUserManagement />;
+      case "jobs":
+        return <AdminJobManagement />;
+      case "ranking":
+        return <AdminRankingMontadores />;
+      case "financeiro":
+        return (
+          <div className="space-y-6">
+            <AdminFinanceiro />
+            <AdminCarteiraGestao />
           </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Jobs</p>
-                  <h3 className="text-2xl font-bold">{stats.totalJobs}</h3>
-                </div>
-                <Package className="w-8 h-8 text-primary" />
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                {stats.activeJobs} ativos
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Montadores</p>
-                  <h3 className="text-2xl font-bold">{stats.totalMontadores}</h3>
-                </div>
-                <Users className="w-8 h-8 text-destructive" />
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                {stats.activeMontadores} ativos
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Clientes</p>
-                  <h3 className="text-2xl font-bold">{stats.totalClientes}</h3>
-                </div>
-                <Users className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Volume Total</p>
-                  <h3 className="text-2xl font-bold">
-                    {formatCurrency(stats.valorTotalMovimentado)}
-                  </h3>
-                </div>
-                <DollarSign className="w-8 h-8 text-yellow-500" />
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                {stats.totalPagamentos} pagamentos
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="users">
-              <Shield className="w-4 h-4 mr-2" />
-              Usuários
-            </TabsTrigger>
-            <TabsTrigger value="jobs">Gestão de Jobs</TabsTrigger>
-            <TabsTrigger value="ranking">Ranking</TabsTrigger>
-            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-            <TabsTrigger value="carteiras">Carteiras</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users">
-            <AdminUserManagement />
-          </TabsContent>
-
-          <TabsContent value="users">
-            <AdminUserManagement />
-          </TabsContent>
-
-          <TabsContent value="jobs">
-            <AdminJobManagement />
-          </TabsContent>
-
-          <TabsContent value="ranking">
-            <AdminRankingMontadores />
-          </TabsContent>
-
-          <TabsContent value="financeiro">
-            <div className="space-y-6">
-              <AdminFinanceiro />
-              <AdminCarteiraGestao />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    Crescimento da Plataforma
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Jobs concluídos</span>
-                      <span className="font-semibold text-green-600">{stats.totalJobs - stats.activeJobs}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Montadores ativos</span>
-                      <span className="font-semibold">{stats.activeMontadores}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Volume processado</span>
-                      <span className="font-semibold text-destructive">
-                        {formatCurrency(stats.valorTotalMovimentado)}
-                      </span>
-                    </div>
+        );
+      case "carteiras":
+        return <AdminCarteiraGestao />;
+      case "overview":
+      default:
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Crescimento da Plataforma
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Jobs concluídos</span>
+                    <span className="font-semibold text-green-600">
+                      {stats.totalJobs - stats.activeJobs}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="w-5 h-5" />
-                    Status da Plataforma
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Sistema operacional</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                      <span>Pagamentos funcionando</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span>Maturação ativa</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span>Webhooks conectados</span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Montadores ativos</span>
+                    <span className="font-semibold">{stats.activeMontadores}</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Volume processado</span>
+                    <span className="font-semibold text-destructive">
+                      {formatCurrency(stats.valorTotalMovimentado)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Status da Plataforma
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Sistema operacional</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                    <span>Pagamentos funcionando</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Maturação ativa</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Webhooks conectados</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen w-full flex bg-background">
+        <AdminSidebar
+          currentSection={currentSection}
+          onSectionChange={setCurrentSection}
+        />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <header className="border-b bg-card sticky top-0 z-10">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <SidebarTrigger />
+                  <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <Wrench className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold">Admin Dashboard</h1>
+                    <p className="text-sm text-muted-foreground">Gestão da Plataforma YOULY</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                >
+                  {loggingOut ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-6 py-8">
+              {/* Stats Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Jobs</p>
+                        <h3 className="text-2xl font-bold">{stats.totalJobs}</h3>
+                      </div>
+                      <Package className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {stats.activeJobs} ativos
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Montadores</p>
+                        <h3 className="text-2xl font-bold">{stats.totalMontadores}</h3>
+                      </div>
+                      <Users className="w-8 h-8 text-destructive" />
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {stats.activeMontadores} ativos
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Clientes</p>
+                        <h3 className="text-2xl font-bold">{stats.totalClientes}</h3>
+                      </div>
+                      <Users className="w-8 h-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Volume Total</p>
+                        <h3 className="text-2xl font-bold">
+                          {formatCurrency(stats.valorTotalMovimentado)}
+                        </h3>
+                      </div>
+                      <DollarSign className="w-8 h-8 text-yellow-500" />
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {stats.totalPagamentos} pagamentos
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dynamic Content */}
+              <div className="space-y-6">
+                {renderContent()}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
