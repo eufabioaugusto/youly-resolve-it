@@ -13,6 +13,46 @@ interface SMSRequest {
   ordem_servico_id?: string;
 }
 
+// Função para enviar SMS via ClickSend
+async function enviarViaClickSend(telefone: string, mensagem: string) {
+  const username = Deno.env.get('CLICKSEND_USERNAME');
+  const apiKey = Deno.env.get('CLICKSEND_API_KEY');
+  
+  if (!username || !apiKey) {
+    throw new Error('ClickSend credentials not configured');
+  }
+  
+  console.log('📤 [ClickSend] Enviando SMS', { telefone, mensagemLength: mensagem.length });
+  
+  const credentials = btoa(`${username}:${apiKey}`);
+  
+  const response = await fetch('https://rest.clicksend.com/v3/sms/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${credentials}`
+    },
+    body: JSON.stringify({
+      messages: [{
+        source: 'youly',
+        from: 'Youly',
+        to: telefone,
+        body: mensagem
+      }]
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (response.ok && result.data?.messages?.[0]?.status === 'SUCCESS') {
+    console.log('✅ [ClickSend] SMS enviado com sucesso', result);
+    return { success: true, data: result };
+  } else {
+    console.error('❌ [ClickSend] Erro ao enviar SMS', result);
+    throw new Error(result.response_msg || 'Failed to send SMS');
+  }
+}
+
 serve(async (req) => {
   console.log('🚀 [sms-send] Iniciado', { timestamp: new Date().toISOString() });
 
@@ -57,43 +97,18 @@ serve(async (req) => {
 
     console.log('✅ [sms-send] Registro SMS criado', { id: smsRecord.id });
 
-    // Tentar enviar SMS via gateway (se configurado)
+    // Enviar SMS via ClickSend
     let envioSucesso = false;
     let errorMessage = null;
 
-    if (smsGatewayApiKey && smsGatewayUrl) {
-      try {
-        console.log('📤 [sms-send] Enviando SMS via gateway', { url: smsGatewayUrl });
-
-        // Aqui você deve integrar com seu gateway de SMS real (Twilio, AWS SNS, etc)
-        // Exemplo genérico:
-        const response = await fetch(smsGatewayUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${smsGatewayApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: telefone,
-            message: mensagem,
-          }),
-        });
-
-        if (response.ok) {
-          envioSucesso = true;
-          console.log('✅ [sms-send] SMS enviado com sucesso');
-        } else {
-          const errorData = await response.text();
-          errorMessage = `Gateway error: ${response.status} - ${errorData}`;
-          console.error('❌ [sms-send] Erro do gateway', errorMessage);
-        }
-      } catch (gatewayError: any) {
-        errorMessage = gatewayError.message;
-        console.error('❌ [sms-send] Erro ao enviar via gateway', gatewayError);
-      }
-    } else {
-      console.warn('⚠️ [sms-send] Gateway de SMS não configurado. SMS registrado mas não enviado.');
-      errorMessage = 'Gateway não configurado';
+    try {
+      console.log('📤 [sms-send] Enviando SMS via ClickSend');
+      await enviarViaClickSend(telefone, mensagem);
+      envioSucesso = true;
+      console.log('✅ [sms-send] SMS enviado com sucesso via ClickSend');
+    } catch (clicksendError: any) {
+      errorMessage = clicksendError.message;
+      console.error('❌ [sms-send] Erro ao enviar via ClickSend', clicksendError);
     }
 
     // Atualizar status do registro

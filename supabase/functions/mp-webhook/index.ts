@@ -189,7 +189,100 @@ serve(async (req) => {
         throw error;
       }
 
-      console.log('Pagamento processado com sucesso');
+      console.log('✅ Pagamento processado com sucesso');
+
+      // 🎯 CRÍTICO: Criar Ordem de Serviço automaticamente
+      console.log('📋 [mp-webhook] Criando Ordem de Serviço automaticamente');
+
+      try {
+        // Buscar negociação aceita para este job
+        const { data: negociacao, error: negError } = await supabase
+          .from('negociacoes')
+          .select(`
+            *,
+            montadores!inner(id, user_id, profiles:user_id!inner(nome))
+          `)
+          .eq('job_id', pagamentoDB.job_id)
+          .eq('status', 'aceito')
+          .single();
+
+        if (negError || !negociacao) {
+          console.error('❌ Negociação não encontrada para criar OS:', negError);
+        } else {
+          // Gerar código de validação
+          const { data: codigoData } = await supabase.rpc('gerar_codigo_validacao');
+          const codigoValidacao = codigoData || 'XXXXXX';
+
+          // Criar Ordem de Serviço
+          const { data: novaOS, error: osError } = await supabase
+            .from('ordem_servico')
+            .insert({
+              negociacao_id: negociacao.id,
+              job_id: pagamentoDB.job_id,
+              montador_id: pagamentoDB.montador_id,
+              cliente_id: pagamentoDB.cliente_id,
+              status: 'pendente',
+              codigo_validacao: codigoValidacao,
+              data_hora_agendamento: negociacao.data_selecionada_montador?.data_hora,
+              periodo_agendamento: negociacao.data_selecionada_montador?.periodo,
+            })
+            .select()
+            .single();
+
+          if (osError) {
+            console.error('❌ Erro ao criar OS:', osError);
+          } else {
+            console.log('✅ OS criada com sucesso:', novaOS.id);
+
+            // Atualizar job com ordem_servico_id
+            await supabase
+              .from('jobs')
+              .update({ ordem_servico_id: novaOS.id })
+              .eq('id', pagamentoDB.job_id);
+
+            // Buscar telefone do cliente
+            const { data: clienteData } = await supabase
+              .from('clientes')
+              .select('id, profiles!inner(telefone, nome)')
+              .eq('id', pagamentoDB.cliente_id)
+              .single();
+
+            const telefoneCliente = clienteData?.profiles?.telefone;
+            const nomeCliente = clienteData?.profiles?.nome;
+
+            if (telefoneCliente) {
+              // Formatar data e período
+              const dataAgendamento = negociacao.data_selecionada_montador?.data_hora
+                ? new Date(negociacao.data_selecionada_montador.data_hora).toLocaleDateString('pt-BR')
+                : 'A definir';
+              const periodoAgendamento = negociacao.data_selecionada_montador?.periodo || 'A definir';
+
+              // Enviar SMS de agendamento
+              const mensagemSMS = `✅ Montagem agendada!\nMontador: ${negociacao.montadores.profiles.nome}\nData: ${dataAgendamento} - ${periodoAgendamento}\nCódigo: ${codigoValidacao}\nGuarde este código para iniciar a montagem.`;
+
+              const { error: smsError } = await supabase.functions.invoke('sms-send', {
+                body: {
+                  telefone: telefoneCliente,
+                  mensagem: mensagemSMS,
+                  tipo: 'agendamento',
+                  ordem_servico_id: novaOS.id,
+                },
+              });
+
+              if (smsError) {
+                console.error('❌ Erro ao enviar SMS de agendamento:', smsError);
+              } else {
+                console.log('✅ SMS de agendamento enviado para', telefoneCliente);
+              }
+            } else {
+              console.warn('⚠️ Telefone do cliente não encontrado para enviar SMS');
+            }
+          }
+        }
+      } catch (osCreationError: any) {
+        console.error('❌ Erro ao criar OS automaticamente:', osCreationError);
+      }
+
     } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
       // Atualizar status como rejeitado
       await supabase

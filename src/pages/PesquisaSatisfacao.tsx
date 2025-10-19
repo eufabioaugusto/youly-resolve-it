@@ -52,7 +52,47 @@ export default function PesquisaSatisfacao() {
     setLoadingOS(true);
 
     try {
-      // Token é o ID da ordem de serviço (simplificado por ora)
+      // 🎯 CRÍTICO: Validar token na tabela pesquisa_tokens
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('pesquisa_tokens')
+        .select('*')
+        .eq('token', token)
+        .maybeSingle();
+
+      if (tokenError || !tokenData) {
+        console.error('❌ Token inválido ou não encontrado', tokenError);
+        toast({
+          title: 'Token inválido',
+          description: 'Este link de pesquisa não é válido ou já expirou',
+          variant: 'destructive',
+        });
+        setOrdemServico(null);
+        setLoadingOS(false);
+        return;
+      }
+
+      // Verificar se token já foi usado
+      if (tokenData.usado) {
+        console.log('⚠️ Token já foi usado');
+        setEnviado(true);
+        setLoadingOS(false);
+        return;
+      }
+
+      // Verificar se token expirou
+      if (new Date(tokenData.expires_at) < new Date()) {
+        console.log('⚠️ Token expirado');
+        toast({
+          title: 'Link expirado',
+          description: 'Este link de pesquisa expirou',
+          variant: 'destructive',
+        });
+        setOrdemServico(null);
+        setLoadingOS(false);
+        return;
+      }
+
+      // Buscar ordem de serviço usando o token validado
       const { data, error } = await supabase
         .from('ordem_servico')
         .select(`
@@ -61,7 +101,7 @@ export default function PesquisaSatisfacao() {
           montadores (*, profiles:user_id(*)),
           clientes (*, profiles:user_id(*))
         `)
-        .eq('id', token)
+        .eq('id', tokenData.ordem_servico_id)
         .single();
 
       if (error) throw error;
@@ -70,7 +110,7 @@ export default function PesquisaSatisfacao() {
       const { data: avaliacaoExistente } = await supabase
         .from('avaliacoes')
         .select('*')
-        .eq('ordem_servico_id', token)
+        .eq('ordem_servico_id', tokenData.ordem_servico_id)
         .maybeSingle();
 
       if (avaliacaoExistente) {
@@ -131,6 +171,12 @@ export default function PesquisaSatisfacao() {
         aspectosPositivos,
         aspectosNegativos,
       });
+
+      // 🎯 CRÍTICO: Marcar token como usado após avaliação
+      await supabase
+        .from('pesquisa_tokens')
+        .update({ usado: true })
+        .eq('token', token);
 
       setEnviado(true);
       toast({

@@ -20,6 +20,7 @@ import {
 import { useOrdemServico } from '@/hooks/useOrdemServico';
 import { useSMS } from '@/hooks/useSMS';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrdemServicoFlowProps {
   ordemServico: any;
@@ -47,22 +48,63 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     try {
       await atualizarStatus(ordemServico.id, 'a_caminho');
       
-      // Buscar telefone do cliente
-      // TODO: Buscar telefone real do cliente via query
-      const telefoneCliente = '5511999999999'; // Placeholder
+      // 🎯 Buscar telefone REAL do cliente
+      const { data: clienteData, error: clienteError } = await supabase
+        .from('clientes')
+        .select('user_id')
+        .eq('id', ordemServico.cliente_id)
+        .single();
+
+      if (clienteError || !clienteData) {
+        console.error('❌ Erro ao buscar cliente:', clienteError);
+        toast.error('Erro ao buscar dados do cliente');
+        return;
+      }
+
+      // Buscar profile do cliente
+      const { data: profileCliente } = await supabase
+        .from('profiles')
+        .select('telefone, nome')
+        .eq('user_id', clienteData.user_id)
+        .single();
+
+      const telefoneCliente = profileCliente?.telefone;
       
-      // Enviar SMS ao cliente
-      await enviarSMSACaminho(
-        telefoneCliente,
-        'Montador', // TODO: Nome real do montador
-        ordemServico.codigo_validacao,
-        ordemServico.id
-      );
-      
-      toast.success('Cliente notificado!');
-      onStatusChange?.();
+      if (!telefoneCliente) {
+        toast.error('Cliente não possui telefone cadastrado');
+        return;
+      }
+
+      // Buscar montador e seu profile
+      const { data: montadorData } = await supabase
+        .from('montadores')
+        .select('user_id')
+        .eq('id', ordemServico.montador_id)
+        .single();
+
+      if (montadorData) {
+        const { data: profileMontador } = await supabase
+          .from('profiles')
+          .select('nome')
+          .eq('user_id', montadorData.user_id)
+          .single();
+
+        const nomeMontador = profileMontador?.nome || 'Montador';
+        
+        // Enviar SMS ao cliente com dados reais
+        await enviarSMSACaminho(
+          telefoneCliente,
+          nomeMontador,
+          ordemServico.codigo_validacao,
+          ordemServico.id
+        );
+        
+        toast.success('Cliente notificado via SMS!');
+        onStatusChange?.();
+      }
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      toast.error('Erro ao processar');
     }
   };
 
@@ -109,6 +151,107 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
         motivoAssistencia: tipoFinalizacao === 'assistencia' ? observacoes : undefined,
         motivoPendente: tipoFinalizacao === 'pendente' ? observacoes : undefined,
       });
+      
+      // 🎯 CRÍTICO: Enviar pesquisa de satisfação após finalização com sucesso
+      if (tipoFinalizacao === 'sucesso' || tipoFinalizacao === 'assistencia') {
+        console.log('📧 [OrdemServicoFlow] Enviando pesquisa de satisfação');
+
+        try {
+          // Gerar token único para a pesquisa
+          const token = crypto.randomUUID();
+          
+          const { error: tokenError } = await supabase
+            .from('pesquisa_tokens')
+            .insert({
+              token,
+              ordem_servico_id: ordemServico.id,
+            });
+
+          if (tokenError) {
+            console.error('❌ Erro ao criar token de pesquisa:', tokenError);
+          } else {
+            // Buscar dados do cliente para enviar SMS e email
+            const { data: clienteData } = await supabase
+              .from('clientes')
+              .select('user_id')
+              .eq('id', ordemServico.cliente_id)
+              .single();
+
+            let telefoneCliente = null;
+            let emailCliente = null;
+
+            if (clienteData) {
+              const { data: profileCliente } = await supabase
+                .from('profiles')
+                .select('telefone, nome, user_id')
+                .eq('user_id', clienteData.user_id)
+                .single();
+
+              telefoneCliente = profileCliente?.telefone;
+              emailCliente = profileCliente?.user_id;
+            }
+
+            // Buscar dados do montador
+            const { data: montadorData } = await supabase
+              .from('montadores')
+              .select('user_id')
+              .eq('id', ordemServico.montador_id)
+              .single();
+
+            let nomeMontador = 'Montador';
+
+            if (montadorData) {
+              const { data: profileMontador } = await supabase
+                .from('profiles')
+                .select('nome')
+                .eq('user_id', montadorData.user_id)
+                .single();
+
+              nomeMontador = profileMontador?.nome || 'Montador';
+            }
+
+            // Link da pesquisa (ajustar com seu domínio)
+            const linkPesquisa = `${window.location.origin}/pesquisa/${token}`;
+
+            // Enviar SMS
+            if (telefoneCliente) {
+              const mensagemSMS = `⭐ Como foi sua experiência com ${nomeMontador}? Avalie o serviço: ${linkPesquisa}`;
+              
+              await supabase.functions.invoke('sms-send', {
+                body: {
+                  telefone: telefoneCliente,
+                  mensagem: mensagemSMS,
+                  tipo: 'pesquisa',
+                  ordem_servico_id: ordemServico.id,
+                },
+              });
+
+              console.log('✅ SMS de pesquisa enviado');
+            }
+
+            // Enviar email (se já tiver a função configurada)
+            if (emailCliente) {
+              try {
+                await supabase.functions.invoke('send-email', {
+                  body: {
+                    to: emailCliente,
+                    template: 'pesquisa-satisfacao',
+                    data: {
+                      linkPesquisa,
+                      nomeMontador,
+                    },
+                  },
+                });
+                console.log('✅ Email de pesquisa enviado');
+              } catch (emailError) {
+                console.log('⚠️ Email não enviado (função pode não estar configurada)');
+              }
+            }
+          }
+        } catch (pesquisaError) {
+          console.error('❌ Erro ao processar pesquisa:', pesquisaError);
+        }
+      }
       
       onOSAtualizada?.();
       onStatusChange?.();

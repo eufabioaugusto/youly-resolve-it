@@ -710,6 +710,41 @@ export type Database = {
           },
         ]
       }
+      pesquisa_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          ordem_servico_id: string | null
+          token: string
+          usado: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ordem_servico_id?: string | null
+          token: string
+          usado?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ordem_servico_id?: string | null
+          token?: string
+          usado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisa_tokens_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

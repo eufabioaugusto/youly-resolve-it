@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,8 @@ import {
   User,
   LogOut,
   Users,
-  MessageSquare
+  MessageSquare,
+  Shield
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import JobDetailsModal from "@/components/JobDetailsModal";
@@ -48,10 +50,22 @@ const ClientDashboard = () => {
     if (!clienteProfile) return;
     
     try {
-      // Buscar jobs do cliente
+      // 🎯 Buscar jobs do cliente COM ordem de serviço
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
-        .select('*')
+        .select(`
+          *,
+          ordem_servico(
+            id,
+            codigo_validacao,
+            status,
+            garantia_ativa,
+            data_ativacao_garantia,
+            data_expiracao_garantia,
+            data_hora_agendamento,
+            periodo_agendamento
+          )
+        `)
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false });
 
@@ -354,6 +368,28 @@ const ClientDashboard = () => {
                             {new Date(job.created_at).toLocaleDateString('pt-BR')}
                           </div>
                         </div>
+
+                        {/* 🎯 CRÍTICO: Exibir código de validação e garantia */}
+                        {job.ordem_servico && (
+                          <div className="mb-3 space-y-2">
+                            {(job.ordem_servico.status === 'a_caminho' || job.ordem_servico.status === 'iniciada') && (
+                              <Alert className="bg-primary/10 border-primary">
+                                <Shield className="h-4 w-4" />
+                                <AlertDescription className="font-semibold">
+                                  Código de validação: <span className="text-lg font-mono">{job.ordem_servico.codigo_validacao}</span>
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                            {job.ordem_servico.garantia_ativa && (
+                              <Alert className="bg-success/10 border-success">
+                                <Shield className="h-4 w-4 text-success" />
+                                <AlertDescription>
+                                  🛡️ Garantia ativa até {new Date(job.ordem_servico.data_expiracao_garantia).toLocaleDateString('pt-BR')}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </div>
+                        )}
                         {job.montador && (
                           <div className="flex items-center gap-2 mb-3">
                             <User className="w-4 h-4 text-muted-foreground" />
