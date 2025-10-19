@@ -3,11 +3,11 @@ import { Resend } from 'npm:resend@4.0.0'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-import { NovoJobEmail } from '../send-email/_templates/novo-job.tsx'
-import { NovaCandidaturaEmail } from '../send-email/_templates/nova-candidatura.tsx'
-import { OrcamentoEnviadoEmail } from '../send-email/_templates/orcamento-enviado.tsx'
-import { PagamentoAprovadoEmail } from '../send-email/_templates/pagamento-aprovado.tsx'
-import { PesquisaSatisfacaoEmail } from '../send-email/_templates/pesquisa-satisfacao-react.tsx'
+import { NovoJobEmail } from './_templates/novo-job.tsx'
+import { NovaCandidaturaEmail } from './_templates/nova-candidatura.tsx'
+import { OrcamentoEnviadoEmail } from './_templates/orcamento-enviado.tsx'
+import { PagamentoAprovadoEmail } from './_templates/pagamento-aprovado.tsx'
+import { PesquisaSatisfacaoEmail } from './_templates/pesquisa-satisfacao-react.tsx'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 
