@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NivelBadge } from "@/components/ui/nivel-badge";
 import { Star, MapPin, Clock, Users, ArrowLeft, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,8 @@ interface Montador {
   preco_hora: number;
   foto_perfil_url?: string;
   score?: number;
+  nivel_gamificacao?: string;
+  is_premium?: boolean;
   profiles: {
     nome: string;
   } | null;
@@ -63,7 +66,7 @@ const SuggestedMontadores = () => {
       // Buscar montadores ativos
       const { data: montadoresData, error: montadoresError } = await supabase
         .from("montadores")
-        .select("id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url")
+        .select("id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url, nivel_gamificacao, is_premium")
         .eq("status", "ativo")
         .order("avaliacao_media", { ascending: false })
         .order("projetos_realizados", { ascending: false });
@@ -372,7 +375,15 @@ const SuggestedMontadores = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {montadores.map((montador) => (
-                  <Card key={montador.id} className="shadow-glow border-0 bg-white">
+                  <Card key={montador.id} className="shadow-glow border-0 bg-white relative">
+                    {/* Badge de Nível no canto superior direito */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <NivelBadge 
+                        nivel={montador.nivel_gamificacao || 'Bronze'} 
+                        isPremium={montador.is_premium || false}
+                      />
+                    </div>
+                    
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center text-center space-y-4">
                         {/* Avatar */}
@@ -411,7 +422,7 @@ const SuggestedMontadores = () => {
                         {montador.especialidades && montador.especialidades.length > 0 && (
                           <div className="w-full">
                             <p className="text-xs font-medium mb-2 text-muted-foreground">Especialidades:</p>
-                            <div className="flex overflow-x-auto gap-1 pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                            <div className="flex overflow-x-auto gap-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                               {montador.especialidades.map((especialidade, index) => (
                                 <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap flex-shrink-0">
                                   {especialidade}
