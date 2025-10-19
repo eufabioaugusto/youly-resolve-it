@@ -20,4 +20,3 @@ enable_confirmations = true
 [auth.hook.send_email]
 enabled = true
 uri = "https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/send-email"
-secrets = "SEND_EMAIL_HOOK_SECRET"
