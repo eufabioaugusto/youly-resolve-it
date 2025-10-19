@@ -70,6 +70,43 @@ const WorkerDashboard = () => {
     }
   }, [montadorProfile]);
 
+  // 🔥 REALTIME: Atualizar negociações automaticamente
+  useEffect(() => {
+    if (!montadorProfile?.id) return;
+
+    console.log('🔔 Configurando realtime para negociações do montador:', montadorProfile.id);
+
+    const channel = supabase
+      .channel('negociacoes-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'negociacoes',
+          filter: `montador_id=eq.${montadorProfile.id}`
+        },
+        (payload) => {
+          console.log('🔥 Negociação atualizada em tempo real:', payload);
+          
+          // Recarregar dados automaticamente
+          fetchAvailableJobs();
+          fetchMyJobs();
+          
+          toast({
+            title: "Nova atualização!",
+            description: "Suas negociações foram atualizadas.",
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔕 Desconectando realtime de negociações');
+      supabase.removeChannel(channel);
+    };
+  }, [montadorProfile?.id]);
+
   const fetchAvailableJobs = async () => {
     if (!montadorProfile) return;
 
@@ -498,7 +535,17 @@ const WorkerDashboard = () => {
             <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
             <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>
             <TabsTrigger value="os">Ordens de Serviço</TabsTrigger>
-            <TabsTrigger value="negotiations">Negociações</TabsTrigger>
+            <TabsTrigger value="negotiations" className="relative">
+              Negociações
+              {negociacoes.length > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+                >
+                  {negociacoes.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="wallet">Carteira</TabsTrigger>
           </TabsList>
           

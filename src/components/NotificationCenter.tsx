@@ -54,18 +54,32 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
     // Navegar baseado no tipo da notificação
     switch (notification.tipo) {
       case 'negociacao':
-        navigate('/central-negociacoes');
+        // Redirecionar para dashboard e depois mudar a aba via hash
+        navigate('/montador#negotiations');
+        setTimeout(() => {
+          const negotiationsTab = document.querySelector('[value="negotiations"]') as HTMLElement;
+          negotiationsTab?.click();
+        }, 100);
         break;
       case 'job':
-        navigate('/available-jobs');
+        navigate('/montador'); // Dashboard do montador
         break;
       case 'pagamento':
-        navigate('/central-negociacoes');
+        navigate('/montador#negotiations');
+        setTimeout(() => {
+          const negotiationsTab = document.querySelector('[value="negotiations"]') as HTMLElement;
+          negotiationsTab?.click();
+        }, 100);
         break;
       case 'saque':
-        navigate('/worker-dashboard');
+        navigate('/montador#wallet');
+        setTimeout(() => {
+          const walletTab = document.querySelector('[value="wallet"]') as HTMLElement;
+          walletTab?.click();
+        }, 100);
         break;
       default:
+        navigate('/montador');
         break;
     }
     
