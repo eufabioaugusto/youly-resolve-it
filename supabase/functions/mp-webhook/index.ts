@@ -298,6 +298,28 @@ serve(async (req) => {
         console.error('❌ Erro ao registrar transação:', transacaoError);
       }
 
+      // 🎯 ATUALIZAR TOTAL MOVIMENTADO DO MONTADOR
+      console.log('⚙️ [4.5/6] Atualizando total_valor_movimentado do montador...');
+      const { data: montadorData, error: montadorFetchError } = await supabase
+        .from('montadores')
+        .select('total_valor_movimentado')
+        .eq('id', pagamentoDB.montador_id)
+        .single();
+
+      if (!montadorFetchError && montadorData) {
+        const novoTotalMovimentado = Number(montadorData.total_valor_movimentado || 0) + valorMontador;
+        const { error: montadorUpdateError } = await supabase
+          .from('montadores')
+          .update({ total_valor_movimentado: novoTotalMovimentado })
+          .eq('id', pagamentoDB.montador_id);
+
+        if (montadorUpdateError) {
+          console.error('❌ Erro ao atualizar total_valor_movimentado:', montadorUpdateError);
+        } else {
+          console.log('✅ Total movimentado atualizado: R$', novoTotalMovimentado.toFixed(2));
+        }
+      }
+
       console.log('⚙️ [5/6] Atualizando negociação...');
       const { error: negUpdateError } = await supabase
         .from('negociacoes')
