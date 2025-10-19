@@ -33,6 +33,8 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const { atualizarStatus, uploadFoto, finalizarOS, validarCodigo, loading } = useOrdemServico();
   const { enviarSMSACaminho } = useSMS();
 
+  const storageKey = `os_progress_${ordemServico.id}`;
+
   const [codigoValidacao, setCodigoValidacao] = useState('');
   const [fotosUpload, setFotosUpload] = useState<{ [key: string]: (File | null)[] }>({
     movel_caixa: [null, null, null],
@@ -56,6 +58,42 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const [observacoes, setObservacoes] = useState('');
   const [tipoFinalizacao, setTipoFinalizacao] = useState<'sucesso' | 'assistencia' | 'pendente' | null>(null);
   const [processandoACaminho, setProcessandoACaminho] = useState(false);
+
+  // 🔄 Recuperar progresso do localStorage ao montar
+  useEffect(() => {
+    const progressoSalvo = localStorage.getItem(storageKey);
+    if (progressoSalvo) {
+      try {
+        const dados = JSON.parse(progressoSalvo);
+        console.log('📦 Recuperando progresso salvo:', dados);
+        
+        setFotosPreview(dados.fotosPreview || fotosPreview);
+        setFotosEnviadas(dados.fotosEnviadas || fotosEnviadas);
+        setObservacoes(dados.observacoes || '');
+        setTipoFinalizacao(dados.tipoFinalizacao || null);
+        setCodigoValidacao(dados.codigoValidacao || '');
+        
+        toast.info('Progresso recuperado');
+      } catch (error) {
+        console.error('❌ Erro ao recuperar progresso:', error);
+      }
+    }
+  }, []);
+
+  // 💾 Salvar progresso no localStorage sempre que houver mudanças
+  useEffect(() => {
+    const progresso = {
+      fotosPreview,
+      fotosEnviadas,
+      observacoes,
+      tipoFinalizacao,
+      codigoValidacao,
+      ultimaAtualizacao: new Date().toISOString(),
+    };
+    
+    localStorage.setItem(storageKey, JSON.stringify(progresso));
+    console.log('💾 Progresso salvo automaticamente');
+  }, [fotosPreview, fotosEnviadas, observacoes, tipoFinalizacao, codigoValidacao]);
 
   const handleACaminho = async () => {
     console.log('🚗 [OrdemServicoFlow] Montador indica estar a caminho');
@@ -324,6 +362,10 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
           console.error('❌ Erro ao processar pesquisa:', pesquisaError);
         }
       }
+      
+      // 🧹 Limpar progresso salvo após finalização bem-sucedida
+      localStorage.removeItem(storageKey);
+      console.log('🧹 Progresso local limpo após finalização');
       
       onOSAtualizada?.();
       onStatusChange?.();
