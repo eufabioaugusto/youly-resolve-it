@@ -108,6 +108,24 @@ serve(async (req) => {
       );
     }
 
+    // Verificar se o token é de produção ou teste
+    const isTestToken = mercadoPagoAccessToken.startsWith('TEST-');
+    const isProductionToken = mercadoPagoAccessToken.startsWith('APP_USR-');
+    
+    console.log('Mercado Pago token info:', {
+      isTest: isTestToken,
+      isProduction: isProductionToken,
+      prefix: mercadoPagoAccessToken.substring(0, 8) + '...'
+    });
+
+    if (isTestToken) {
+      console.warn('⚠️ ATENÇÃO: Usando token de TESTE do Mercado Pago');
+    } else if (isProductionToken) {
+      console.log('✓ Usando token de PRODUÇÃO do Mercado Pago');
+    } else {
+      console.warn('⚠️ Token do Mercado Pago em formato não reconhecido');
+    }
+
     // Use service role for data fetching
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -281,6 +299,12 @@ serve(async (req) => {
       binary_mode: false
     };
 
+    console.log('Criando preferência MP:', {
+      valor: preferenceData.items[0].unit_price,
+      excluded_payment_types: preferenceData.payment_methods.excluded_payment_types,
+      excluded_payment_methods: preferenceData.payment_methods.excluded_payment_methods
+    });
+
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -297,7 +321,11 @@ serve(async (req) => {
     }
 
     const preference = await mpResponse.json();
-    console.log('Preferência criada:', preference.id);
+    console.log('Preferência criada com sucesso:', {
+      id: preference.id,
+      payment_methods: preference.payment_methods,
+      collector_id: preference.collector_id
+    });
 
     // Atualizar pagamento com preference_id
     await supabase
