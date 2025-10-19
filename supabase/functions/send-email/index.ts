@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'YOULY <onboarding@resend.dev>',
+      from: 'YOULY <no-reply@youly.com.br>',
       to: [user.email],
       subject: '🔧 Confirme sua conta no YOULY',
       html,
