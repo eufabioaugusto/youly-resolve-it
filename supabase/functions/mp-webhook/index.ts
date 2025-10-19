@@ -211,17 +211,91 @@ serve(async (req) => {
     if (payment.status === 'approved') {
       console.log('Processando pagamento aprovado');
       
-      // Chamar função para processar pagamento aprovado
-      const { error } = await supabase.rpc('processar_pagamento_aprovado', {
-        p_pagamento_id: pagamentoId,
-        p_mp_payment_id: payment.id.toString(),
-        p_mp_payment_method: payment.payment_method_id || 'unknown',
-        p_installments: payment.installments || 1
-      });
+      // Processar pagamento aprovado diretamente (sem RPC)
+      console.log('⚙️ [1/6] Atualizando status do pagamento...');
+      const { error: updateError } = await supabase
+        .from('pagamentos')
+        .update({
+          status: 'pago',
+          mercado_pago_payment_id: payment.id.toString(),
+          mercado_pago_payment_method: payment.payment_method_id || 'unknown',
+          installments: payment.installments || 1,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', pagamentoId);
 
-      if (error) {
-        console.error('Erro ao processar pagamento aprovado:', error);
-        throw error;
+      if (updateError) {
+        console.error('❌ Erro ao atualizar pagamento:', updateError);
+        throw updateError;
+      }
+
+      console.log('⚙️ [2/6] Buscando carteira do montador...');
+      const { data: carteiraData, error: carteiraError } = await supabase
+        .from('carteira')
+        .select('id, saldo_em_processamento')
+        .eq('montador_id', pagamentoDB.montador_id)
+        .single();
+
+      if (carteiraError || !carteiraData) {
+        console.error('❌ Erro ao buscar carteira:', carteiraError);
+        throw new Error('Carteira do montador não encontrada');
+      }
+
+      console.log('⚙️ [3/6] Bloqueando valor na carteira...');
+      const novoSaldoProcessamento = Number(carteiraData.saldo_em_processamento) + Number(pagamentoDB.valor_total);
+      const dataLiberacao = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      
+      const { error: carteiraUpdateError } = await supabase
+        .from('carteira')
+        .update({
+          saldo_em_processamento: novoSaldoProcessamento,
+          data_liberacao_admin: dataLiberacao
+        })
+        .eq('id', carteiraData.id);
+
+      if (carteiraUpdateError) {
+        console.error('❌ Erro ao atualizar carteira:', carteiraUpdateError);
+      }
+
+      console.log('⚙️ [4/6] Registrando transação...');
+      const { error: transacaoError } = await supabase
+        .from('carteira_transacoes')
+        .insert({
+          carteira_id: carteiraData.id,
+          tipo: 'bloqueio',
+          valor: pagamentoDB.valor_total,
+          descricao: 'Valor bloqueado - aguardando liberação (3 dias)',
+          job_id: pagamentoDB.job_id,
+          pagamento_id: pagamentoId
+        });
+
+      if (transacaoError) {
+        console.error('❌ Erro ao registrar transação:', transacaoError);
+      }
+
+      console.log('⚙️ [5/6] Atualizando negociação...');
+      const { error: negUpdateError } = await supabase
+        .from('negociacoes')
+        .update({
+          pagamento_id: pagamentoId,
+          data_pagamento: new Date().toISOString(),
+          valor_final: pagamentoDB.valor_total
+        })
+        .eq('job_id', pagamentoDB.job_id)
+        .eq('montador_id', pagamentoDB.montador_id);
+
+      if (negUpdateError) {
+        console.error('❌ Erro ao atualizar negociação:', negUpdateError);
+      }
+
+      console.log('⚙️ [6/6] Atualizando status do job...');
+      const { error: jobUpdateError } = await supabase
+        .from('jobs')
+        .update({ status: 'pago' })
+        .eq('id', pagamentoDB.job_id);
+
+      if (jobUpdateError) {
+        console.error('❌ Erro ao atualizar job:', jobUpdateError);
       }
 
       console.log('✅ Pagamento processado com sucesso');
