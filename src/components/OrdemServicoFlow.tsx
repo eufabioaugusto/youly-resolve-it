@@ -41,70 +41,89 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   });
   const [observacoes, setObservacoes] = useState('');
   const [tipoFinalizacao, setTipoFinalizacao] = useState<'sucesso' | 'assistencia' | 'pendente' | null>(null);
+  const [processandoACaminho, setProcessandoACaminho] = useState(false);
 
   const handleACaminho = async () => {
     console.log('🚗 [OrdemServicoFlow] Montador indica estar a caminho');
+    setProcessandoACaminho(true);
     
     try {
+      // 1. Atualizar status IMEDIATAMENTE
       await atualizarStatus(ordemServico.id, 'a_caminho');
       
-      // 🎯 Buscar telefone REAL do cliente
-      const { data: clienteData, error: clienteError } = await supabase
-        .from('clientes')
-        .select('user_id')
-        .eq('id', ordemServico.cliente_id)
-        .single();
+      // 2. Notificar sucesso ao usuário IMEDIATAMENTE
+      toast.success('Status atualizado! Enviando SMS ao cliente...');
+      onStatusChange?.();
+      onOSAtualizada?.();
+      
+      // 3. Enviar SMS em BACKGROUND (não bloqueia a UI)
+      enviarSMSBackground();
+      
+    } catch (error) {
+      console.error('❌ Erro ao atualizar status:', error);
+      toast.error('Erro ao atualizar status');
+      setProcessandoACaminho(false);
+    }
+  };
 
-      if (clienteError || !clienteData) {
-        console.error('❌ Erro ao buscar cliente:', clienteError);
-        toast.error('Erro ao buscar dados do cliente');
+  const enviarSMSBackground = async () => {
+    try {
+      // Buscar dados em paralelo para otimizar
+      const [clienteResult, montadorResult] = await Promise.all([
+        supabase
+          .from('clientes')
+          .select('user_id')
+          .eq('id', ordemServico.cliente_id)
+          .single(),
+        supabase
+          .from('montadores')
+          .select('user_id')
+          .eq('id', ordemServico.montador_id)
+          .single()
+      ]);
+
+      if (!clienteResult.data || !montadorResult.data) {
+        console.error('❌ Dados não encontrados');
         return;
       }
 
-      // Buscar profile do cliente
-      const { data: profileCliente } = await supabase
-        .from('profiles')
-        .select('telefone, nome')
-        .eq('user_id', clienteData.user_id)
-        .single();
+      // Buscar profiles em paralelo
+      const [profileCliente, profileMontador] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('telefone')
+          .eq('user_id', clienteResult.data.user_id)
+          .single(),
+        supabase
+          .from('profiles')
+          .select('nome')
+          .eq('user_id', montadorResult.data.user_id)
+          .single()
+      ]);
 
-      const telefoneCliente = profileCliente?.telefone;
-      
+      const telefoneCliente = profileCliente.data?.telefone;
+      const nomeMontador = profileMontador.data?.nome || 'Montador';
+
       if (!telefoneCliente) {
         toast.error('Cliente não possui telefone cadastrado');
         return;
       }
 
-      // Buscar montador e seu profile
-      const { data: montadorData } = await supabase
-        .from('montadores')
-        .select('user_id')
-        .eq('id', ordemServico.montador_id)
-        .single();
-
-      if (montadorData) {
-        const { data: profileMontador } = await supabase
-          .from('profiles')
-          .select('nome')
-          .eq('user_id', montadorData.user_id)
-          .single();
-
-        const nomeMontador = profileMontador?.nome || 'Montador';
-        
-        // Enviar SMS ao cliente com dados reais
-        await enviarSMSACaminho(
-          telefoneCliente,
-          nomeMontador,
-          ordemServico.codigo_validacao,
-          ordemServico.id
-        );
-        
-        toast.success('Cliente notificado via SMS!');
-        onStatusChange?.();
-      }
+      // Enviar SMS
+      await enviarSMSACaminho(
+        telefoneCliente,
+        nomeMontador,
+        ordemServico.codigo_validacao,
+        ordemServico.id
+      );
+      
+      console.log('✅ SMS enviado em background');
+      
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      toast.error('Erro ao processar');
+      console.error('⚠️ Erro ao enviar SMS (não crítico):', error);
+      toast.warning('SMS não enviado, mas status foi atualizado');
+    } finally {
+      setProcessandoACaminho(false);
     }
   };
 
@@ -301,8 +320,12 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleACaminho} disabled={loading} className="w-full">
-              Estou a caminho
+            <Button 
+              onClick={handleACaminho} 
+              disabled={processandoACaminho || loading} 
+              className="w-full"
+            >
+              {processandoACaminho ? 'Processando...' : 'Estou a caminho'}
             </Button>
             <p className="text-sm text-muted-foreground mt-2">
               O cliente receberá um SMS com sua notificação
