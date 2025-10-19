@@ -177,10 +177,41 @@ serve(async (req) => {
       );
     }
 
-    // SECURITY FIX: Validate valor matches job's valor_estimado (allow small variance for negotiation)
-    if (jobData.valor_estimado) {
+    // SECURITY FIX: Validate valor against negotiation or estimated value
+    // Check if there's an accepted negotiation
+    const { data: negociacaoData } = await supabase
+      .from('negociacoes')
+      .select('valor_final, status')
+      .eq('job_id', jobId)
+      .eq('montador_id', montadorId)
+      .eq('status', 'aceito')
+      .maybeSingle();
+
+    // If there's an accepted negotiation, validate against valor_final
+    if (negociacaoData?.valor_final) {
+      const expectedValor = negociacaoData.valor_final;
+      const variance = Math.abs(valor - expectedValor) / expectedValor;
+      if (variance > 0.01) { // Allow 1% variance for rounding
+        console.error('Valor differs from negotiated amount', {
+          requestedValor: valor,
+          negotiatedValor: expectedValor
+        });
+        return new Response(
+          JSON.stringify({ 
+            error: 'Valor não corresponde ao negociado',
+            details: `O valor deve ser R$ ${expectedValor.toFixed(2)}`
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        );
+      }
+    } 
+    // Otherwise, validate against estimated value if available
+    else if (jobData.valor_estimado) {
       const variance = Math.abs(valor - jobData.valor_estimado) / jobData.valor_estimado;
-      if (variance > 0.5) { // Allow 50% variance for negotiation
+      if (variance > 0.5) { // Allow 50% variance for direct payments
         console.error('Valor differs too much from estimated', {
           requestedValor: valor,
           estimatedValor: jobData.valor_estimado
