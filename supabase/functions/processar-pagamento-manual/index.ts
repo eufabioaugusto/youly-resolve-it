@@ -17,19 +17,21 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { pagamento_id, mercado_pago_payment_id } = await req.json();
+    const body = await req.json();
+    let pagamentoId = body.pagamento_id;
+    const mercadoPagoPaymentId = body.mercado_pago_payment_id;
 
     console.log('🔧 Processamento manual iniciado:', {
-      pagamento_id,
-      mercado_pago_payment_id
+      pagamento_id: pagamentoId,
+      mercado_pago_payment_id: mercadoPagoPaymentId
     });
 
     // Se tiver MP payment ID, buscar do MP
     let paymentData;
-    if (mercado_pago_payment_id) {
+    if (mercadoPagoPaymentId) {
       console.log('📦 Buscando pagamento do Mercado Pago...');
       const mpResponse = await fetch(
-        `https://api.mercadopago.com/v1/payments/${mercado_pago_payment_id}`,
+        `https://api.mercadopago.com/v1/payments/${mercadoPagoPaymentId}`,
         {
           headers: {
             'Authorization': `Bearer ${mercadoPagoAccessToken}`,
@@ -51,7 +53,7 @@ serve(async (req) => {
 
       // Se o external_reference for diferente, usar ele
       if (paymentData.external_reference) {
-        pagamento_id = paymentData.external_reference;
+        pagamentoId = paymentData.external_reference;
       }
     }
 
@@ -59,7 +61,7 @@ serve(async (req) => {
     const { data: pagamento, error: pagError } = await supabase
       .from('pagamentos')
       .select('*')
-      .eq('id', pagamento_id)
+      .eq('id', pagamentoId)
       .single();
 
     if (pagError || !pagamento) {
@@ -89,7 +91,7 @@ serve(async (req) => {
     console.log('⚙️ Processando pagamento...');
     const { error: processError } = await supabase.rpc('processar_pagamento_aprovado', {
       p_pagamento_id: pagamento.id,
-      p_mp_payment_id: mercado_pago_payment_id || 'manual',
+      p_mp_payment_id: mercadoPagoPaymentId || 'manual',
       p_mp_payment_method: paymentData?.payment_method_id || 'manual',
       p_installments: paymentData?.installments || 1
     });
