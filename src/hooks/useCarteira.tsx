@@ -36,6 +36,51 @@ export function useCarteira() {
     }
   }, [montadorProfile?.id]);
 
+  // Realtime para carteira
+  useEffect(() => {
+    if (!montadorProfile?.id) return;
+
+    console.log('🔔 Configurando realtime para carteira');
+    
+    const carteiraChannel = supabase
+      .channel('carteira-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'carteira',
+          filter: `montador_id=eq.${montadorProfile.id}`
+        },
+        (payload) => {
+          console.log('💰 Carteira atualizada:', payload);
+          fetchCarteira();
+        }
+      )
+      .subscribe();
+
+    const transacoesChannel = supabase
+      .channel('transacoes-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'carteira_transacoes'
+        },
+        (payload) => {
+          console.log('📝 Transação registrada:', payload);
+          fetchTransacoes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(carteiraChannel);
+      supabase.removeChannel(transacoesChannel);
+    };
+  }, [montadorProfile?.id]);
+
   const fetchCarteira = async () => {
     if (!montadorProfile?.id) return;
 
