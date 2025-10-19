@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { Star, TrendingUp, Award } from 'lucide-react';
 import { NivelBadge } from '@/components/ui/nivel-badge';
+import { logger } from '@/lib/logger';
 
 export function AdminRankingMontadores() {
   const [montadores, setMontadores] = useState<any[]>([]);
@@ -18,7 +19,7 @@ export function AdminRankingMontadores() {
   }, []);
 
   const loadMontadores = async () => {
-    console.log('🚀 [AdminRankingMontadores] Carregando montadores');
+    logger.adminAction('Carregando ranking de montadores');
     setLoading(true);
 
     try {
@@ -29,10 +30,10 @@ export function AdminRankingMontadores() {
 
       if (error) throw error;
 
-      console.log('✅ [AdminRankingMontadores] Montadores carregados', data);
+      logger.info('admin', 'Ranking de montadores carregado', { total: data?.length });
       setMontadores(data || []);
-    } catch (error) {
-      console.error('❌ [AdminRankingMontadores] Erro ao carregar montadores', error);
+    } catch (error: any) {
+      logger.apiError('admin', 'AdminRankingMontadores.loadMontadores', error);
     } finally {
       setLoading(false);
     }

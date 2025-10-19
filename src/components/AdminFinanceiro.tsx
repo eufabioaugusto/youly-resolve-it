@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DollarSign, Download, Filter, TrendingUp } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export function AdminFinanceiro() {
   const { toast } = useToast();
@@ -22,7 +23,7 @@ export function AdminFinanceiro() {
   }, [filtroPeriodo]);
 
   const loadData = async () => {
-    console.log('🚀 [AdminFinanceiro] Carregando dados financeiros');
+    logger.adminAction('Carregando dados financeiros');
     setLoading(true);
 
     try {
@@ -61,13 +62,13 @@ export function AdminFinanceiro() {
 
       if (montadoresError) throw montadoresError;
 
-      console.log('✅ [AdminFinanceiro] Montadores carregados', montadoresData);
+      logger.info('admin', 'Dados financeiros carregados', { montadores: montadoresData?.length });
       setMontadores(montadoresData || []);
-    } catch (error) {
-      console.error('❌ [AdminFinanceiro] Erro ao carregar dados', error);
+    } catch (error: any) {
+      logger.apiError('admin', 'AdminFinanceiro.loadData', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível carregar os dados financeiros',
+        description: error?.message || 'Não foi possível carregar os dados financeiros',
         variant: 'destructive',
       });
     } finally {
@@ -76,7 +77,7 @@ export function AdminFinanceiro() {
   };
 
   const exportarRelatorio = () => {
-    console.log('📊 [AdminFinanceiro] Exportando relatório');
+    logger.adminAction('Exportando relatório financeiro');
     
     // Preparar dados para CSV
     const csvHeader = 'Montador,CPF,Total Movimentado,Saldo Disponível,Em Processamento,Total Sacado\n';

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface CarteiraProcessamento {
   id: string;
@@ -44,6 +45,7 @@ export function AdminCarteiraGestao() {
   }, []);
 
   const carregarCarteirasProcessamento = async () => {
+    logger.adminAction('Carregando carteiras em processamento');
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -61,7 +63,6 @@ export function AdminCarteiraGestao() {
         .order('data_liberacao_admin', { ascending: true });
 
       if (error) {
-        console.error('Erro ao carregar carteiras:', error);
         throw error;
       }
 
@@ -84,12 +85,13 @@ export function AdminCarteiraGestao() {
         })
       );
 
+      logger.info('wallet', 'Carteiras em processamento carregadas', { total: carteirasComNomes.length });
       setCarteiras(carteirasComNomes as any);
-    } catch (error) {
-      console.error('Erro ao carregar carteiras:', error);
+    } catch (error: any) {
+      logger.apiError('wallet', 'AdminCarteiraGestao.carregarCarteirasProcessamento', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar as carteiras",
+        description: error?.message || "Não foi possível carregar as carteiras",
         variant: "destructive"
       });
     } finally {
@@ -100,6 +102,7 @@ export function AdminCarteiraGestao() {
   const liberarValor = async (carteiraId: string) => {
     if (!user) return;
 
+    logger.adminAction('Liberando valor da carteira', user.id, { carteiraId });
     setLiberandoId(carteiraId);
     try {
       const { error } = await supabase.rpc('liberar_valor_carteira', {
@@ -108,10 +111,10 @@ export function AdminCarteiraGestao() {
       });
 
       if (error) {
-        console.error('Erro ao liberar valor:', error);
         throw error;
       }
 
+      logger.info('wallet', 'Valor liberado com sucesso', { carteiraId }, user.id);
       toast({
         title: "Sucesso",
         description: "Valor liberado com sucesso!",
@@ -119,11 +122,11 @@ export function AdminCarteiraGestao() {
 
       // Recarregar dados
       await carregarCarteirasProcessamento();
-    } catch (error) {
-      console.error('Erro ao liberar valor:', error);
+    } catch (error: any) {
+      logger.apiError('wallet', 'AdminCarteiraGestao.liberarValor', error, user.id);
       toast({
         title: "Erro",
-        description: "Não foi possível liberar o valor",
+        description: error?.message || "Não foi possível liberar o valor",
         variant: "destructive"
       });
     } finally {

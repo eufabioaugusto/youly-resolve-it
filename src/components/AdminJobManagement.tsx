@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Search, AlertCircle, Clock, CheckCircle, Wrench } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export function AdminJobManagement() {
   const { toast } = useToast();
@@ -22,7 +23,7 @@ export function AdminJobManagement() {
   }, []);
 
   const loadData = async () => {
-    console.log('🚀 [AdminJobManagement] Carregando dados');
+    logger.adminAction('Carregando dados do painel de gestão de jobs');
     setLoading(true);
 
     try {
@@ -58,13 +59,13 @@ export function AdminJobManagement() {
 
       if (montadoresError) throw montadoresError;
 
-      console.log('✅ [AdminJobManagement] Montadores disponíveis:', montadoresData);
+      logger.info('admin', 'Montadores disponíveis carregados', { total: montadoresData?.length });
       setMontadores(montadoresData || []);
-    } catch (error) {
-      console.error('❌ [AdminJobManagement] Erro ao carregar dados', error);
+    } catch (error: any) {
+      logger.apiError('admin', 'AdminJobManagement.loadData', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível carregar os dados',
+        description: error?.message || 'Não foi possível carregar os dados',
         variant: 'destructive',
       });
     } finally {
@@ -73,7 +74,7 @@ export function AdminJobManagement() {
   };
 
   const handleAssignMontador = async (jobId: string, montadorId: string) => {
-    console.log('🚀 [AdminJobManagement] Atribuindo montador', { jobId, montadorId });
+    logger.adminAction('Atribuindo montador ao job', undefined, { jobId, montadorId });
     setAssigningJobId(jobId);
 
     try {
