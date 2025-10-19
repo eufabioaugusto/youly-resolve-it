@@ -177,7 +177,7 @@ serve(async (req) => {
       );
     }
 
-    // SECURITY FIX: Validate valor against negotiation or estimated value
+    // SECURITY FIX: Validate valor against accepted negotiation
     // Check if there's an accepted negotiation
     const { data: negociacaoData } = await supabase
       .from('negociacoes')
@@ -187,39 +187,19 @@ serve(async (req) => {
       .eq('status', 'aceito')
       .maybeSingle();
 
-    // If there's an accepted negotiation, validate against valor_final
+    // Validate against negotiated service value if exists
     if (negociacaoData?.valor_final) {
       const expectedValor = negociacaoData.valor_final;
       const variance = Math.abs(valor - expectedValor) / expectedValor;
       if (variance > 0.01) { // Allow 1% variance for rounding
-        console.error('Valor differs from negotiated amount', {
+        console.error('Valor differs from negotiated service amount', {
           requestedValor: valor,
           negotiatedValor: expectedValor
         });
         return new Response(
           JSON.stringify({ 
-            error: 'Valor não corresponde ao negociado',
-            details: `O valor deve ser R$ ${expectedValor.toFixed(2)}`
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400
-          }
-        );
-      }
-    } 
-    // Otherwise, validate against estimated value if available
-    else if (jobData.valor_estimado) {
-      const variance = Math.abs(valor - jobData.valor_estimado) / jobData.valor_estimado;
-      if (variance > 0.5) { // Allow 50% variance for direct payments
-        console.error('Valor differs too much from estimated', {
-          requestedValor: valor,
-          estimatedValor: jobData.valor_estimado
-        });
-        return new Response(
-          JSON.stringify({ 
-            error: 'Valor muito diferente do estimado',
-            details: 'O valor solicitado difere muito do valor estimado do job'
+            error: 'Valor não corresponde ao serviço negociado',
+            details: `O valor do serviço deve ser R$ ${expectedValor.toFixed(2)}`
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
