@@ -191,11 +191,13 @@ const SuggestedMontadores = () => {
     try {
       console.log("Iniciando contratação:", { jobId: job.id, montadorId, clienteId: clienteProfile.id });
 
-      // Verificar se já existe uma negociação para este job
+      // Verificar se já existe uma negociação ATIVA com ESTE montador
       const { data: existingNegociacao, error: checkError } = await supabase
         .from("negociacoes")
-        .select("id")
+        .select("id, status")
         .eq("job_id", job.id)
+        .eq("montador_id", montadorId)
+        .neq("status", "recusado") // Ignorar negociações recusadas
         .maybeSingle();
 
       if (checkError) {
@@ -204,7 +206,7 @@ const SuggestedMontadores = () => {
       }
 
       if (existingNegociacao) {
-        console.log("Negociação já existe, redirecionando...");
+        console.log("Negociação ativa já existe com este montador, redirecionando...");
         navigate(`/cliente/negociacao/${job.id}`);
         return;
       }

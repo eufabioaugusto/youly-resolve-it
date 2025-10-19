@@ -747,15 +747,26 @@ const CentralNegociacao = () => {
                     <h3 className="text-xl font-semibold mb-2">Negociação Encerrada</h3>
                     <p className="text-muted-foreground mb-4">
                       O orçamento foi recusado. A negociação foi finalizada.
+                      {isCliente && ' Você pode escolher outro montador para este serviço.'}
                     </p>
+                    <div className="flex gap-3 justify-center">
+                      <Button
+                        onClick={() => navigate(isCliente ? "/cliente" : "/montador")}
+                        variant="outline"
+                      >
+                        Voltar ao Dashboard
+                      </Button>
+                      {isCliente && negociacao?.jobs && (
+                        <Button
+                          onClick={() => navigate(`/cliente/sugestoes/${negociacao.jobs.id}`)}
+                          className="bg-gradient-primary"
+                        >
+                          Escolher Outro Montador
+                        </Button>
+                      )}
+                    </div>
                   </>
                 )}
-                <Button
-                  onClick={() => navigate(isCliente ? "/cliente" : "/montador")}
-                  className="bg-gradient-primary"
-                >
-                  Voltar ao Dashboard
-                </Button>
               </CardContent>
             </Card>
           )}
