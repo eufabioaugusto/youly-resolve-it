@@ -443,9 +443,10 @@ const WorkerDashboard = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="available" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
             <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>
+            <TabsTrigger value="os">Ordens de Serviço</TabsTrigger>
             <TabsTrigger value="negotiations">Negociações</TabsTrigger>
             <TabsTrigger value="wallet">Carteira</TabsTrigger>
           </TabsList>
@@ -634,6 +635,21 @@ const WorkerDashboard = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="os" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Ordens de Serviço</CardTitle>
+                <CardDescription>Acompanhe suas ordens de serviço agendadas e em andamento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Funcionalidade de OS será integrada aqui</p>
+                  <p className="text-sm mt-2">Use o componente OrdemServicoFlow para gerenciar o fluxo completo</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

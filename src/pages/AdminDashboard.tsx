@@ -6,6 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCarteiraGestao } from "@/components/AdminCarteiraGestao";
+import { AdminJobManagement } from "@/components/AdminJobManagement";
+import { AdminFinanceiro } from "@/components/AdminFinanceiro";
+import { AdminRankingMontadores } from "@/components/AdminRankingMontadores";
 import { 
   Users, 
   DollarSign, 
@@ -14,7 +17,9 @@ import {
   Package,
   LogOut,
   Activity,
-  Wrench
+  Wrench,
+  Clock,
+  Award
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -186,11 +191,26 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="carteiras" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="carteiras">Gestão de Carteiras</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="jobs">Gestão de Jobs</TabsTrigger>
+            <TabsTrigger value="ranking">Ranking</TabsTrigger>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="carteiras">Carteiras</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="jobs">
+            <AdminJobManagement />
+          </TabsContent>
+
+          <TabsContent value="ranking">
+            <AdminRankingMontadores />
+          </TabsContent>
+
+          <TabsContent value="financeiro">
+            <AdminFinanceiro />
+          </TabsContent>
 
           <TabsContent value="carteiras">
             <AdminCarteiraGestao />

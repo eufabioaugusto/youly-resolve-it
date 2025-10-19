@@ -9,26 +9,32 @@ import { ptBR } from 'date-fns/locale';
 
 interface DataSelecaoModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   datasDisponiveis: Array<{ data: string; periodo: string }>;
-  onConfirmar: (dataSelecionada: { data: string; periodo: string }) => void;
+  onConfirm: (dataSelecionada: { data: string; periodo: string }) => void;
   loading?: boolean;
 }
 
 export function DataSelecaoModal({
   open,
+  onClose,
   onOpenChange,
   datasDisponiveis,
-  onConfirmar,
+  onConfirm,
   loading = false,
 }: DataSelecaoModalProps) {
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && onClose) onClose();
+    if (onOpenChange) onOpenChange(newOpen);
+  };
   const [dataSelecionada, setDataSelecionada] = useState<string>('');
 
   const handleConfirmar = () => {
     if (!dataSelecionada) return;
     
     const [data, periodo] = dataSelecionada.split('|');
-    onConfirmar({ data, periodo });
+    onConfirm({ data, periodo });
   };
 
   const formatarData = (dataStr: string) => {
@@ -50,7 +56,7 @@ export function DataSelecaoModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Selecione a data da montagem</DialogTitle>
@@ -85,7 +91,7 @@ export function DataSelecaoModal({
         </div>
 
         <div className="flex gap-2 justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
           <Button 

@@ -24,6 +24,7 @@ import JobCandidates from "./pages/JobCandidates";
 import SuggestedMontadores from "./pages/SuggestedMontadores";
 import PagamentoSucesso from "./pages/PagamentoSucesso";
 import PagamentoFalha from "./pages/PagamentoFalha";
+import PesquisaSatisfacao from "./pages/PesquisaSatisfacao";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,7 @@ const App = () => (
               <Route path="/pagamento/sucesso" element={<PagamentoSucesso />} />
               <Route path="/pagamento/falha" element={<PagamentoFalha />} />
               <Route path="/pagamento/pendente" element={<PagamentoSucesso />} />
+              <Route path="/pesquisa/:token" element={<PesquisaSatisfacao />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -15,6 +15,9 @@ import { useNegociacoes } from "@/hooks/useNegociacoes";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PagamentoModal } from "@/components/PagamentoModal";
+import { TimeoutMonitor } from "@/components/TimeoutMonitor";
+import { DataSelecaoModal } from "@/components/DataSelecaoModal";
+import { useTimeout } from "@/hooks/useTimeout";
 
 const CentralNegociacao = () => {
   const { jobId } = useParams();
@@ -27,6 +30,10 @@ const CentralNegociacao = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
+  const [dataSelecaoModalOpen, setDataSelecaoModalOpen] = useState(false);
+  const [timeoutAtivo, setTimeoutAtivo] = useState<any>(null);
+  
+  const { getTimeoutAtivo } = useTimeout();
   
   // Form states
   const [valorProposta, setValorProposta] = useState('');
@@ -147,6 +154,13 @@ const CentralNegociacao = () => {
         
         if (data?.valor_proposto_montador) {
           setValorContraproposta(data.valor_proposto_montador.toString());
+        }
+        
+        // Verificar se há timeout ativo para este montador
+        if (isMontador && data?.status === 'pendente') {
+          const timeout = await getTimeoutAtivo(data.id);
+          console.log('✅ Timeout ativo encontrado:', timeout);
+          setTimeoutAtivo(timeout);
         }
       }
     } catch (error) {
@@ -318,9 +332,25 @@ const CentralNegociacao = () => {
             <p className="text-muted-foreground mb-4">
               Negocie diretamente {isCliente ? 'com o montador' : 'com o cliente'} sobre preço e detalhes do serviço
             </p>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4 items-center">
               {getStatusBadge(negociacao.status)}
             </div>
+            
+            {/* Timeout Monitor para Montador */}
+            {isMontador && timeoutAtivo && !timeoutAtivo.expirado && (
+              <div className="mt-6">
+                <TimeoutMonitor
+                  dataExpiracao={timeoutAtivo.data_expiracao}
+                  onExpired={() => {
+                    toast({
+                      title: "Tempo esgotado!",
+                      description: "Este pedido será redirecionado ao administrador.",
+                      variant: "destructive"
+                    });
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Informações do Job */}
@@ -692,6 +722,19 @@ const CentralNegociacao = () => {
             </Card>
           )}
         </div>
+
+        {/* Modal de Seleção de Data */}
+        {dataSelecaoModalOpen && negociacao && (
+          <DataSelecaoModal
+            open={dataSelecaoModalOpen}
+            onClose={() => setDataSelecaoModalOpen(false)}
+            datasDisponiveis={negociacao.jobs?.data_opcoes || []}
+            onConfirm={async (dataSelecionada) => {
+              console.log('📅 Data selecionada pelo montador', dataSelecionada);
+              setDataSelecaoModalOpen(false);
+            }}
+          />
+        )}
 
         {/* Modal de Pagamento */}
         {negociacao && (
