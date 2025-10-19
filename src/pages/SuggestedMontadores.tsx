@@ -18,6 +18,7 @@ interface Montador {
   especialidades: string[];
   preco_hora: number;
   foto_perfil_url?: string;
+  score?: number;
   profiles: {
     nome: string;
   } | null;
@@ -91,8 +92,8 @@ const SuggestedMontadores = () => {
 
         console.log("Profiles carregados:", profilesData);
 
-        // Combinar dados e filtrar por especialidades relacionadas ao job
-        let montadoresWithProfiles = montadoresData.map((montador) => {
+        // Combinar dados dos montadores com seus profiles
+        const montadoresWithProfiles = montadoresData.map((montador) => {
           const profile = profilesData?.find((p) => p.user_id === montador.user_id);
           console.log(`Montador ${montador.id} - Profile encontrado:`, profile);
           return {
@@ -101,42 +102,70 @@ const SuggestedMontadores = () => {
           };
         });
 
-        // Filtrar montadores que têm especialidades relacionadas ao job
-        if (jobData.categoria) {
-          montadoresWithProfiles = montadoresWithProfiles.filter((montador) => {
-            if (!montador.especialidades) return false;
-
-            const jobCategoria = jobData.categoria.toLowerCase();
-            return montador.especialidades.some((esp) => {
+        // 🎯 Sistema de Scoring Inteligente
+        const calculateMontadorScore = (montador: any, jobCategoria: string) => {
+          let score = 0;
+          
+          // 1. ESPECIALIDADE (peso 40) - match com a categoria do job
+          if (montador.especialidades && jobCategoria) {
+            const jobCat = jobCategoria.toLowerCase();
+            const hasExactMatch = montador.especialidades.some((esp: string) => {
               const especialidade = esp.toLowerCase();
               return (
-                especialidade.includes(jobCategoria) ||
-                jobCategoria.includes(especialidade) ||
-                (jobCategoria === "mesa" && especialidade === "mesa") ||
-                (jobCategoria === "guarda-roupa" && especialidade === "guarda-roupa") ||
-                (jobCategoria === "cama" && especialidade === "cama") ||
-                (jobCategoria === "estante" && especialidade === "estante")
+                especialidade.includes(jobCat) ||
+                jobCat.includes(especialidade) ||
+                especialidade === jobCat
               );
             });
-          });
-        }
+            
+            if (hasExactMatch) {
+              score += 40; // Match exato com especialidade
+            } else if (montador.especialidades.length > 0) {
+              score += 10; // Tem especialidades mas não match exato
+            }
+          }
+          
+          // 2. AVALIAÇÃO (peso 30) - montadores bem avaliados
+          const avaliacaoNormalizada = (montador.avaliacao_media / 5) * 30;
+          score += avaliacaoNormalizada;
+          
+          // 3. EXPERIÊNCIA (peso 20) - projetos realizados
+          const experienciaNormalizada = Math.min(montador.projetos_realizados / 10, 1) * 20;
+          score += experienciaNormalizada;
+          
+          // 4. FATOR ALEATORIEDADE (peso 10) - dar chance a novos montadores
+          const randomBonus = Math.random() * 10;
+          score += randomBonus;
+          
+          // 5. BONUS para montadores novos (incentivo)
+          if (montador.projetos_realizados === 0) {
+            score += 5; // Pequeno boost para dar oportunidade
+          }
+          
+          return score;
+        };
 
-        // Se não há montadores com especialidades específicas, mostrar todos os ativos (máximo 3)
-        if (montadoresWithProfiles.length === 0) {
-          montadoresWithProfiles = montadoresData
-            .map((montador) => {
-              const profile = profilesData?.find((p) => p.user_id === montador.user_id);
-              return {
-                ...montador,
-                profiles: profile || { nome: "Montador" },
-              };
-            })
-            .slice(0, 3);
-        } else {
-          // Pegar até 3 montadores especializados
-          montadoresWithProfiles = montadoresWithProfiles.slice(0, 3);
-        }
-        setMontadores(montadoresWithProfiles);
+        // Calcular score para cada montador
+        const montadoresComScore = montadoresWithProfiles.map((montador) => ({
+          ...montador,
+          score: calculateMontadorScore(montador, jobData.categoria || ''),
+        }));
+
+        // Ordenar por score (maior para menor)
+        const montadoresSorted = montadoresComScore.sort((a, b) => b.score - a.score);
+
+        // Pegar os TOP 5 montadores (não apenas 3!)
+        const topMontadores = montadoresSorted.slice(0, 5);
+
+        console.log('🎯 Montadores com score:', topMontadores.map(m => ({
+          nome: m.profiles?.nome,
+          score: m.score.toFixed(2),
+          especialidades: m.especialidades,
+          avaliacao: m.avaliacao_media,
+          projetos: m.projetos_realizados
+        })));
+
+        setMontadores(topMontadores);
       } else {
         setMontadores([]);
       }
@@ -283,7 +312,7 @@ const SuggestedMontadores = () => {
             </div>
             <h1 className="text-3xl font-bold text-black mb-2">Pedido criado com sucesso!</h1>
             <p className="text-black/80 mb-6">
-              Montadores próximos foram notificados. Aqui estão 3 montadores recomendados para seu projeto:
+              Montadores próximos foram notificados. Aqui estão os montadores mais qualificados para seu projeto:
             </p>
           </div>
 
@@ -389,6 +418,20 @@ const SuggestedMontadores = () => {
                                 </Badge>
                               ))}
                             </div>
+                          </div>
+                        )}
+
+                        {/* Match Score Visual */}
+                        {montador.score && (
+                          <div className="w-full bg-primary/10 border border-primary/20 rounded-lg p-3">
+                            <p className="text-xs text-center">
+                              <strong className="text-primary">Match: {Math.round((montador.score / 100) * 100)}%</strong>
+                              <span className="block text-muted-foreground mt-1">
+                                {montador.score >= 60 ? '🎯 Altamente recomendado' : 
+                                 montador.score >= 40 ? '✓ Boa opção' : 
+                                 '⭐ Novo na plataforma'}
+                              </span>
+                            </p>
                           </div>
                         )}
 
