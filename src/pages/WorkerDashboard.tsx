@@ -324,8 +324,6 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
-      console.log('🚀 [WorkerDashboard] Buscando ordens de serviço para montador:', montadorProfile.id);
-      
       // Buscar OS primeiro
       const { data: osData, error: osError } = await supabase
         .from('ordem_servico')
@@ -334,8 +332,6 @@ const WorkerDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (osError) throw osError;
-
-      console.log('✅ [WorkerDashboard] OS encontradas:', osData?.length || 0);
 
       if (!osData || osData.length === 0) {
         setOrdensServico([]);
@@ -379,10 +375,9 @@ const WorkerDashboard = () => {
         };
       });
 
-      console.log('✅ [WorkerDashboard] OS completas:', osCompletas);
       setOrdensServico(osCompletas || []);
     } catch (error) {
-      console.error('❌ [WorkerDashboard] Erro ao buscar OS:', error);
+      console.error('Erro ao buscar OS:', error);
     }
   };
 
