@@ -36,7 +36,10 @@ export function AdminFinanceiro() {
         .select(`
           *,
           jobs (*),
-          montadores (*, profiles:user_id(*))
+          montadores (
+            *,
+            profiles!montadores_user_id_fkey(*)
+          )
         `)
         .gte('created_at', dataInicio.toISOString())
         .order('created_at', { ascending: false });
@@ -51,7 +54,7 @@ export function AdminFinanceiro() {
         .from('montadores')
         .select(`
           *,
-          profiles:user_id(*),
+          profiles!montadores_user_id_fkey(*),
           carteira (*)
         `)
         .order('total_valor_movimentado', { ascending: false });

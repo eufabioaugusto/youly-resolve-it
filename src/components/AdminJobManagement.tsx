@@ -34,7 +34,10 @@ export function AdminJobManagement() {
           negociacoes (
             *,
             jobs (*),
-            montadores (*, profiles:user_id(*))
+            montadores (
+              *,
+              profiles!montadores_user_id_fkey(*)
+            )
           )
         `)
         .eq('expirado', true)
@@ -49,7 +52,7 @@ export function AdminJobManagement() {
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
-        .select('*, profiles:user_id(*)')
+        .select('*, profiles!montadores_user_id_fkey(*)')
         .eq('status', 'ativo')
         .order('avaliacao_media', { ascending: false });
 
