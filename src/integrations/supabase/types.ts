@@ -959,6 +959,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_estatisticas_cliente: {
+        Args: { p_cliente_id: string }
+        Returns: boolean
+      }
       atualizar_estatisticas_montador: {
         Args: { p_montador_id: string }
         Returns: boolean
