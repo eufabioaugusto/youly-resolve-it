@@ -270,10 +270,15 @@ serve(async (req) => {
       auto_return: 'approved',
       external_reference: pagamento.id,
       notification_url: `${supabaseUrl}/functions/v1/mp-webhook`,
+      statement_descriptor: 'YOULY',
       payment_methods: {
         excluded_payment_types: [],
-        installments: 12
-      }
+        excluded_payment_methods: [],
+        installments: 12,
+        default_installments: 1
+      },
+      marketplace_fee: 0,
+      binary_mode: false
     };
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
