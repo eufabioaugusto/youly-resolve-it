@@ -23,27 +23,70 @@ export default function OrdemServicoPage() {
   }, [osId, montadorProfile]);
 
   const loadOrdemServico = async () => {
-    console.log('🚀 [OrdemServicoPage] Carregando OS', { osId });
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // Buscar OS
+      const { data: osData, error: osError } = await supabase
         .from('ordem_servico')
-        .select(`
-          *,
-          jobs (*),
-          clientes (*, profiles:user_id(*)),
-          montadores (*, profiles:user_id(*))
-        `)
+        .select('*')
         .eq('id', osId)
         .single();
 
-      if (error) throw error;
+      if (osError) throw osError;
 
-      console.log('✅ [OrdemServicoPage] OS carregada', data);
-      setOrdemServico(data);
+      // Buscar job
+      const { data: jobData } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', osData.job_id)
+        .single();
+
+      // Buscar cliente
+      const { data: clienteData } = await supabase
+        .from('clientes')
+        .select('id, user_id')
+        .eq('id', osData.cliente_id)
+        .single();
+
+      // Buscar profile do cliente
+      const { data: clienteProfile } = await supabase
+        .from('profiles')
+        .select('nome, telefone')
+        .eq('user_id', clienteData?.user_id)
+        .single();
+
+      // Buscar montador
+      const { data: montadorData } = await supabase
+        .from('montadores')
+        .select('id, user_id')
+        .eq('id', osData.montador_id)
+        .single();
+
+      // Buscar profile do montador
+      const { data: montadorProfileData } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', montadorData?.user_id)
+        .single();
+
+      // Combinar dados
+      const osCompleta = {
+        ...osData,
+        jobs: jobData,
+        clientes: {
+          ...clienteData,
+          profiles: clienteProfile
+        },
+        montadores: {
+          ...montadorData,
+          profiles: montadorProfileData
+        }
+      };
+
+      setOrdemServico(osCompleta);
     } catch (error) {
-      console.error('❌ [OrdemServicoPage] Erro ao carregar OS', error);
+      console.error('Erro ao carregar OS:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar a ordem de serviço',
