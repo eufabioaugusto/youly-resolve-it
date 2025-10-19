@@ -735,11 +735,15 @@ const WorkerDashboard = () => {
                     <p className="text-muted-foreground mb-4">
                       Suas negociações aparecerão aqui quando você enviar orçamentos.
                     </p>
-                    <TabsTrigger value="available" asChild>
-                      <Button className="bg-gradient-primary">
-                        Ver Trabalhos Disponíveis
-                      </Button>
-                    </TabsTrigger>
+                    <Button 
+                      className="bg-gradient-primary"
+                      onClick={() => {
+                        const availableTab = document.querySelector('[value="available"]') as HTMLElement;
+                        availableTab?.click();
+                      }}
+                    >
+                      Ver Trabalhos Disponíveis
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
