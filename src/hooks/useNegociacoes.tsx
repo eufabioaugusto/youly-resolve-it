@@ -266,22 +266,26 @@ export const useNegociacoes = () => {
 
       console.log('Buscando negociação para jobId:', jobId);
       
-      // Buscar negociação básica primeiro
-      const { data: negociacaoData, error: negociacaoError } = await supabase
+      // Buscar negociações do job (pode haver múltiplas se houve recusa)
+      const { data: negociacoesData, error: negociacaoError } = await supabase
         .from('negociacoes')
         .select('*')
         .eq('job_id', jobId)
-        .maybeSingle();
-
+        .order('created_at', { ascending: false });
+      
       if (negociacaoError) {
-        console.error('Erro na consulta de negociação básica:', negociacaoError);
+        console.error('Erro na consulta de negociação:', negociacaoError);
         throw negociacaoError;
       }
-
-      if (!negociacaoData) {
-        console.log('Negociação não encontrada para jobId:', jobId);
+      
+      if (!negociacoesData || negociacoesData.length === 0) {
+        console.log('Nenhuma negociação encontrada para jobId:', jobId);
         return null;
       }
+      
+      // Priorizar negociação ATIVA (não recusada)
+      const negociacaoData = negociacoesData.find(n => n.status !== 'recusado') || negociacoesData[0];
+
 
       // Buscar dados relacionados separadamente
       const [jobData, montadorData, clienteData] = await Promise.all([
