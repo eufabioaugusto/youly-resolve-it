@@ -700,7 +700,7 @@ const CentralNegociacao = () => {
             onOpenChange={setPagamentoModalOpen}
             jobId={negociacao.job_id || ''}
             montadorId={negociacao.montador_id || ''}
-            valor={negociacao.valor_proposto_montador || negociacao.valor_proposto_cliente || 0}
+            valor={negociacao.valor_final || negociacao.valor_proposto_montador || negociacao.valor_proposto_cliente || 0}
             jobDescricao={negociacao.jobs?.descricao || ''}
             montadorNome={negociacao.montadores?.profiles?.nome || ''}
           />
