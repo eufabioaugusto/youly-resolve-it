@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { NivelBadge } from "@/components/ui/nivel-badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
@@ -359,13 +361,33 @@ const WorkerDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Bem-vindo, {profile?.nome || 'Montador'}! 🔧
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Encontre novos trabalhos ou acompanhe seus serviços.
-            </p>
+          <div className="flex items-center gap-4">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={montadorProfile?.foto_perfil_url || undefined} alt={profile?.nome} />
+              <AvatarFallback className="text-lg">
+                {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'MT'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-3xl font-bold text-foreground">
+                  Bem-vindo, {profile?.nome || 'Montador'}! 🔧
+                </h1>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <NivelBadge 
+                  nivel={montadorProfile?.nivel_gamificacao || 'Bronze'} 
+                  isPremium={montadorProfile?.is_premium || false}
+                />
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-medium">{montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {montadorProfile?.projetos_realizados || 0} projetos concluídos
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <NotificationCenter variant="header" />
