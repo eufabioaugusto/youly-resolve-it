@@ -64,25 +64,48 @@ const ClientProfile = () => {
     
     setLoadingPagamentos(true);
     try {
-      const { data, error } = await supabase
+      // Buscar pagamentos
+      const { data: pagamentosData, error: pagamentosError } = await supabase
         .from('pagamentos')
-        .select(`
-          *,
-          jobs (descricao, categoria),
-          montadores (
-            id,
-            user_id,
-            profiles:user_id (nome)
-          )
-        `)
+        .select('*')
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (pagamentosError) throw pagamentosError;
+
+      // Buscar jobs relacionados
+      const jobIds = pagamentosData?.map(p => p.job_id).filter(Boolean) || [];
+      const { data: jobsData } = await supabase
+        .from('jobs')
+        .select('id, descricao, categoria')
+        .in('id', jobIds);
+
+      // Buscar montadores e seus profiles
+      const montadorIds = pagamentosData?.map(p => p.montador_id).filter(Boolean) || [];
+      const { data: montadoresData } = await supabase
+        .from('montadores')
+        .select('id, user_id')
+        .in('id', montadorIds);
+
+      const userIds = montadoresData?.map(m => m.user_id).filter(Boolean) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', userIds);
+
+      // Combinar os dados
+      const pagamentosCompletos = pagamentosData?.map(pag => ({
+        ...pag,
+        jobs: jobsData?.find(j => j.id === pag.job_id),
+        montadores: montadoresData?.find(m => m.id === pag.montador_id),
+        montador_nome: profilesData?.find(p => 
+          p.user_id === montadoresData?.find(m => m.id === pag.montador_id)?.user_id
+        )?.nome
+      }));
       
-      console.log('📊 [ClientProfile] Pagamentos carregados:', data);
-      setPagamentos(data || []);
+      console.log('📊 [ClientProfile] Pagamentos carregados:', pagamentosCompletos);
+      setPagamentos(pagamentosCompletos || []);
     } catch (error: any) {
       console.error('Erro ao carregar pagamentos:', error);
     } finally {

@@ -213,6 +213,20 @@ serve(async (req) => {
       
       // Processar pagamento aprovado diretamente (sem RPC)
       console.log('⚙️ [1/6] Atualizando status do pagamento...');
+      
+      // ========================================
+      // CALCULAR COMISSÃO DA PLATAFORMA (20%)
+      // ========================================
+      const valorTotal = Number(pagamentoDB.valor_total);
+      const comissaoPlataforma = valorTotal * 0.20; // 20% para a plataforma
+      const valorMontador = valorTotal * 0.80; // 80% para o montador
+      
+      console.log('💰 Valores calculados:', {
+        valorTotal,
+        comissaoPlataforma,
+        valorMontador
+      });
+      
       const { error: updateError } = await supabase
         .from('pagamentos')
         .update({
@@ -220,7 +234,9 @@ serve(async (req) => {
           mercado_pago_payment_id: payment.id.toString(),
           mercado_pago_payment_method: payment.payment_method_id || 'unknown',
           installments: payment.installments || 1,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
+          comissao_plataforma: comissaoPlataforma,
+          valor_montador: valorMontador
         })
         .eq('id', pagamentoId);
 
@@ -241,8 +257,8 @@ serve(async (req) => {
         throw new Error('Carteira do montador não encontrada');
       }
 
-      console.log('⚙️ [3/6] Bloqueando valor na carteira...');
-      const novoSaldoProcessamento = Number(carteiraData.saldo_em_processamento) + Number(pagamentoDB.valor_total);
+      console.log('⚙️ [3/6] Bloqueando valor na carteira (80% = R$', valorMontador.toFixed(2), ')...');
+      const novoSaldoProcessamento = Number(carteiraData.saldo_em_processamento) + valorMontador;
       const dataLiberacao = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
       
       const { error: carteiraUpdateError } = await supabase
@@ -263,8 +279,8 @@ serve(async (req) => {
         .insert({
           carteira_id: carteiraData.id,
           tipo: 'bloqueio',
-          valor: pagamentoDB.valor_total,
-          descricao: 'Valor bloqueado - aguardando liberação (3 dias)',
+          valor: valorMontador,
+          descricao: `Valor bloqueado - aguardando liberação (3 dias) - Comissão 20% = R$ ${comissaoPlataforma.toFixed(2)}`,
           job_id: pagamentoDB.job_id,
           pagamento_id: pagamentoId
         });

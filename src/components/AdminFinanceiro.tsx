@@ -34,42 +34,44 @@ export function AdminFinanceiro() {
       // Buscar pagamentos
       const { data: pagamentosData, error: pagamentosError } = await supabase
         .from('pagamentos')
-        .select(`
-          *,
-          jobs (*),
-          montadores (*)
-        `)
+        .select('*')
         .gte('created_at', dataInicio.toISOString())
         .order('created_at', { ascending: false });
 
       if (pagamentosError) throw pagamentosError;
 
-      // Buscar profiles dos montadores dos pagamentos separadamente
-      let pagamentosComProfiles = pagamentosData;
-      if (pagamentosData && pagamentosData.length > 0) {
-        const montadorUserIds = pagamentosData
-          .map(p => p.montadores?.user_id)
-          .filter(Boolean);
-        
-        if (montadorUserIds.length > 0) {
-          const { data: profilesData } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('user_id', montadorUserIds);
-          
-          // Combinar dados
-          pagamentosComProfiles = pagamentosData.map(p => ({
-            ...p,
-            montadores: p.montadores ? {
-              ...p.montadores,
-              profiles: profilesData?.find(pr => pr.user_id === p.montadores?.user_id)
-            } : null
-          }));
-        }
-      }
+      // Buscar jobs relacionados
+      const jobIds = pagamentosData?.map(p => p.job_id).filter(Boolean) || [];
+      const { data: jobsData } = await supabase
+        .from('jobs')
+        .select('id, descricao, categoria')
+        .in('id', jobIds);
 
-      console.log('✅ [AdminFinanceiro] Pagamentos carregados', pagamentosComProfiles);
-      setPagamentos(pagamentosComProfiles || []);
+      // Buscar montadores e profiles dos pagamentos
+      const montadorIds = pagamentosData?.map(p => p.montador_id).filter(Boolean) || [];
+      const { data: montadoresPagData } = await supabase
+        .from('montadores')
+        .select('id, user_id')
+        .in('id', montadorIds);
+
+      const userIds = montadoresPagData?.map(m => m.user_id).filter(Boolean) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', userIds);
+
+      // Combinar dados
+      const pagamentosCompletos = pagamentosData?.map(pag => ({
+        ...pag,
+        jobs: jobsData?.find(j => j.id === pag.job_id),
+        montadores: montadoresPagData?.find(m => m.id === pag.montador_id),
+        montador_nome: profilesData?.find(p => 
+          p.user_id === montadoresPagData?.find(m => m.id === pag.montador_id)?.user_id
+        )?.nome
+      }));
+
+      console.log('✅ [AdminFinanceiro] Pagamentos carregados', pagamentosCompletos);
+      setPagamentos(pagamentosCompletos || []);
 
       // Buscar montadores com carteiras
       const { data: montadoresData, error: montadoresError } = await supabase
@@ -143,7 +145,15 @@ export function AdminFinanceiro() {
   };
 
   const calcularResumo = () => {
-    const totalMovimentado = montadores.reduce((acc, m) => acc + (m.total_valor_movimentado || 0), 0);
+    // Calcular totais dos pagamentos com comissão
+    const totalMovimentado = pagamentos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+    const totalComissaoPlataforma = pagamentos
+      .filter(p => p.status === 'pago')
+      .reduce((acc, p) => acc + (p.comissao_plataforma || 0), 0);
+    const totalMontadores = pagamentos
+      .filter(p => p.status === 'pago')
+      .reduce((acc, p) => acc + (p.valor_montador || 0), 0);
+    
     const totalDisponivel = montadores.reduce((acc, m) => {
       const carteira = m.carteira?.[0];
       return acc + (carteira?.saldo_disponivel || 0);
@@ -153,7 +163,13 @@ export function AdminFinanceiro() {
       return acc + (carteira?.saldo_em_processamento || 0);
     }, 0);
 
-    return { totalMovimentado, totalDisponivel, totalProcessamento };
+    return { 
+      totalMovimentado, 
+      totalComissaoPlataforma, 
+      totalMontadores, 
+      totalDisponivel, 
+      totalProcessamento 
+    };
   };
 
   const filteredPagamentos = pagamentos.filter((p) => {
@@ -174,13 +190,16 @@ export function AdminFinanceiro() {
   return (
     <div className="space-y-6">
       {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Volume Total</p>
                 <p className="text-2xl font-bold">R$ {resumo.totalMovimentado.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {pagamentos.filter(p => p.status === 'pago').length} pagamentos
+                </p>
               </div>
               <TrendingUp className="w-8 h-8 text-success" />
             </div>
@@ -191,8 +210,22 @@ export function AdminFinanceiro() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Saldo Disponível</p>
-                <p className="text-2xl font-bold text-success">R$ {resumo.totalDisponivel.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Comissão Plataforma</p>
+                <p className="text-2xl font-bold text-primary">R$ {resumo.totalComissaoPlataforma.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">20% dos pagamentos</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Montadores</p>
+                <p className="text-2xl font-bold text-success">R$ {resumo.totalMontadores.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">80% dos pagamentos</p>
               </div>
               <DollarSign className="w-8 h-8 text-success" />
             </div>
@@ -205,6 +238,7 @@ export function AdminFinanceiro() {
               <div>
                 <p className="text-sm text-muted-foreground">Em Processamento</p>
                 <p className="text-2xl font-bold text-warning">R$ {resumo.totalProcessamento.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Liberação em 3 dias</p>
               </div>
               <DollarSign className="w-8 h-8 text-warning" />
             </div>
@@ -328,10 +362,14 @@ export function AdminFinanceiro() {
                     </p>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {pagamento.montadores?.profiles?.nome}
+                    {pagamento.montador_nome || 'N/A'}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
-                    R$ {pagamento.valor_total.toFixed(2)}
+                    R$ {pagamento.valor_total?.toFixed(2) || '0.00'}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Plataforma: R$ {pagamento.comissao_plataforma?.toFixed(2) || '0.00'} | 
+                      Montador: R$ {pagamento.valor_montador?.toFixed(2) || '0.00'}
+                    </p>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge

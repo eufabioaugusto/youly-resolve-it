@@ -246,11 +246,12 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
-      // Buscar jobs do montador
+      // Buscar jobs do montador que ainda NÃO viraram ordem de serviço
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select('*')
         .eq('montador_id', montadorProfile.id)
+        .is('ordem_servico_id', null) // Apenas jobs sem ordem de serviço
         .order('created_at', { ascending: false })
         .limit(10);
 

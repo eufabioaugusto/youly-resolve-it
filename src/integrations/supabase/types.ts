@@ -637,6 +637,7 @@ export type Database = {
       pagamentos: {
         Row: {
           cliente_id: string
+          comissao_plataforma: number | null
           created_at: string
           failure_reason: string | null
           id: string
@@ -651,10 +652,12 @@ export type Database = {
           status: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id: string | null
           updated_at: string
+          valor_montador: number | null
           valor_total: number
         }
         Insert: {
           cliente_id: string
+          comissao_plataforma?: number | null
           created_at?: string
           failure_reason?: string | null
           id?: string
@@ -669,10 +672,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id?: string | null
           updated_at?: string
+          valor_montador?: number | null
           valor_total: number
         }
         Update: {
           cliente_id?: string
+          comissao_plataforma?: number | null
           created_at?: string
           failure_reason?: string | null
           id?: string
@@ -687,6 +692,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["pagamento_status"] | null
           transacao_gateway_id?: string | null
           updated_at?: string
+          valor_montador?: number | null
           valor_total?: number
         }
         Relationships: [
