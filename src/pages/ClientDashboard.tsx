@@ -40,6 +40,13 @@ const ClientDashboard = () => {
   const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
   const [selectedJobForPayment, setSelectedJobForPayment] = useState<any>(null);
 
+  // Redirecionar se não for cliente
+  useEffect(() => {
+    if (profile && profile.role !== 'client') {
+      navigate('/montador');
+    }
+  }, [profile, navigate]);
+
   useEffect(() => {
     if (clienteProfile) {
       fetchJobs();
