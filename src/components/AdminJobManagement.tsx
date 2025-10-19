@@ -53,14 +53,30 @@ export function AdminJobManagement() {
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
-        .select('*, profiles!montadores_user_id_fkey(*)')
+        .select('*')
         .eq('status', 'ativo')
         .order('avaliacao_media', { ascending: false });
+      
+      // Buscar profiles dos montadores separadamente
+      let montadoresComProfiles = montadoresData;
+      if (montadoresData && montadoresData.length > 0) {
+        const userIds = montadoresData.map(m => m.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('user_id', userIds);
+        
+        // Combinar dados
+        montadoresComProfiles = montadoresData.map(m => ({
+          ...m,
+          profiles: profilesData?.find(p => p.user_id === m.user_id)
+        }));
+      }
 
       if (montadoresError) throw montadoresError;
 
-      logger.info('admin', 'Montadores disponíveis carregados', { total: montadoresData?.length });
-      setMontadores(montadoresData || []);
+      logger.info('admin', 'Montadores disponíveis carregados', { total: montadoresComProfiles?.length });
+      setMontadores(montadoresComProfiles || []);
     } catch (error: any) {
       logger.apiError('admin', 'AdminJobManagement.loadData', error);
       toast({
