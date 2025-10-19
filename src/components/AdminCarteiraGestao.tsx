@@ -48,46 +48,64 @@ export function AdminCarteiraGestao() {
     logger.adminAction('Carregando carteiras em processamento');
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log('🔍 [AdminCarteiraGestao] Buscando carteiras...');
+      
+      // Buscar carteiras com saldo em processamento
+      const { data: carteirasData, error: carteirasError } = await supabase
         .from('carteira')
-        .select(`
-          id,
-          montador_id,
-          saldo_em_processamento,
-          data_liberacao_admin,
-          montadores (
-            user_id
-          )
-        `)
+        .select('id, montador_id, saldo_em_processamento, data_liberacao_admin')
         .gt('saldo_em_processamento', 0)
         .order('data_liberacao_admin', { ascending: true });
 
-      if (error) {
-        throw error;
+      if (carteirasError) throw carteirasError;
+      
+      console.log('✅ [AdminCarteiraGestao] Carteiras encontradas:', carteirasData?.length);
+
+      if (!carteirasData || carteirasData.length === 0) {
+        setCarteiras([]);
+        setLoading(false);
+        return;
       }
 
-      // Buscar nomes dos montadores separadamente
-      const carteirasComNomes = await Promise.all(
-        (data || []).map(async (carteira) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('nome')
-            .eq('user_id', carteira.montadores?.user_id)
-            .single();
+      // Buscar montadores
+      const montadorIds = carteirasData.map(c => c.montador_id);
+      const { data: montadoresData, error: montadoresError } = await supabase
+        .from('montadores')
+        .select('id, user_id')
+        .in('id', montadorIds);
 
-          return {
-            ...carteira,
-            montadores: {
-              ...carteira.montadores,
-              profiles: { nome: profileData?.nome || 'Nome não disponível' }
+      if (montadoresError) throw montadoresError;
+
+      // Buscar profiles
+      const userIds = montadoresData?.map(m => m.user_id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combinar dados
+      const carteirasCompletas = carteirasData.map(carteira => {
+        const montador = montadoresData?.find(m => m.id === carteira.montador_id);
+        const profile = profilesData?.find(p => p.user_id === montador?.user_id);
+        
+        return {
+          ...carteira,
+          montadores: {
+            user_id: montador?.user_id,
+            profiles: {
+              nome: profile?.nome || 'Nome não disponível'
             }
-          };
-        })
-      );
+          }
+        };
+      });
 
-      logger.info('wallet', 'Carteiras em processamento carregadas', { total: carteirasComNomes.length });
-      setCarteiras(carteirasComNomes as any);
+      console.log('✅ [AdminCarteiraGestao] Carteiras completas:', carteirasCompletas);
+      logger.info('wallet', 'Carteiras em processamento carregadas', { total: carteirasCompletas.length });
+      setCarteiras(carteirasCompletas as any);
     } catch (error: any) {
+      console.error('❌ [AdminCarteiraGestao] Erro:', error);
       logger.apiError('wallet', 'AdminCarteiraGestao.carregarCarteirasProcessamento', error);
       toast({
         title: "Erro",

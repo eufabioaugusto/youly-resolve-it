@@ -324,7 +324,7 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
-      console.log('🚀 [WorkerDashboard] Buscando ordens de serviço');
+      console.log('🚀 [WorkerDashboard] Buscando ordens de serviço para montador:', montadorProfile.id);
       
       const { data, error } = await supabase
         .from('ordem_servico')
@@ -338,7 +338,8 @@ const WorkerDashboard = () => {
 
       if (error) throw error;
 
-      console.log('✅ [WorkerDashboard] Ordens de serviço encontradas', data);
+      console.log('✅ [WorkerDashboard] Ordens de serviço encontradas:', data?.length || 0);
+      console.log('📋 [WorkerDashboard] OS detalhes:', data);
       setOrdensServico(data || []);
     } catch (error) {
       console.error('❌ [WorkerDashboard] Erro ao buscar OS', error);

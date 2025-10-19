@@ -41,6 +41,8 @@ export const useNegociacoes = () => {
 
   const fetchNegociacoes = async () => {
     try {
+      console.log('🔍 [useNegociacoes] Iniciando busca de negociações');
+      
       // Buscar negociações com informações dos jobs
       let query = supabase
         .from('negociacoes')
@@ -59,26 +61,41 @@ export const useNegociacoes = () => {
       // Filtrar baseado no papel do usuário
       if (profile?.role === 'montador' && montadorProfile) {
         query = query.eq('montador_id', montadorProfile.id);
+        console.log('🎯 [useNegociacoes] Buscando para montador:', montadorProfile.id);
       } else if (profile?.role === 'client' && clienteProfile) {
         query = query.eq('cliente_id', clienteProfile.id);
+        console.log('🎯 [useNegociacoes] Buscando para cliente:', clienteProfile.id);
       }
       
       const { data: negociacoesData, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Filtrar negociações que NÃO viraram ordem de serviço ainda
-      const negociacoesAtivas = negociacoesData?.filter(neg => 
-        !neg.jobs?.ordem_servico_id && 
-        neg.jobs?.status !== 'pago' &&
-        neg.jobs?.status !== 'em_andamento'
-      ) || [];
+      console.log('📦 [useNegociacoes] Negociações recebidas:', negociacoesData?.length || 0);
+      console.log('📋 [useNegociacoes] Dados completos:', negociacoesData);
       
-      console.log('✅ Negociações encontradas:', negociacoesData?.length || 0);
-      console.log('✅ Negociações ativas (sem OS):', negociacoesAtivas.length);
+      // Filtrar negociações que NÃO viraram ordem de serviço ainda
+      const negociacoesAtivas = negociacoesData?.filter(neg => {
+        const temOS = !!neg.jobs?.ordem_servico_id;
+        const statusPago = neg.jobs?.status === 'pago';
+        const statusAndamento = neg.jobs?.status === 'em_andamento';
+        
+        console.log(`🔍 [useNegociacoes] Negociação ${neg.id}:`, {
+          temOS,
+          statusPago,
+          statusAndamento,
+          ordem_servico_id: neg.jobs?.ordem_servico_id,
+          job_status: neg.jobs?.status,
+          deveMostrar: !temOS && !statusPago && !statusAndamento
+        });
+        
+        return !temOS && !statusPago && !statusAndamento;
+      }) || [];
+      
+      console.log('✅ [useNegociacoes] Negociações ATIVAS (filtradas):', negociacoesAtivas.length);
       setNegociacoes(negociacoesAtivas);
     } catch (error: any) {
-      console.error('Erro ao buscar negociações:', error);
+      console.error('❌ [useNegociacoes] Erro ao buscar negociações:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar as negociações",
