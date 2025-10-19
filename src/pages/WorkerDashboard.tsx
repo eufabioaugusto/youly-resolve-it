@@ -487,51 +487,54 @@ const WorkerDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={montadorProfile?.foto_perfil_url || undefined} alt={profile?.nome} />
-              <AvatarFallback className="text-lg">
-                {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'MT'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-3xl font-bold text-foreground">
-                  Bem-vindo, {profile?.nome || 'Montador'}! 🔧
-                </h1>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <NivelBadge 
-                  nivel={montadorProfile?.nivel_gamificacao || 'Bronze'} 
-                  isPremium={montadorProfile?.is_premium || false}
-                />
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}</span>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="w-12 h-12 sm:w-16 sm:h-16">
+                <AvatarImage src={montadorProfile?.foto_perfil_url || undefined} alt={profile?.nome} />
+                <AvatarFallback className="text-lg">
+                  {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'MT'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-xl sm:text-3xl font-bold text-foreground">
+                    Bem-vindo, {profile?.nome?.split(' ')[0] || 'Montador'}! 🔧
+                  </h1>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {montadorProfile?.projetos_realizados || 0} projetos concluídos
+                <div className="flex items-center gap-3 flex-wrap">
+                  <NivelBadge 
+                    nivel={montadorProfile?.nivel_gamificacao || 'Bronze'} 
+                    isPremium={montadorProfile?.is_premium || false}
+                  />
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium">{montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {montadorProfile?.projetos_realizados || 0} projetos
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationCenter variant="header" />
-            <Link to="/montador/perfil">
-              <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Minha Conta
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <NotificationCenter variant="header" />
+              <Link to="/montador/perfil" className="flex-1 sm:flex-none">
+                <Button variant="outline" size="sm" className="w-full">
+                  <Settings className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Minha Conta</span>
+                  <span className="sm:hidden">Conta</span>
+                </Button>
+              </Link>
+              <Button onClick={handleLogout} variant="outline" size="sm" disabled={loggingOut} className="flex-1 sm:flex-none">
+                {loggingOut ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                ) : (
+                  <LogOut className="w-4 h-4 mr-2" />
+                )}
+                {loggingOut ? 'Saindo...' : 'Sair'}
               </Button>
-            </Link>
-            <Button onClick={handleLogout} variant="outline" size="sm" disabled={loggingOut}>
-              {loggingOut ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-              ) : (
-                <LogOut className="w-4 h-4 mr-2" />
-              )}
-              {loggingOut ? 'Saindo...' : 'Sair'}
-            </Button>
+            </div>
           </div>
         </div>
 
@@ -621,11 +624,11 @@ const WorkerDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
-            <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>
-            <TabsTrigger value="os">Ordens de Serviço</TabsTrigger>
-            <TabsTrigger value="negotiations" className="relative">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <TabsTrigger value="available" className="text-xs sm:text-sm">Disponíveis</TabsTrigger>
+            <TabsTrigger value="my-jobs" className="text-xs sm:text-sm">Meus Jobs</TabsTrigger>
+            <TabsTrigger value="os" className="text-xs sm:text-sm">OS</TabsTrigger>
+            <TabsTrigger value="negotiations" className="relative text-xs sm:text-sm">
               Negociações
               {negociacoes.length > 0 && (
                 <Badge 
@@ -636,7 +639,7 @@ const WorkerDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="wallet">Carteira</TabsTrigger>
+            <TabsTrigger value="wallet" className="text-xs sm:text-sm">Carteira</TabsTrigger>
           </TabsList>
           
           <TabsContent value="available" className="mt-6">
@@ -660,10 +663,10 @@ const WorkerDashboard = () => {
                     {availableJobs.map((job) => (
                       <Card key={job.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-1">{job.descricao}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex flex-col gap-3">
+                            <div>
+                              <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-2">
                                 <span className="flex items-center gap-1">
                                   <User className="w-4 h-4" />
                                   {job.clientes?.profiles?.nome || 'Cliente'}
@@ -675,67 +678,68 @@ const WorkerDashboard = () => {
                                 {job.categoria && (
                                   <Badge variant="outline">{job.categoria}</Badge>
                                 )}
-                                {candidaturas.includes(job.id) && (
-                                  <Badge variant="secondary">Candidatura enviada</Badge>
+                              </div>
+                              {candidaturas.includes(job.id) && (
+                                <Badge variant="secondary" className="mb-2">Candidatura enviada</Badge>
+                              )}
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">
+                                  Valor: R$ {job.valor_estimado?.toFixed(2) || 'A negociar'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Cliente: {job.clientes?.avaliacao_media?.toFixed(1) || '0.0'} ⭐
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(job.created_at).toLocaleDateString('pt-BR')}
+                                </p>
+                              </div>
+                              
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleOpenJobDetails(job)}
+                                  className="w-full sm:w-auto"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver detalhes
+                                </Button>
+                                {job.status === 'em_negociacao' ? (
+                                  <Button 
+                                    onClick={() => navigate(`/montador/negociacao/${job.id}`)}
+                                    className="bg-gradient-primary hover:shadow-glow w-full sm:w-auto"
+                                  >
+                                    Ver Negociação
+                                  </Button>
+                                ) : candidaturas.includes(job.id) ? (
+                                  <Button 
+                                    disabled
+                                    variant="secondary"
+                                    size="sm"
+                                    className="w-full sm:w-auto"
+                                  >
+                                    Candidatura Enviada
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    onClick={() => {
+                                      console.log('🖱️ Clique em Candidatar-se');
+                                      console.log('🎯 Job ID:', job.id);
+                                      console.log('📋 Candidaturas atuais:', candidaturas);
+                                      console.log('✅ Já candidatado?', candidaturas.includes(job.id));
+                                      handleOpenCandidateModal(job);
+                                    }}
+                                    disabled={loadingJobId === job.id}
+                                    className="bg-gradient-primary hover:shadow-glow w-full sm:w-auto"
+                                    size="sm"
+                                  >
+                                    {loadingJobId === job.id ? 'Candidatando...' : 'Candidatar-se'}
+                                  </Button>
                                 )}
                               </div>
-                            </div>
-                             <div className="text-right">
-                               <div className="space-y-1">
-                                 <p className="text-sm font-medium text-muted-foreground">
-                                   Valor: R$ {job.valor_estimado?.toFixed(2) || 'A negociar'}
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">
-                                   Cliente: {job.clientes?.avaliacao_media?.toFixed(1) || '0.0'} ⭐
-                                 </p>
-                               </div>
-                             </div>
-                          </div>
-                          
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(job.created_at).toLocaleDateString('pt-BR')}
-                            </span>
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleOpenJobDetails(job)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver detalhes
-                              </Button>
-                              {job.status === 'em_negociacao' ? (
-                                <Button 
-                                  onClick={() => navigate(`/montador/negociacao/${job.id}`)}
-                                  className="bg-gradient-primary hover:shadow-glow"
-                                >
-                                  Ver Negociação
-                                </Button>
-                              ) : candidaturas.includes(job.id) ? (
-                                <Button 
-                                  disabled
-                                  variant="secondary"
-                                  size="sm"
-                                >
-                                  Candidatura Enviada
-                                </Button>
-                              ) : (
-                                <Button 
-                                  onClick={() => {
-                                    console.log('🖱️ Clique em Candidatar-se');
-                                    console.log('🎯 Job ID:', job.id);
-                                    console.log('📋 Candidaturas atuais:', candidaturas);
-                                    console.log('✅ Já candidatado?', candidaturas.includes(job.id));
-                                    handleOpenCandidateModal(job);
-                                  }}
-                                  disabled={loadingJobId === job.id}
-                                  className="bg-gradient-primary hover:shadow-glow"
-                                  size="sm"
-                                >
-                                  {loadingJobId === job.id ? 'Candidatando...' : 'Candidatar-se'}
-                                </Button>
-                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -771,10 +775,10 @@ const WorkerDashboard = () => {
                     {myJobs.map((job) => (
                       <Card key={job.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-1">{job.descricao}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex flex-col gap-3">
+                            <div>
+                              <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-2">
                                 <span className="flex items-center gap-1">
                                   <User className="w-4 h-4" />
                                   {job.clientes?.profiles?.nome || 'Cliente'}
@@ -789,33 +793,34 @@ const WorkerDashboard = () => {
                                 </span>
                               </div>
                             </div>
-                            <div className="text-right">
-                              {job.valor_estimado && (
-                                <p className="text-2xl font-bold text-green-600 mb-1">
-                                  R$ {job.valor_estimado.toFixed(2)}
-                                </p>
-                              )}
-                              <Badge variant={
-                                job.status === 'em_andamento' ? 'default' :
-                                job.status === 'concluido' ? 'secondary' : 'outline'
-                              }>
-                                {job.status === 'em_andamento' ? 'Em Andamento' : 
-                                 job.status === 'concluido' ? 'Concluído' : 
-                                 job.status === 'aberto' ? 'Aberto' : job.status}
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-between items-center">
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                Ver detalhes
-                              </Button>
-                              {job.status === 'em_andamento' && (
-                                <Button size="sm">
-                                  Finalizar trabalho
+                            
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
+                              <div>
+                                {job.valor_estimado && (
+                                  <p className="text-xl sm:text-2xl font-bold text-green-600 mb-2">
+                                    R$ {job.valor_estimado.toFixed(2)}
+                                  </p>
+                                )}
+                                <Badge variant={
+                                  job.status === 'em_andamento' ? 'default' :
+                                  job.status === 'concluido' ? 'secondary' : 'outline'
+                                }>
+                                  {job.status === 'em_andamento' ? 'Em Andamento' : 
+                                   job.status === 'concluido' ? 'Concluído' : 
+                                   job.status === 'aberto' ? 'Aberto' : job.status}
+                                </Badge>
+                              </div>
+                              
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                                  Ver detalhes
                                 </Button>
-                              )}
+                                {job.status === 'em_andamento' && (
+                                  <Button size="sm" className="w-full sm:w-auto">
+                                    Finalizar trabalho
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </CardContent>
