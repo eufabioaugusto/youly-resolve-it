@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      avaliacoes: {
+        Row: {
+          aspectos_negativos: string[] | null
+          aspectos_positivos: string[] | null
+          cliente_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          job_id: string
+          montador_id: string
+          nota: number
+          ordem_servico_id: string
+          respondida: boolean
+        }
+        Insert: {
+          aspectos_negativos?: string[] | null
+          aspectos_positivos?: string[] | null
+          cliente_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+          montador_id: string
+          nota: number
+          ordem_servico_id: string
+          respondida?: boolean
+        }
+        Update: {
+          aspectos_negativos?: string[] | null
+          aspectos_positivos?: string[] | null
+          cliente_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          montador_id?: string
+          nota?: number
+          ordem_servico_id?: string
+          respondida?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidaturas: {
         Row: {
           created_at: string
@@ -175,12 +246,14 @@ export type Database = {
           cliente_id: string
           created_at: string
           data_opcoes: Json | null
+          data_selecionada: Json | null
           descricao: string
           endereco: Json
           id: string
           imagens_produtos: string[] | null
           montador_id: string | null
           nota_fiscal: string | null
+          ordem_servico_id: string | null
           status: Database["public"]["Enums"]["job_status"] | null
           updated_at: string
           valor_estimado: number | null
@@ -190,12 +263,14 @@ export type Database = {
           cliente_id: string
           created_at?: string
           data_opcoes?: Json | null
+          data_selecionada?: Json | null
           descricao: string
           endereco: Json
           id?: string
           imagens_produtos?: string[] | null
           montador_id?: string | null
           nota_fiscal?: string | null
+          ordem_servico_id?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null
           updated_at?: string
           valor_estimado?: number | null
@@ -205,12 +280,14 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           data_opcoes?: Json | null
+          data_selecionada?: Json | null
           descricao?: string
           endereco?: Json
           id?: string
           imagens_produtos?: string[] | null
           montador_id?: string | null
           nota_fiscal?: string | null
+          ordem_servico_id?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null
           updated_at?: string
           valor_estimado?: number | null
@@ -228,6 +305,13 @@ export type Database = {
             columns: ["montador_id"]
             isOneToOne: false
             referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
             referencedColumns: ["id"]
           },
         ]
@@ -248,6 +332,8 @@ export type Database = {
           preco_hora: number | null
           projetos_realizados: number | null
           status: string | null
+          taxa_conclusao_sucesso: number
+          total_assistencias: number
           total_avaliacoes: number | null
           total_valor_movimentado: number | null
           updated_at: string
@@ -268,6 +354,8 @@ export type Database = {
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          taxa_conclusao_sucesso?: number
+          total_assistencias?: number
           total_avaliacoes?: number | null
           total_valor_movimentado?: number | null
           updated_at?: string
@@ -288,6 +376,8 @@ export type Database = {
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          taxa_conclusao_sucesso?: number
+          total_assistencias?: number
           total_avaliacoes?: number | null
           total_valor_movimentado?: number | null
           updated_at?: string
@@ -300,6 +390,8 @@ export type Database = {
           cliente_id: string
           created_at: string
           data_pagamento: string | null
+          data_resposta_montador: string | null
+          data_selecionada_montador: Json | null
           id: string
           job_id: string
           montador_id: string
@@ -307,6 +399,7 @@ export type Database = {
           observacoes_montador: string | null
           pagamento_id: string | null
           status: string
+          timeout_expirado: boolean
           updated_at: string
           valor_final: number | null
           valor_proposto_cliente: number | null
@@ -316,6 +409,8 @@ export type Database = {
           cliente_id: string
           created_at?: string
           data_pagamento?: string | null
+          data_resposta_montador?: string | null
+          data_selecionada_montador?: Json | null
           id?: string
           job_id: string
           montador_id: string
@@ -323,6 +418,7 @@ export type Database = {
           observacoes_montador?: string | null
           pagamento_id?: string | null
           status?: string
+          timeout_expirado?: boolean
           updated_at?: string
           valor_final?: number | null
           valor_proposto_cliente?: number | null
@@ -332,6 +428,8 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           data_pagamento?: string | null
+          data_resposta_montador?: string | null
+          data_selecionada_montador?: Json | null
           id?: string
           job_id?: string
           montador_id?: string
@@ -339,6 +437,7 @@ export type Database = {
           observacoes_montador?: string | null
           pagamento_id?: string | null
           status?: string
+          timeout_expirado?: boolean
           updated_at?: string
           valor_final?: number | null
           valor_proposto_cliente?: number | null
@@ -401,6 +500,136 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ordem_servico: {
+        Row: {
+          cliente_id: string
+          codigo_validacao: string
+          created_at: string
+          data_ativacao_garantia: string | null
+          data_expiracao_garantia: string | null
+          data_hora_agendamento: string | null
+          data_hora_conclusao: string | null
+          data_hora_inicio: string | null
+          garantia_ativa: boolean
+          id: string
+          job_id: string
+          montador_id: string
+          motivo_assistencia: string | null
+          motivo_pendente: string | null
+          negociacao_id: string
+          observacoes_montador: string | null
+          periodo_agendamento: string | null
+          status: Database["public"]["Enums"]["ordem_servico_status"]
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          codigo_validacao: string
+          created_at?: string
+          data_ativacao_garantia?: string | null
+          data_expiracao_garantia?: string | null
+          data_hora_agendamento?: string | null
+          data_hora_conclusao?: string | null
+          data_hora_inicio?: string | null
+          garantia_ativa?: boolean
+          id?: string
+          job_id: string
+          montador_id: string
+          motivo_assistencia?: string | null
+          motivo_pendente?: string | null
+          negociacao_id: string
+          observacoes_montador?: string | null
+          periodo_agendamento?: string | null
+          status?: Database["public"]["Enums"]["ordem_servico_status"]
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          codigo_validacao?: string
+          created_at?: string
+          data_ativacao_garantia?: string | null
+          data_expiracao_garantia?: string | null
+          data_hora_agendamento?: string | null
+          data_hora_conclusao?: string | null
+          data_hora_inicio?: string | null
+          garantia_ativa?: boolean
+          id?: string
+          job_id?: string
+          montador_id?: string
+          motivo_assistencia?: string | null
+          motivo_pendente?: string | null
+          negociacao_id?: string
+          observacoes_montador?: string | null
+          periodo_agendamento?: string | null
+          status?: Database["public"]["Enums"]["ordem_servico_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_servico_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_servico_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_servico_negociacao_id_fkey"
+            columns: ["negociacao_id"]
+            isOneToOne: false
+            referencedRelation: "negociacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordem_servico_fotos: {
+        Row: {
+          created_at: string
+          id: string
+          ordem: number
+          ordem_servico_id: string
+          tipo: Database["public"]["Enums"]["foto_tipo"]
+          url_foto: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          ordem_servico_id: string
+          tipo: Database["public"]["Enums"]["foto_tipo"]
+          url_foto: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          ordem_servico_id?: string
+          tipo?: Database["public"]["Enums"]["foto_tipo"]
+          url_foto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_fotos_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pagamentos: {
         Row: {
@@ -558,6 +787,105 @@ export type Database = {
           },
         ]
       }
+      sms_enviados: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          mensagem: string
+          ordem_servico_id: string | null
+          status: Database["public"]["Enums"]["sms_status"]
+          telefone: string
+          tipo: Database["public"]["Enums"]["sms_tipo"]
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          mensagem: string
+          ordem_servico_id?: string | null
+          status?: Database["public"]["Enums"]["sms_status"]
+          telefone: string
+          tipo: Database["public"]["Enums"]["sms_tipo"]
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          mensagem?: string
+          ordem_servico_id?: string | null
+          status?: Database["public"]["Enums"]["sms_status"]
+          telefone?: string
+          tipo?: Database["public"]["Enums"]["sms_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_enviados_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeout_montador: {
+        Row: {
+          created_at: string
+          data_expiracao: string
+          data_inicio_timeout: string
+          expirado: boolean
+          id: string
+          job_id: string
+          montador_id: string
+          negociacao_id: string
+          respondido: boolean
+        }
+        Insert: {
+          created_at?: string
+          data_expiracao: string
+          data_inicio_timeout?: string
+          expirado?: boolean
+          id?: string
+          job_id: string
+          montador_id: string
+          negociacao_id: string
+          respondido?: boolean
+        }
+        Update: {
+          created_at?: string
+          data_expiracao?: string
+          data_inicio_timeout?: string
+          expirado?: boolean
+          id?: string
+          job_id?: string
+          montador_id?: string
+          negociacao_id?: string
+          respondido?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeout_montador_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeout_montador_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeout_montador_negociacao_id_fkey"
+            columns: ["negociacao_id"]
+            isOneToOne: false
+            referencedRelation: "negociacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -587,6 +915,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_estatisticas_montador: {
+        Args: { p_montador_id: string }
+        Returns: boolean
+      }
       create_first_admin: {
         Args: {
           admin_email: string
@@ -594,6 +926,10 @@ export type Database = {
           admin_password: string
         }
         Returns: Json
+      }
+      gerar_codigo_validacao: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: {
@@ -627,6 +963,11 @@ export type Database = {
     Enums: {
       app_role: "admin" | "client" | "montador"
       candidatura_status: "pendente" | "aceito" | "recusado"
+      foto_tipo:
+        | "movel_caixa"
+        | "movel_montado"
+        | "portas_abertas"
+        | "assistencia"
       job_status:
         | "aberto"
         | "aguardando_pagamento"
@@ -634,10 +975,22 @@ export type Database = {
         | "concluido"
         | "cancelado"
         | "em_negociacao"
+        | "pago"
+        | "a_caminho"
       notificacao_tipo: "sistema" | "job" | "pagamento" | "saque" | "negociacao"
+      ordem_servico_status:
+        | "pendente"
+        | "a_caminho"
+        | "iniciada"
+        | "concluida"
+        | "concluida_com_assistencia"
+        | "pendente_pecas"
       pagamento_metodo: "pix" | "cartao"
       pagamento_status: "pago" | "pendente" | "estornado"
       saque_status: "solicitado" | "pago" | "rejeitado"
+      saque_status_new: "solicitado" | "aprovado" | "processado" | "cancelado"
+      sms_status: "pendente" | "enviado" | "erro"
+      sms_tipo: "agendamento" | "a_caminho" | "codigo_validacao" | "pesquisa"
       user_role: "client" | "montador" | "admin"
     }
     CompositeTypes: {
@@ -768,6 +1121,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "client", "montador"],
       candidatura_status: ["pendente", "aceito", "recusado"],
+      foto_tipo: [
+        "movel_caixa",
+        "movel_montado",
+        "portas_abertas",
+        "assistencia",
+      ],
       job_status: [
         "aberto",
         "aguardando_pagamento",
@@ -775,11 +1134,24 @@ export const Constants = {
         "concluido",
         "cancelado",
         "em_negociacao",
+        "pago",
+        "a_caminho",
       ],
       notificacao_tipo: ["sistema", "job", "pagamento", "saque", "negociacao"],
+      ordem_servico_status: [
+        "pendente",
+        "a_caminho",
+        "iniciada",
+        "concluida",
+        "concluida_com_assistencia",
+        "pendente_pecas",
+      ],
       pagamento_metodo: ["pix", "cartao"],
       pagamento_status: ["pago", "pendente", "estornado"],
       saque_status: ["solicitado", "pago", "rejeitado"],
+      saque_status_new: ["solicitado", "aprovado", "processado", "cancelado"],
+      sms_status: ["pendente", "enviado", "erro"],
+      sms_tipo: ["agendamento", "a_caminho", "codigo_validacao", "pesquisa"],
       user_role: ["client", "montador", "admin"],
     },
   },
