@@ -185,6 +185,21 @@ export const useNegociacoes = () => {
         }
       }
 
+      // Se recusado, liberar o job para outros montadores
+      if (acao === 'recusado') {
+        if (negociacao) {
+          const { error: jobError } = await supabase
+            .from('jobs')
+            .update({ 
+              status: 'aberto',
+              montador_id: null
+            })
+            .eq('id', negociacao.job_id);
+
+          if (jobError) throw jobError;
+        }
+      }
+
       // Limpar cache para forçar recarregamento
       negociacoesCache.clear();
 
