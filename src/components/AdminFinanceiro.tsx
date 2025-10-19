@@ -130,6 +130,9 @@ export function AdminFinanceiro() {
       
       console.log('📊 [AdminFinanceiro] Montadores carregados:', montadoresData?.length);
       console.log('💰 [AdminFinanceiro] Exemplo carteira:', montadoresData?.[0]?.carteira);
+      console.log('🔍 [AdminFinanceiro] Tipo carteira:', Array.isArray(montadoresData?.[0]?.carteira) ? 'ARRAY' : 'OBJECT');
+      console.log('🧪 [AdminFinanceiro] Teste acesso [0]:', montadoresData?.[0]?.carteira?.[0]);
+      console.log('🧪 [AdminFinanceiro] Teste acesso direto:', montadoresData?.[0]?.carteira);
       
       // Buscar profiles dos montadores separadamente
       let montadoresComProfiles = montadoresData;
@@ -169,7 +172,7 @@ export function AdminFinanceiro() {
     // Preparar dados para CSV
     const csvHeader = 'Montador,CPF,Total Movimentado,Saldo Disponível,Em Processamento,Total Sacado\n';
     const csvRows = montadores.map((m) => {
-      const carteira = m.carteira?.[0];
+      const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
       return [
         m.profiles?.nome || 'N/A',
         m.profiles?.documento || 'N/A',
@@ -204,13 +207,13 @@ export function AdminFinanceiro() {
     
     // Saldos das carteiras
     const totalDisponivel = montadores.reduce((acc, m) => {
-      const carteira = m.carteira?.[0];
-      return acc + (carteira?.saldo_disponivel || 0);
+      const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
+      return acc + (Number(carteira?.saldo_disponivel || 0));
     }, 0);
     const totalProcessamento = montadores.reduce((acc, m) => {
-      const carteira = m.carteira?.[0];
+      const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
       const saldoProcessamento = Number(carteira?.saldo_em_processamento || 0);
-      console.log(`💳 Montador ${m.profiles?.nome}: Em Proc = R$ ${saldoProcessamento.toFixed(2)}`);
+      console.log(`💳 Montador ${m.profiles?.nome}: Em Proc = R$ ${saldoProcessamento.toFixed(2)} (tipo: ${Array.isArray(m.carteira) ? 'array' : 'object'})`);
       return acc + saldoProcessamento;
     }, 0);
 
@@ -223,7 +226,10 @@ export function AdminFinanceiro() {
       totalPagamentos: pagamentos.length,
       pagamentosPagos: pagamentosPagos.length,
       qtdMontadores: montadores.length,
-      montadoresComCarteira: montadores.filter(m => m.carteira?.[0]).length
+      montadoresComCarteira: montadores.filter(m => {
+        const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
+        return carteira != null;
+      }).length
     });
 
     return { 
@@ -347,7 +353,7 @@ export function AdminFinanceiro() {
             </TableHeader>
             <TableBody>
               {montadores.map((montador) => {
-                const carteira = montador.carteira?.[0];
+                const carteira = Array.isArray(montador.carteira) ? montador.carteira[0] : montador.carteira;
                 return (
                   <TableRow key={montador.id}>
                     <TableCell>
