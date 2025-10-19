@@ -33,11 +33,17 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const { enviarSMSACaminho } = useSMS();
 
   const [codigoValidacao, setCodigoValidacao] = useState('');
-  const [fotosUpload, setFotosUpload] = useState<{ [key: string]: File | null }>({
-    movel_caixa: null,
-    movel_montado: null,
-    portas_abertas: null,
-    assistencia: null,
+  const [fotosUpload, setFotosUpload] = useState<{ [key: string]: (File | null)[] }>({
+    movel_caixa: [null, null, null],
+    movel_montado: [null, null, null],
+    portas_abertas: [null, null, null],
+    assistencia: [null, null, null],
+  });
+  const [fotosEnviadas, setFotosEnviadas] = useState<{ [key: string]: number }>({
+    movel_caixa: 0,
+    movel_montado: 0,
+    portas_abertas: 0,
+    assistencia: 0,
   });
   const [observacoes, setObservacoes] = useState('');
   const [tipoFinalizacao, setTipoFinalizacao] = useState<'sucesso' | 'assistencia' | 'pendente' | null>(null);
@@ -140,19 +146,34 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     }
   };
 
-  const handleUploadFoto = async (tipo: string) => {
-    const arquivo = fotosUpload[tipo];
+  const handleUploadFoto = async (tipo: string, index: number) => {
+    const arquivo = fotosUpload[tipo][index];
     if (!arquivo) return;
 
-    console.log('📸 [OrdemServicoFlow] Fazendo upload de foto', { tipo });
+    console.log('📸 [OrdemServicoFlow] Fazendo upload de foto', { tipo, index });
 
     try {
-      await uploadFoto(ordemServico.id, tipo, arquivo);
-      setFotosUpload({ ...fotosUpload, [tipo]: null });
-      toast.success('Foto enviada!');
+      // Criar um tipo único para cada foto (ex: movel_caixa_1, movel_caixa_2)
+      const tipoComIndex = index === 0 ? tipo : `${tipo}_${index + 1}`;
+      await uploadFoto(ordemServico.id, tipoComIndex, arquivo);
+      
+      // Limpar o arquivo e atualizar contador
+      const novosFotos = [...fotosUpload[tipo]];
+      novosFotos[index] = null;
+      setFotosUpload({ ...fotosUpload, [tipo]: novosFotos });
+      setFotosEnviadas({ ...fotosEnviadas, [tipo]: fotosEnviadas[tipo] + 1 });
+      
+      toast.success(`Foto ${index + 1} enviada!`);
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao enviar foto');
     }
+  };
+
+  const handleSelectFoto = (tipo: string, index: number, file: File | null) => {
+    const novosFotos = [...fotosUpload[tipo]];
+    novosFotos[index] = file;
+    setFotosUpload({ ...fotosUpload, [tipo]: novosFotos });
   };
 
   const handleFinalizar = async () => {
@@ -388,60 +409,103 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Etapa 1: Móvel na caixa */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">1. Móvel na caixa (obrigatório)</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFotosUpload({ ...fotosUpload, movel_caixa: e.target.files?.[0] || null })}
-                />
-                {fotosUpload.movel_caixa && (
-                  <Button onClick={() => handleUploadFoto('movel_caixa')} size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Enviar foto
-                  </Button>
-                )}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-base font-semibold">1. Móvel na caixa</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {fotosEnviadas.movel_caixa}/3 fotos enviadas (mínimo 1 obrigatória)
+                  </p>
+                </div>
+                
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="space-y-2">
+                    <Label className="text-sm">
+                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleSelectFoto('movel_caixa', index, e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {fotosUpload.movel_caixa[index] && (
+                        <Button onClick={() => handleUploadFoto('movel_caixa', index)} size="sm">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Enviar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <Separator />
 
               {/* Etapa 2: Móvel montado */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">2. Móvel montado (obrigatório)</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFotosUpload({ ...fotosUpload, movel_montado: e.target.files?.[0] || null })}
-                />
-                {fotosUpload.movel_montado && (
-                  <Button onClick={() => handleUploadFoto('movel_montado')} size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Enviar foto
-                  </Button>
-                )}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-base font-semibold">2. Móvel montado</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {fotosEnviadas.movel_montado}/3 fotos enviadas (mínimo 1 obrigatória)
+                  </p>
+                </div>
+                
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="space-y-2">
+                    <Label className="text-sm">
+                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleSelectFoto('movel_montado', index, e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {fotosUpload.movel_montado[index] && (
+                        <Button onClick={() => handleUploadFoto('movel_montado', index)} size="sm">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Enviar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <Separator />
 
-              {/* Etapa 3: Portas abertas (condicional) */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">
-                  3. Portas abertas (se aplicável)
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Obrigatório para guarda-roupas e armários
-                </p>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFotosUpload({ ...fotosUpload, portas_abertas: e.target.files?.[0] || null })}
-                />
-                {fotosUpload.portas_abertas && (
-                  <Button onClick={() => handleUploadFoto('portas_abertas')} size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Enviar foto
-                  </Button>
-                )}
+              {/* Etapa 3: Portas abertas */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-base font-semibold">3. Portas abertas (se aplicável)</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {fotosEnviadas.portas_abertas}/3 fotos enviadas (mínimo 1 se for guarda-roupa/armário)
+                  </p>
+                </div>
+                
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="space-y-2">
+                    <Label className="text-sm">
+                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleSelectFoto('portas_abertas', index, e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {fotosUpload.portas_abertas[index] && (
+                        <Button onClick={() => handleUploadFoto('portas_abertas', index)} size="sm">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Enviar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -524,19 +588,35 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
               )}
 
               {tipoFinalizacao === 'assistencia' && (
-                <div className="space-y-2">
-                  <Label>Fotos da assistência</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setFotosUpload({ ...fotosUpload, assistencia: e.target.files?.[0] || null })}
-                  />
-                  {fotosUpload.assistencia && (
-                    <Button onClick={() => handleUploadFoto('assistencia')} size="sm">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Enviar foto
-                    </Button>
-                  )}
+                <div className="space-y-3">
+                  <div>
+                    <Label>Fotos da assistência</Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {fotosEnviadas.assistencia}/3 fotos enviadas
+                    </p>
+                  </div>
+                  
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="space-y-2">
+                      <Label className="text-sm">
+                        Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleSelectFoto('assistencia', index, e.target.files?.[0] || null)}
+                          className="flex-1"
+                        />
+                        {fotosUpload.assistencia[index] && (
+                          <Button onClick={() => handleUploadFoto('assistencia', index)} size="sm">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Enviar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
