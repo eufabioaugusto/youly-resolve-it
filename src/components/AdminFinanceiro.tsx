@@ -37,18 +37,39 @@ export function AdminFinanceiro() {
         .select(`
           *,
           jobs (*),
-          montadores (
-            *,
-            profiles!montadores_user_id_fkey(*)
-          )
+          montadores (*)
         `)
         .gte('created_at', dataInicio.toISOString())
         .order('created_at', { ascending: false });
 
       if (pagamentosError) throw pagamentosError;
 
-      console.log('✅ [AdminFinanceiro] Pagamentos carregados', pagamentosData);
-      setPagamentos(pagamentosData || []);
+      // Buscar profiles dos montadores dos pagamentos separadamente
+      let pagamentosComProfiles = pagamentosData;
+      if (pagamentosData && pagamentosData.length > 0) {
+        const montadorUserIds = pagamentosData
+          .map(p => p.montadores?.user_id)
+          .filter(Boolean);
+        
+        if (montadorUserIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('user_id', montadorUserIds);
+          
+          // Combinar dados
+          pagamentosComProfiles = pagamentosData.map(p => ({
+            ...p,
+            montadores: p.montadores ? {
+              ...p.montadores,
+              profiles: profilesData?.find(pr => pr.user_id === p.montadores?.user_id)
+            } : null
+          }));
+        }
+      }
+
+      console.log('✅ [AdminFinanceiro] Pagamentos carregados', pagamentosComProfiles);
+      setPagamentos(pagamentosComProfiles || []);
 
       // Buscar montadores com carteiras
       const { data: montadoresData, error: montadoresError } = await supabase

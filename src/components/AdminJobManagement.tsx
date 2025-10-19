@@ -35,10 +35,7 @@ export function AdminJobManagement() {
           negociacoes (
             *,
             jobs (*),
-            montadores (
-              *,
-              profiles!montadores_user_id_fkey(*)
-            )
+            montadores (*)
           )
         `)
         .eq('expirado', true)
@@ -47,8 +44,35 @@ export function AdminJobManagement() {
 
       if (timeoutError) throw timeoutError;
 
-      console.log('✅ [AdminJobManagement] Jobs com timeout:', timeoutData);
-      setJobsTimeout(timeoutData || []);
+      // Buscar profiles dos montadores dos timeouts separadamente
+      let timeoutDataComProfiles = timeoutData;
+      if (timeoutData && timeoutData.length > 0) {
+        const montadorIds = timeoutData
+          .map(t => t.negociacoes?.montadores?.user_id)
+          .filter(Boolean);
+        
+        if (montadorIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('user_id', montadorIds);
+          
+          // Combinar dados
+          timeoutDataComProfiles = timeoutData.map(t => ({
+            ...t,
+            negociacoes: t.negociacoes ? {
+              ...t.negociacoes,
+              montadores: t.negociacoes.montadores ? {
+                ...t.negociacoes.montadores,
+                profiles: profilesData?.find(p => p.user_id === t.negociacoes?.montadores?.user_id)
+              } : null
+            } : null
+          }));
+        }
+      }
+
+      console.log('✅ [AdminJobManagement] Jobs com timeout:', timeoutDataComProfiles);
+      setJobsTimeout(timeoutDataComProfiles || []);
 
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
