@@ -128,14 +128,15 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   };
 
   const handleIniciarMontagem = async () => {
-    console.log('🔨 [OrdemServicoFlow] Iniciando montagem', { codigo: codigoValidacao });
+    console.log('🔨 [OrdemServicoFlow] Iniciando montagem');
     
-    const valido = await validarCodigo(ordemServico.id, codigoValidacao);
-    
-    if (valido) {
+    try {
       await atualizarStatus(ordemServico.id, 'iniciada');
       toast.success('Montagem iniciada!');
       onStatusChange?.();
+    } catch (error) {
+      console.error('Erro ao iniciar montagem:', error);
+      toast.error('Erro ao iniciar montagem');
     }
   };
 
@@ -160,7 +161,21 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
       return;
     }
 
-    console.log('✅ [OrdemServicoFlow] Finalizando OS', { tipoFinalizacao });
+    // Validar código antes de finalizar (ativa a garantia)
+    if (!codigoValidacao || codigoValidacao.length !== 6) {
+      toast.error('Digite o código de validação fornecido pelo cliente');
+      return;
+    }
+
+    console.log('✅ [OrdemServicoFlow] Validando código e finalizando OS', { tipoFinalizacao });
+
+    // Validar código
+    const valido = await validarCodigo(ordemServico.id, codigoValidacao);
+    if (!valido) {
+      return; // O erro já é mostrado no validarCodigo
+    }
+
+    console.log('✅ [OrdemServicoFlow] Código validado, finalizando OS');
 
     try {
       await finalizarOS({
@@ -334,7 +349,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
         </Card>
       )}
 
-      {/* Iniciar montagem com código */}
+      {/* Iniciar montagem direto */}
       {ordemServico.status === 'a_caminho' && (
         <Card>
           <CardHeader>
@@ -342,24 +357,17 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
               <Clock className="w-5 h-5" />
               Iniciar montagem
             </CardTitle>
+            <CardDescription>
+              Ao chegar no local, inicie a montagem
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="codigo">Código de validação (fornecido pelo cliente)</Label>
-              <Input
-                id="codigo"
-                value={codigoValidacao}
-                onChange={(e) => setCodigoValidacao(e.target.value.toUpperCase())}
-                placeholder="Digite o código"
-                maxLength={6}
-              />
-            </div>
+          <CardContent>
             <Button 
               onClick={handleIniciarMontagem} 
-              disabled={loading || codigoValidacao.length !== 6}
+              disabled={loading}
               className="w-full"
             >
-              Validar e iniciar
+              Iniciar montagem
             </Button>
           </CardContent>
         </Card>
@@ -445,8 +453,31 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 <FileText className="w-5 h-5" />
                 Finalizar ordem de serviço
               </CardTitle>
+              <CardDescription>
+                O código de validação ativa a garantia de 30 dias
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Código de validação */}
+              <div className="space-y-2">
+                <Label htmlFor="codigo-final" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Código de validação (fornecido pelo cliente)
+                </Label>
+                <Input
+                  id="codigo-final"
+                  value={codigoValidacao}
+                  onChange={(e) => setCodigoValidacao(e.target.value.toUpperCase())}
+                  placeholder="Digite o código"
+                  maxLength={6}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Solicite o código ao cliente para ativar a garantia
+                </p>
+              </div>
+
+              <Separator />
+
               <div className="space-y-2">
                 <Label>Tipo de finalização</Label>
                 <div className="space-y-2">
@@ -522,11 +553,16 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
 
               <Button 
                 onClick={handleFinalizar} 
-                disabled={loading || !tipoFinalizacao || ((tipoFinalizacao === 'assistencia' || tipoFinalizacao === 'pendente') && observacoes.length < 20)}
+                disabled={loading || !tipoFinalizacao || codigoValidacao.length !== 6 || ((tipoFinalizacao === 'assistencia' || tipoFinalizacao === 'pendente') && observacoes.length < 20)}
                 className="w-full"
               >
-                Finalizar ordem de serviço
+                Validar código e finalizar
               </Button>
+              {codigoValidacao.length !== 6 && (
+                <p className="text-sm text-destructive text-center">
+                  Digite o código de 6 dígitos para finalizar
+                </p>
+              )}
             </CardContent>
           </Card>
         </>
