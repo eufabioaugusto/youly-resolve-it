@@ -36,25 +36,19 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const storageKey = `os_progress_${ordemServico.id}`;
 
   const [codigoValidacao, setCodigoValidacao] = useState('');
-  const [fotosUpload, setFotosUpload] = useState<{ [key: string]: (File | null)[] }>({
-    movel_caixa: [null, null, null],
-    movel_montado: [null, null, null],
-    portas_abertas: [null, null, null],
-    assistencia: [null, null, null],
+  const [fotosEnviadas, setFotosEnviadas] = useState<{ [key: string]: boolean }>({
+    movel_caixa: false,
+    movel_montado: false,
+    portas_abertas: false,
+    assistencia: false,
   });
-  const [fotosPreview, setFotosPreview] = useState<{ [key: string]: (string | null)[] }>({
-    movel_caixa: [null, null, null],
-    movel_montado: [null, null, null],
-    portas_abertas: [null, null, null],
-    assistencia: [null, null, null],
+  const [fotosPreview, setFotosPreview] = useState<{ [key: string]: string | null }>({
+    movel_caixa: null,
+    movel_montado: null,
+    portas_abertas: null,
+    assistencia: null,
   });
-  const [fotosEnviadas, setFotosEnviadas] = useState<{ [key: string]: number }>({
-    movel_caixa: 0,
-    movel_montado: 0,
-    portas_abertas: 0,
-    assistencia: 0,
-  });
-  const [uploadingFoto, setUploadingFoto] = useState<{ tipo: string; index: number } | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState<string | null>(null);
   const [observacoes, setObservacoes] = useState('');
   const [tipoFinalizacao, setTipoFinalizacao] = useState<'sucesso' | 'assistencia' | 'pendente' | null>(null);
   const [processandoACaminho, setProcessandoACaminho] = useState(false);
@@ -192,63 +186,31 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     }
   };
 
-  const handleSelectFoto = async (tipo: string, index: number, file: File | null) => {
-    console.log('🎯 handleSelectFoto chamado:', { tipo, index, file: file?.name });
-    
-    if (!file) {
-      console.log('⚠️ Nenhum arquivo selecionado');
-      return;
-    }
+  const handleSelectFoto = async (tipo: string, file: File | null) => {
+    if (!file) return;
 
+    console.log('📸 Upload iniciado:', { tipo, file: file.name });
+    
     // Criar preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      console.log('✅ Preview criado para:', { tipo, index });
-      setFotosPreview(prev => {
-        const novosPreviews = [...prev[tipo]];
-        novosPreviews[index] = reader.result as string;
-        return { ...prev, [tipo]: novosPreviews };
-      });
+      setFotosPreview(prev => ({ ...prev, [tipo]: reader.result as string }));
     };
     reader.readAsDataURL(file);
 
-    // Atualizar arquivo
-    setFotosUpload(prev => {
-      const novosFotos = [...prev[tipo]];
-      novosFotos[index] = file;
-      return { ...prev, [tipo]: novosFotos };
-    });
-
     // Upload automático
-    setUploadingFoto({ tipo, index });
-    console.log('⏳ Iniciando upload...', { tipo, index });
+    setUploadingFoto(tipo);
     
     try {
-      const tipoComIndex = index === 0 ? tipo : `${tipo}_${index + 1}`;
-      console.log('📤 Tipo do upload:', tipoComIndex);
-      
-      await uploadFoto(ordemServico.id, tipoComIndex, file);
-      
-      setFotosEnviadas(prev => {
-        const novo = { ...prev, [tipo]: prev[tipo] + 1 };
-        console.log('✅ Fotos enviadas atualizado:', novo);
-        return novo;
-      });
-      
-      toast.success(`Foto ${index + 1} enviada com sucesso!`);
+      await uploadFoto(ordemServico.id, tipo, file);
+      setFotosEnviadas(prev => ({ ...prev, [tipo]: true }));
+      toast.success('Foto enviada com sucesso!');
     } catch (error) {
       console.error('❌ Erro ao fazer upload:', error);
       toast.error('Erro ao enviar foto');
-      
-      // Limpar preview em caso de erro
-      setFotosPreview(prev => {
-        const novosPreviews = [...prev[tipo]];
-        novosPreviews[index] = null;
-        return { ...prev, [tipo]: novosPreviews };
-      });
+      setFotosPreview(prev => ({ ...prev, [tipo]: null }));
     } finally {
       setUploadingFoto(null);
-      console.log('✅ Upload finalizado');
     }
   };
 
@@ -490,229 +452,165 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
             <CardContent className="space-y-6">
               {/* Etapa 1: Móvel na caixa */}
               <div className="space-y-3">
-                <div>
-                  <Label className="text-base font-semibold">1. Móvel na caixa</Label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {fotosEnviadas.movel_caixa}/3 fotos enviadas (mínimo 1 obrigatória)
-                  </p>
-                </div>
+                <Label className="text-base font-semibold">1. Móvel na caixa (obrigatória)</Label>
                 
-                <div className="grid grid-cols-3 gap-3">
-                  {[0, 1, 2].map((index) => {
-                    const isUploading = uploadingFoto?.tipo === 'movel_caixa' && uploadingFoto?.index === index;
-                    const hasPreview = fotosPreview.movel_caixa[index];
-                    
-                    return (
-                      <div key={index} className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          id={`movel-caixa-${index}`}
-                          key={`movel-caixa-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
-                          className="hidden"
-                          onChange={(e) => {
-                            console.log('📸 Input onChange disparado:', { index, files: e.target.files });
-                            const file = e.target.files?.[0] || null;
-                            if (file) {
-                              handleSelectFoto('movel_caixa', index, file);
-                            }
-                            // Resetar o input
-                            e.target.value = '';
-                          }}
-                          disabled={isUploading}
-                        />
-                        <label
-                          htmlFor={`movel-caixa-${index}`}
-                          className={`
-                            aspect-square flex flex-col items-center justify-center gap-2 
-                            border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
-                            transition-all hover:border-primary hover:bg-accent relative
-                            ${hasPreview ? 'border-primary' : 'border-muted-foreground/25'}
-                            ${isUploading ? 'opacity-50 cursor-wait' : ''}
-                          `}
-                        >
-                          {hasPreview ? (
-                            <>
-                              <img 
-                                src={hasPreview} 
-                                alt={`Preview ${index + 1}`}
-                                className="absolute inset-0 w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera className="w-8 h-8 text-white" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {isUploading ? (
-                                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                              ) : (
-                                <Camera className="w-8 h-8 text-muted-foreground" />
-                              )}
-                              <span className="text-xs font-medium text-center px-2">
-                                {isUploading ? 'Enviando...' : `Foto ${index + 1}`}
-                                {index === 0 && !isUploading && <span className="block text-destructive">Obrigatória</span>}
-                              </span>
-                            </>
-                          )}
-                        </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  id="movel-caixa"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleSelectFoto('movel_caixa', file);
+                    e.target.value = '';
+                  }}
+                  disabled={uploadingFoto === 'movel_caixa'}
+                />
+                <label
+                  htmlFor="movel-caixa"
+                  className={`
+                    aspect-video w-full flex flex-col items-center justify-center gap-2 
+                    border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
+                    transition-all hover:border-primary hover:bg-accent relative
+                    ${fotosPreview.movel_caixa ? 'border-primary' : 'border-muted-foreground/25'}
+                    ${uploadingFoto === 'movel_caixa' ? 'opacity-50 cursor-wait' : ''}
+                  `}
+                >
+                  {fotosPreview.movel_caixa ? (
+                    <>
+                      <img 
+                        src={fotosPreview.movel_caixa} 
+                        alt="Móvel na caixa"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-12 h-12 text-white" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </>
+                  ) : (
+                    <>
+                      {uploadingFoto === 'movel_caixa' ? (
+                        <Loader2 className="w-12 h-12 text-muted-foreground animate-spin" />
+                      ) : (
+                        <Camera className="w-12 h-12 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {uploadingFoto === 'movel_caixa' ? 'Enviando...' : 'Tirar foto do móvel na caixa'}
+                      </span>
+                    </>
+                  )}
+                </label>
               </div>
 
               <Separator />
 
               {/* Etapa 2: Móvel montado */}
               <div className="space-y-3">
-                <div>
-                  <Label className="text-base font-semibold">2. Móvel montado</Label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {fotosEnviadas.movel_montado}/3 fotos enviadas (mínimo 1 obrigatória)
-                  </p>
-                </div>
+                <Label className="text-base font-semibold">2. Móvel montado (obrigatória)</Label>
                 
-                <div className="grid grid-cols-3 gap-3">
-                  {[0, 1, 2].map((index) => {
-                    const isUploading = uploadingFoto?.tipo === 'movel_montado' && uploadingFoto?.index === index;
-                    const hasPreview = fotosPreview.movel_montado[index];
-                    
-                    return (
-                      <div key={index} className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          id={`movel-montado-${index}`}
-                          key={`movel-montado-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
-                          className="hidden"
-                          onChange={(e) => {
-                            console.log('📸 Input onChange disparado (móvel montado):', { index, files: e.target.files });
-                            const file = e.target.files?.[0] || null;
-                            if (file) {
-                              handleSelectFoto('movel_montado', index, file);
-                            }
-                            e.target.value = '';
-                          }}
-                          disabled={isUploading}
-                        />
-                        <label
-                          htmlFor={`movel-montado-${index}`}
-                          className={`
-                            aspect-square flex flex-col items-center justify-center gap-2 
-                            border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
-                            transition-all hover:border-primary hover:bg-accent relative
-                            ${hasPreview ? 'border-primary' : 'border-muted-foreground/25'}
-                            ${isUploading ? 'opacity-50 cursor-wait' : ''}
-                          `}
-                        >
-                          {hasPreview ? (
-                            <>
-                              <img 
-                                src={hasPreview} 
-                                alt={`Preview ${index + 1}`}
-                                className="absolute inset-0 w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera className="w-8 h-8 text-white" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {isUploading ? (
-                                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                              ) : (
-                                <Camera className="w-8 h-8 text-muted-foreground" />
-                              )}
-                              <span className="text-xs font-medium text-center px-2">
-                                {isUploading ? 'Enviando...' : `Foto ${index + 1}`}
-                                {index === 0 && !isUploading && <span className="block text-destructive">Obrigatória</span>}
-                              </span>
-                            </>
-                          )}
-                        </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  id="movel-montado"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleSelectFoto('movel_montado', file);
+                    e.target.value = '';
+                  }}
+                  disabled={uploadingFoto === 'movel_montado'}
+                />
+                <label
+                  htmlFor="movel-montado"
+                  className={`
+                    aspect-video w-full flex flex-col items-center justify-center gap-2 
+                    border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
+                    transition-all hover:border-primary hover:bg-accent relative
+                    ${fotosPreview.movel_montado ? 'border-primary' : 'border-muted-foreground/25'}
+                    ${uploadingFoto === 'movel_montado' ? 'opacity-50 cursor-wait' : ''}
+                  `}
+                >
+                  {fotosPreview.movel_montado ? (
+                    <>
+                      <img 
+                        src={fotosPreview.movel_montado} 
+                        alt="Móvel montado"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-12 h-12 text-white" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </>
+                  ) : (
+                    <>
+                      {uploadingFoto === 'movel_montado' ? (
+                        <Loader2 className="w-12 h-12 text-muted-foreground animate-spin" />
+                      ) : (
+                        <Camera className="w-12 h-12 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {uploadingFoto === 'movel_montado' ? 'Enviando...' : 'Tirar foto do móvel montado'}
+                      </span>
+                    </>
+                  )}
+                </label>
               </div>
 
               <Separator />
 
               {/* Etapa 3: Portas abertas */}
               <div className="space-y-3">
-                <div>
-                  <Label className="text-base font-semibold">3. Portas abertas (se aplicável)</Label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {fotosEnviadas.portas_abertas}/3 fotos enviadas
-                  </p>
-                </div>
+                <Label className="text-base font-semibold">3. Portas abertas (opcional)</Label>
                 
-                <div className="grid grid-cols-3 gap-3">
-                  {[0, 1, 2].map((index) => {
-                    const isUploading = uploadingFoto?.tipo === 'portas_abertas' && uploadingFoto?.index === index;
-                    const hasPreview = fotosPreview.portas_abertas[index];
-                    
-                    return (
-                      <div key={index} className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          id={`portas-abertas-${index}`}
-                          key={`portas-abertas-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
-                          className="hidden"
-                          onChange={(e) => {
-                            console.log('📸 Input onChange disparado (portas abertas):', { index, files: e.target.files });
-                            const file = e.target.files?.[0] || null;
-                            if (file) {
-                              handleSelectFoto('portas_abertas', index, file);
-                            }
-                            e.target.value = '';
-                          }}
-                          disabled={isUploading}
-                        />
-                        <label
-                          htmlFor={`portas-abertas-${index}`}
-                          className={`
-                            aspect-square flex flex-col items-center justify-center gap-2 
-                            border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
-                            transition-all hover:border-primary hover:bg-accent relative
-                            ${hasPreview ? 'border-primary' : 'border-muted-foreground/25'}
-                            ${isUploading ? 'opacity-50 cursor-wait' : ''}
-                          `}
-                        >
-                          {hasPreview ? (
-                            <>
-                              <img 
-                                src={hasPreview} 
-                                alt={`Preview ${index + 1}`}
-                                className="absolute inset-0 w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera className="w-8 h-8 text-white" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {isUploading ? (
-                                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                              ) : (
-                                <Camera className="w-8 h-8 text-muted-foreground" />
-                              )}
-                              <span className="text-xs font-medium text-center px-2">
-                                {isUploading ? 'Enviando...' : `Foto ${index + 1}`}
-                                {index === 0 && !isUploading && <span className="block text-destructive">Obrigatória</span>}
-                              </span>
-                            </>
-                          )}
-                        </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  id="portas-abertas"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleSelectFoto('portas_abertas', file);
+                    e.target.value = '';
+                  }}
+                  disabled={uploadingFoto === 'portas_abertas'}
+                />
+                <label
+                  htmlFor="portas-abertas"
+                  className={`
+                    aspect-video w-full flex flex-col items-center justify-center gap-2 
+                    border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
+                    transition-all hover:border-primary hover:bg-accent relative
+                    ${fotosPreview.portas_abertas ? 'border-primary' : 'border-muted-foreground/25'}
+                    ${uploadingFoto === 'portas_abertas' ? 'opacity-50 cursor-wait' : ''}
+                  `}
+                >
+                  {fotosPreview.portas_abertas ? (
+                    <>
+                      <img 
+                        src={fotosPreview.portas_abertas} 
+                        alt="Portas abertas"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-12 h-12 text-white" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </>
+                  ) : (
+                    <>
+                      {uploadingFoto === 'portas_abertas' ? (
+                        <Loader2 className="w-12 h-12 text-muted-foreground animate-spin" />
+                      ) : (
+                        <Camera className="w-12 h-12 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {uploadingFoto === 'portas_abertas' ? 'Enviando...' : 'Tirar foto das portas abertas'}
+                      </span>
+                    </>
+                  )}
+                </label>
               </div>
             </CardContent>
           </Card>
@@ -796,76 +694,55 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
 
               {tipoFinalizacao === 'assistencia' && (
                 <div className="space-y-3">
-                  <div>
-                    <Label>Fotos da assistência</Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {fotosEnviadas.assistencia}/3 fotos enviadas
-                    </p>
-                  </div>
+                  <Label>Foto da assistência (obrigatória)</Label>
                   
-                  <div className="grid grid-cols-3 gap-3">
-                    {[0, 1, 2].map((index) => {
-                      const isUploading = uploadingFoto?.tipo === 'assistencia' && uploadingFoto?.index === index;
-                      const hasPreview = fotosPreview.assistencia[index];
-                      
-                      return (
-                        <div key={index} className="relative">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            id={`assistencia-${index}`}
-                            key={`assistencia-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
-                            className="hidden"
-                            onChange={(e) => {
-                              console.log('📸 Input onChange disparado (assistência):', { index, files: e.target.files });
-                              const file = e.target.files?.[0] || null;
-                              if (file) {
-                                handleSelectFoto('assistencia', index, file);
-                              }
-                              e.target.value = '';
-                            }}
-                            disabled={isUploading}
-                          />
-                          <label
-                            htmlFor={`assistencia-${index}`}
-                            className={`
-                              aspect-square flex flex-col items-center justify-center gap-2 
-                              border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
-                              transition-all hover:border-primary hover:bg-accent relative
-                              ${hasPreview ? 'border-primary' : 'border-muted-foreground/25'}
-                              ${isUploading ? 'opacity-50 cursor-wait' : ''}
-                            `}
-                          >
-                            {hasPreview ? (
-                              <>
-                                <img 
-                                  src={hasPreview} 
-                                  alt={`Preview ${index + 1}`}
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Camera className="w-8 h-8 text-white" />
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                {isUploading ? (
-                                  <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-                                ) : (
-                                  <Camera className="w-8 h-8 text-muted-foreground" />
-                                )}
-                                <span className="text-xs font-medium text-center px-2">
-                                  {isUploading ? 'Enviando...' : `Foto ${index + 1}`}
-                                  {index === 0 && !isUploading && <span className="block text-destructive">Obrigatória</span>}
-                                </span>
-                              </>
-                            )}
-                          </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    id="assistencia"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleSelectFoto('assistencia', file);
+                      e.target.value = '';
+                    }}
+                    disabled={uploadingFoto === 'assistencia'}
+                  />
+                  <label
+                    htmlFor="assistencia"
+                    className={`
+                      aspect-video w-full flex flex-col items-center justify-center gap-2 
+                      border-2 border-dashed rounded-lg cursor-pointer overflow-hidden
+                      transition-all hover:border-primary hover:bg-accent relative
+                      ${fotosPreview.assistencia ? 'border-primary' : 'border-muted-foreground/25'}
+                      ${uploadingFoto === 'assistencia' ? 'opacity-50 cursor-wait' : ''}
+                    `}
+                  >
+                    {fotosPreview.assistencia ? (
+                      <>
+                        <img 
+                          src={fotosPreview.assistencia} 
+                          alt="Assistência"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Camera className="w-12 h-12 text-white" />
                         </div>
-                      );
-                    })}
-                  </div>
+                      </>
+                    ) : (
+                      <>
+                        {uploadingFoto === 'assistencia' ? (
+                          <Loader2 className="w-12 h-12 text-muted-foreground animate-spin" />
+                        ) : (
+                          <Camera className="w-12 h-12 text-muted-foreground" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {uploadingFoto === 'assistencia' ? 'Enviando...' : 'Tirar foto da assistência'}
+                        </span>
+                      </>
+                    )}
+                  </label>
                 </div>
               )}
 
