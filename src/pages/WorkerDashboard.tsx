@@ -276,10 +276,18 @@ const WorkerDashboard = () => {
 
         if (profilesError) throw profilesError;
 
+        // Buscar negociações para pegar o valor do orçamento
+        const jobIds = jobsData.map(job => job.id);
+        const { data: negociacoesData } = await supabase
+          .from('negociacoes')
+          .select('job_id, valor_proposto_montador, status')
+          .in('job_id', jobIds);
+
         // Combinar os dados
         const jobsWithClientes = jobsData.map(job => {
           const cliente = clientesData?.find(c => c.id === job.cliente_id);
           const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
+          const negociacao = negociacoesData?.find(n => n.job_id === job.id);
           
           return {
             ...job,
@@ -288,7 +296,8 @@ const WorkerDashboard = () => {
               profiles: {
                 nome: profile?.nome || 'Cliente'
               }
-            }
+            },
+            negociacao: negociacao
           };
         });
 
@@ -796,10 +805,20 @@ const WorkerDashboard = () => {
                             
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
                               <div>
-                                {job.valor_estimado && (
-                                  <p className="text-xl sm:text-2xl font-bold text-green-600 mb-2">
-                                    R$ {job.valor_estimado.toFixed(2)}
-                                  </p>
+                                {job.negociacao?.valor_proposto_montador ? (
+                                  <div className="mb-2">
+                                    <p className="text-xs text-muted-foreground mb-1">Meu Orçamento</p>
+                                    <p className="text-xl sm:text-2xl font-bold text-primary">
+                                      R$ {job.negociacao.valor_proposto_montador.toFixed(2)}
+                                    </p>
+                                  </div>
+                                ) : job.valor_estimado && (
+                                  <div className="mb-2">
+                                    <p className="text-xs text-muted-foreground mb-1">Valor Estimado</p>
+                                    <p className="text-lg font-semibold text-muted-foreground">
+                                      R$ {job.valor_estimado.toFixed(2)}
+                                    </p>
+                                  </div>
                                 )}
                                 <Badge variant={
                                   job.status === 'em_andamento' ? 'default' :
