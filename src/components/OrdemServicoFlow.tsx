@@ -198,16 +198,20 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     // Criar preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      const novosPreviews = [...fotosPreview[tipo]];
-      novosPreviews[index] = reader.result as string;
-      setFotosPreview({ ...fotosPreview, [tipo]: novosPreviews });
+      setFotosPreview(prev => {
+        const novosPreviews = [...prev[tipo]];
+        novosPreviews[index] = reader.result as string;
+        return { ...prev, [tipo]: novosPreviews };
+      });
     };
     reader.readAsDataURL(file);
 
     // Atualizar arquivo
-    const novosFotos = [...fotosUpload[tipo]];
-    novosFotos[index] = file;
-    setFotosUpload({ ...fotosUpload, [tipo]: novosFotos });
+    setFotosUpload(prev => {
+      const novosFotos = [...prev[tipo]];
+      novosFotos[index] = file;
+      return { ...prev, [tipo]: novosFotos };
+    });
 
     // Upload automático
     setUploadingFoto({ tipo, index });
@@ -216,16 +220,18 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
       const tipoComIndex = index === 0 ? tipo : `${tipo}_${index + 1}`;
       await uploadFoto(ordemServico.id, tipoComIndex, file);
       
-      setFotosEnviadas({ ...fotosEnviadas, [tipo]: fotosEnviadas[tipo] + 1 });
+      setFotosEnviadas(prev => ({ ...prev, [tipo]: prev[tipo] + 1 }));
       toast.success(`Foto ${index + 1} enviada com sucesso!`);
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
       toast.error('Erro ao enviar foto');
       
       // Limpar preview em caso de erro
-      const novosPreviews = [...fotosPreview[tipo]];
-      novosPreviews[index] = null;
-      setFotosPreview({ ...fotosPreview, [tipo]: novosPreviews });
+      setFotosPreview(prev => {
+        const novosPreviews = [...prev[tipo]];
+        novosPreviews[index] = null;
+        return { ...prev, [tipo]: novosPreviews };
+      });
     } finally {
       setUploadingFoto(null);
     }
