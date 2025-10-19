@@ -411,9 +411,9 @@ const SuggestedMontadores = () => {
                         {montador.especialidades && montador.especialidades.length > 0 && (
                           <div className="w-full">
                             <p className="text-xs font-medium mb-2 text-muted-foreground">Especialidades:</p>
-                            <div className="flex flex-wrap justify-center gap-1">
-                              {montador.especialidades.slice(0, 3).map((especialidade, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
+                            <div className="flex overflow-x-auto gap-1 pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                              {montador.especialidades.map((especialidade, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap flex-shrink-0">
                                   {especialidade}
                                 </Badge>
                               ))}
