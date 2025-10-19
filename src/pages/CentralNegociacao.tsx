@@ -110,31 +110,32 @@ const CentralNegociacao = () => {
     try {
       console.log(`Tentativa ${tentativa} de carregar negociação para jobId:`, jobId);
       
-      // Primeiro, verificar se existe uma negociação para este job
-      const { data: negociacaoData, error: negociacaoError } = await supabase
+      // Buscar todas as negociações para este job
+      const { data: negociacoesData, error: negociacaoError } = await supabase
         .from('negociacoes')
         .select('*')
         .eq('job_id', jobId)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
       if (negociacaoError) {
-        console.error('Erro ao buscar negociação básica:', negociacaoError);
+        console.error('Erro ao buscar negociação:', negociacaoError);
         throw negociacaoError;
       }
 
+      if (!negociacoesData || negociacoesData.length === 0) {
+        console.log('Nenhuma negociação encontrada');
+        setNegociacao(null);
+        return;
+      }
+
+      // Priorizar negociação ativa (não recusada)
+      const negociacaoData = negociacoesData.find(n => n.status !== 'recusado') || negociacoesData[0];
+
       if (!negociacaoData) {
-        if (tentativa < 3) {
-          console.log(`Negociação não encontrada, tentando novamente em 2s...`);
-          setTimeout(() => {
-            loadNegociacao(tentativa + 1);
-          }, 2000);
-          return;
-        } else {
-          console.log('Negociação não encontrada após todas as tentativas');
-          setNegociacao(null);
-          setLoading(false);
-          return;
-        }
+        console.log('Negociação não encontrada após todas as tentativas');
+        setNegociacao(null);
+        setLoading(false);
+        return;
       }
 
       // Se a negociação existe, buscar com joins
