@@ -639,12 +639,16 @@ const WorkerDashboard = () => {
             <TabsTrigger value="os" className="text-sm">Ordens de Serviço</TabsTrigger>
             <TabsTrigger value="negotiations" className="relative text-sm">
               Negociações
-              {negociacoes.length > 0 && (
+              {negociacoes.filter(neg => 
+                neg.status === 'pendente' || neg.status === 'contra_proposta'
+              ).length > 0 && (
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
                 >
-                  {negociacoes.length}
+                  {negociacoes.filter(neg => 
+                    neg.status === 'pendente' || neg.status === 'contra_proposta'
+                  ).length}
                 </Badge>
               )}
             </TabsTrigger>
