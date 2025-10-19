@@ -5,7 +5,9 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { ConfirmationEmail } from './_templates/confirmation-email.tsx'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
-const hookSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET') as string
+// O secret do Supabase vem no formato 'v1,whsec_xxx' ou 'whsec_xxx'
+const rawSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET') as string
+const hookSecret = rawSecret?.replace('v1,whsec_', '')?.replace('whsec_', '') || rawSecret
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

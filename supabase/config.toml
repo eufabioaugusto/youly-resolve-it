@@ -3,6 +3,9 @@ project_id = "ttzgwemurovxdxhgbdxz"
 [functions.send-email]
 verify_jwt = false
 
+[functions.send-notification-email]
+verify_jwt = false
+
 [functions.mp-create-checkout]
 verify_jwt = true
 
@@ -11,12 +14,15 @@ verify_jwt = false
 
 [auth]
 [auth.email]
-# Enable custom SMTP
+# Enable custom SMTP to use our email templates
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
+template.confirmation.subject = "Confirme sua conta no YOULY"
+template.confirmation.content_path = ""
 
 # Configure webhook to intercept auth emails
 [auth.hook.send_email]
 enabled = true
 uri = "https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/send-email"
+secrets = "SEND_EMAIL_HOOK_SECRET"
