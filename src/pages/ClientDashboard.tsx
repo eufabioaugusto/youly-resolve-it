@@ -24,6 +24,7 @@ import {
 import { useState, useEffect } from "react";
 import JobDetailsModal from "@/components/JobDetailsModal";
 import NotificationCenter from "@/components/NotificationCenter";
+import { PagamentoModal } from "@/components/PagamentoModal";
 
 const ClientDashboard = () => {
   const { signOut } = useAuth();
@@ -34,6 +35,8 @@ const ClientDashboard = () => {
   const [loggingOut, setLoggingOut] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
+  const [selectedJobForPayment, setSelectedJobForPayment] = useState<any>(null);
 
   useEffect(() => {
     if (clienteProfile) {
@@ -424,7 +427,16 @@ const ClientDashboard = () => {
                         </>
                       ) : null}
                       {job.status === "aguardando_pagamento" && (
-                        <Button size="sm" className="bg-gradient-primary">Pagar agora</Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-gradient-primary"
+                          onClick={() => {
+                            setSelectedJobForPayment(job);
+                            setPagamentoModalOpen(true);
+                          }}
+                        >
+                          Pagar agora
+                        </Button>
                       )}
                       {job.status === "concluido" && (
                         <Button variant="outline" size="sm">Avaliar</Button>
@@ -443,6 +455,23 @@ const ClientDashboard = () => {
           open={detailsModalOpen}
           onOpenChange={setDetailsModalOpen}
         />
+
+        {/* Modal de Pagamento */}
+        {selectedJobForPayment && (
+          <PagamentoModal
+            open={pagamentoModalOpen}
+            onOpenChange={setPagamentoModalOpen}
+            jobId={selectedJobForPayment.id}
+            montadorId={selectedJobForPayment.montador_id}
+            valor={
+              selectedJobForPayment.negociacoes?.find((n: any) => n.status === 'aceito')?.valor_final ||
+              selectedJobForPayment.negociacoes?.find((n: any) => n.status === 'aceito')?.valor_proposto_montador ||
+              0
+            }
+            jobDescricao={selectedJobForPayment.descricao}
+            montadorNome={selectedJobForPayment.montador?.profiles?.nome || 'Montador'}
+          />
+        )}
       </div>
     </div>
   );
