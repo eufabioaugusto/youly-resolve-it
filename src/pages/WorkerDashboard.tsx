@@ -326,23 +326,63 @@ const WorkerDashboard = () => {
     try {
       console.log('🚀 [WorkerDashboard] Buscando ordens de serviço para montador:', montadorProfile.id);
       
-      const { data, error } = await supabase
+      // Buscar OS primeiro
+      const { data: osData, error: osError } = await supabase
         .from('ordem_servico')
-        .select(`
-          *,
-          jobs (*),
-          clientes (*, profiles:user_id(*))
-        `)
+        .select('*')
         .eq('montador_id', montadorProfile.id)
-        .order('data_hora_agendamento', { ascending: true });
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (osError) throw osError;
 
-      console.log('✅ [WorkerDashboard] Ordens de serviço encontradas:', data?.length || 0);
-      console.log('📋 [WorkerDashboard] OS detalhes:', data);
-      setOrdensServico(data || []);
+      console.log('✅ [WorkerDashboard] OS encontradas:', osData?.length || 0);
+
+      if (!osData || osData.length === 0) {
+        setOrdensServico([]);
+        return;
+      }
+
+      // Buscar jobs relacionados
+      const jobIds = osData.map(os => os.job_id);
+      const { data: jobsData } = await supabase
+        .from('jobs')
+        .select('*')
+        .in('id', jobIds);
+
+      // Buscar clientes
+      const clienteIds = osData.map(os => os.cliente_id);
+      const { data: clientesData } = await supabase
+        .from('clientes')
+        .select('id, user_id')
+        .in('id', clienteIds);
+
+      // Buscar profiles dos clientes
+      const userIds = clientesData?.map(c => c.user_id) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', userIds);
+
+      // Combinar dados
+      const osCompletas = osData.map(os => {
+        const job = jobsData?.find(j => j.id === os.job_id);
+        const cliente = clientesData?.find(c => c.id === os.cliente_id);
+        const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
+
+        return {
+          ...os,
+          jobs: job,
+          clientes: {
+            ...cliente,
+            profiles: { nome: profile?.nome || 'Cliente' }
+          }
+        };
+      });
+
+      console.log('✅ [WorkerDashboard] OS completas:', osCompletas);
+      setOrdensServico(osCompletas || []);
     } catch (error) {
-      console.error('❌ [WorkerDashboard] Erro ao buscar OS', error);
+      console.error('❌ [WorkerDashboard] Erro ao buscar OS:', error);
     }
   };
 
