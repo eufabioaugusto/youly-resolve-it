@@ -1054,7 +1054,7 @@ export type Database = {
         | "pendente_pecas"
       pagamento_metodo: "pix" | "cartao"
       pagamento_status: "pago" | "pendente" | "estornado"
-      saque_status: "solicitado" | "pago" | "rejeitado"
+      saque_status: "solicitado" | "pago" | "rejeitado" | "aprovado"
       saque_status_new: "solicitado" | "aprovado" | "processado" | "cancelado"
       sms_status: "pendente" | "enviado" | "erro"
       sms_tipo: "agendamento" | "a_caminho" | "codigo_validacao" | "pesquisa"
@@ -1215,7 +1215,7 @@ export const Constants = {
       ],
       pagamento_metodo: ["pix", "cartao"],
       pagamento_status: ["pago", "pendente", "estornado"],
-      saque_status: ["solicitado", "pago", "rejeitado"],
+      saque_status: ["solicitado", "pago", "rejeitado", "aprovado"],
       saque_status_new: ["solicitado", "aprovado", "processado", "cancelado"],
       sms_status: ["pendente", "enviado", "erro"],
       sms_tipo: ["agendamento", "a_caminho", "codigo_validacao", "pesquisa"],
