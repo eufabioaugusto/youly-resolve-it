@@ -998,6 +998,10 @@ export type Database = {
         Args: { p_cliente_id: string; p_user_id: string }
         Returns: boolean
       }
+      montador_pode_ver_cliente_negociacao: {
+        Args: { p_cliente_id: string; p_user_id: string }
+        Returns: boolean
+      }
       processar_pagamento_aprovado: {
         Args: {
           p_installments?: number
