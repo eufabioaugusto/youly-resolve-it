@@ -45,27 +45,31 @@ async function validateWebhookSignature(
     const ts = tsPart.split('=')[1];
     const receivedHash = hashPart.split('=')[1];
 
-    // Validate timestamp (prevent replay attacks - 24 hour window for MP delays)
+    // Validate timestamp (prevent replay attacks - aceitar até 7 dias para webhooks atrasados)
     const timestamp = parseInt(ts);
     const now = Date.now() / 1000;
     const timeDiff = Math.abs(now - timestamp);
     
-    // MP pode demorar para enviar webhooks, aceitar até 24h
-    if (timeDiff > 86400) {
-      console.error('Webhook timestamp too old (>24h)', {
+    // Aceitar webhooks de até 7 dias (604800 segundos)
+    const MAX_WEBHOOK_AGE = 604800; // 7 dias em segundos
+    
+    if (timeDiff > MAX_WEBHOOK_AGE) {
+      console.error('Webhook timestamp too old (>7 days)', {
         timestamp,
         now,
-        diff: timeDiff
+        diff: timeDiff,
+        age_hours: (timeDiff / 3600).toFixed(1)
       });
       return false;
     }
     
-    // Log warning if older than 5 minutes but still accept
+    // Log warning se mais de 5 minutos mas ainda aceitar
     if (timeDiff > 300) {
       console.warn('⚠️ Webhook timestamp older than 5 minutes but accepted', {
         timestamp,
         now,
-        diff: timeDiff
+        diff: timeDiff,
+        age_hours: (timeDiff / 3600).toFixed(1)
       });
     }
 
