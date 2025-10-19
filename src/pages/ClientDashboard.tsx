@@ -160,11 +160,12 @@ const ClientDashboard = () => {
           .select('job_id')
           .in('job_id', jobsData.map(j => j.id));
 
-        // Buscar negociações para cada job
+        // Buscar negociações para cada job (apenas ativas, não recusadas)
         const { data: negociacoes } = await supabase
           .from('negociacoes')
           .select('job_id, status, valor_proposto_montador, valor_final')
-          .in('job_id', jobsData.map(j => j.id));
+          .in('job_id', jobsData.map(j => j.id))
+          .neq('status', 'recusado'); // Excluir negociações recusadas
 
         // Combinar os dados
         const jobsWithData = jobsData.map(job => {

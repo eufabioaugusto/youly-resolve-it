@@ -186,18 +186,23 @@ export const useNegociacoes = () => {
       }
 
       // Se recusado, liberar o job para outros montadores
-      if (acao === 'recusado') {
-        if (negociacao) {
-          const { error: jobError } = await supabase
-            .from('jobs')
-            .update({ 
-              status: 'aberto',
-              montador_id: null
-            })
-            .eq('id', negociacao.job_id);
+      if (acao === 'recusado' && negociacao) {
+        console.log('🔓 Liberando job após recusa:', negociacao.job_id);
+        
+        const { error: jobError } = await supabase
+          .from('jobs')
+          .update({ 
+            status: 'aberto',
+            montador_id: null
+          })
+          .eq('id', negociacao.job_id);
 
-          if (jobError) throw jobError;
+        if (jobError) {
+          console.error('❌ Erro ao liberar job:', jobError);
+          throw jobError;
         }
+        
+        console.log('✅ Job liberado com sucesso');
       }
 
       // Limpar cache para forçar recarregamento
