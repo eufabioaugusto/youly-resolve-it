@@ -287,7 +287,11 @@ export const useNegociacoes = () => {
       const negociacaoData = negociacoesData.find(n => n.status !== 'recusado') || negociacoesData[0];
 
 
-      // Buscar dados relacionados separadamente
+      // Buscar dados relacionados separadamente com logs detalhados
+      console.log('🔍 Buscando dados relacionados para negociação:', negociacaoData.id);
+      console.log('Cliente ID:', negociacaoData.cliente_id);
+      console.log('Montador ID:', negociacaoData.montador_id);
+      
       const [jobData, montadorData, clienteData] = await Promise.all([
         // Job
         supabase
@@ -303,8 +307,10 @@ export const useNegociacoes = () => {
           .eq('id', negociacaoData.montador_id)
           .maybeSingle()
           .then(async (result) => {
+            console.log('📦 Resultado montador:', result);
             if (result.error) {
-              console.error('Erro ao buscar montador:', result.error);
+              console.error('❌ Erro ao buscar montador:', result.error);
+              return { data: null, error: result.error };
             }
             if (result.data) {
               const profileResult = await supabase
@@ -313,19 +319,17 @@ export const useNegociacoes = () => {
                 .eq('user_id', result.data.user_id)
                 .maybeSingle();
               
-              if (profileResult.error) {
-                console.error('Erro ao buscar profile do montador:', profileResult.error);
-              }
+              console.log('📦 Profile do montador:', profileResult);
               
               return {
-                ...result,
                 data: {
                   ...result.data,
                   profiles: profileResult.data
-                }
+                },
+                error: null
               };
             }
-            return result;
+            return { data: null, error: null };
           }),
         
         // Cliente com perfil
@@ -335,8 +339,10 @@ export const useNegociacoes = () => {
           .eq('id', negociacaoData.cliente_id)
           .maybeSingle()
           .then(async (result) => {
+            console.log('📦 Resultado cliente:', result);
             if (result.error) {
-              console.error('Erro ao buscar cliente:', result.error);
+              console.error('❌ Erro ao buscar cliente:', result.error);
+              return { data: null, error: result.error };
             }
             if (result.data) {
               const profileResult = await supabase
@@ -345,19 +351,17 @@ export const useNegociacoes = () => {
                 .eq('user_id', result.data.user_id)
                 .maybeSingle();
               
-              if (profileResult.error) {
-                console.error('Erro ao buscar profile do cliente:', profileResult.error);
-              }
+              console.log('📦 Profile do cliente:', profileResult);
               
               return {
-                ...result,
                 data: {
                   ...result.data,
                   profiles: profileResult.data
-                }
+                },
+                error: null
               };
             }
-            return result;
+            return { data: null, error: null };
           })
       ]);
 
