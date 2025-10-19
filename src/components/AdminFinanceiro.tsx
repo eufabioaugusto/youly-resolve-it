@@ -22,20 +22,41 @@ export function AdminFinanceiro() {
     loadData();
   }, [filtroPeriodo]);
 
+  // Realtime para pagamentos
+  useEffect(() => {
+    console.log('🔔 Configurando realtime para pagamentos no Admin');
+    
+    const channel = supabase
+      .channel('admin-pagamentos-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pagamentos'
+        },
+        (payload) => {
+          console.log('🔥 Pagamento atualizado no Admin:', payload);
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const loadData = async () => {
     logger.adminAction('Carregando dados financeiros');
     setLoading(true);
 
     try {
-      // Calcular data de início baseada no período
-      const dataInicio = new Date();
-      dataInicio.setDate(dataInicio.getDate() - parseInt(filtroPeriodo));
-
-      // Buscar pagamentos
+      // Buscar TODOS os pagamentos (sem filtro de data)
+      console.log('🔍 [AdminFinanceiro] Buscando todos os pagamentos...');
       const { data: pagamentosData, error: pagamentosError } = await supabase
         .from('pagamentos')
         .select('*')
-        .gte('created_at', dataInicio.toISOString())
         .order('created_at', { ascending: false });
 
       if (pagamentosError) throw pagamentosError;

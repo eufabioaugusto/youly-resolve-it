@@ -41,8 +41,20 @@ export const useNegociacoes = () => {
 
   const fetchNegociacoes = async () => {
     try {
-      // Buscar negociações básicas primeiro
-      let query = supabase.from('negociacoes').select('*');
+      // Buscar negociações com informações dos jobs
+      let query = supabase
+        .from('negociacoes')
+        .select(`
+          *,
+          jobs!inner (
+            id,
+            status,
+            ordem_servico_id,
+            descricao,
+            endereco,
+            categoria
+          )
+        `);
       
       // Filtrar baseado no papel do usuário
       if (profile?.role === 'montador' && montadorProfile) {
@@ -55,8 +67,16 @@ export const useNegociacoes = () => {
 
       if (error) throw error;
       
-      console.log('Negociações encontradas:', negociacoesData?.length || 0);
-      setNegociacoes(negociacoesData || []);
+      // Filtrar negociações que NÃO viraram ordem de serviço ainda
+      const negociacoesAtivas = negociacoesData?.filter(neg => 
+        !neg.jobs?.ordem_servico_id && 
+        neg.jobs?.status !== 'pago' &&
+        neg.jobs?.status !== 'em_andamento'
+      ) || [];
+      
+      console.log('✅ Negociações encontradas:', negociacoesData?.length || 0);
+      console.log('✅ Negociações ativas (sem OS):', negociacoesAtivas.length);
+      setNegociacoes(negociacoesAtivas);
     } catch (error: any) {
       console.error('Erro ao buscar negociações:', error);
       toast({

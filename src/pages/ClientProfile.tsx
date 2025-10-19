@@ -59,6 +59,34 @@ const ClientProfile = () => {
     }
   }, [clienteProfile]);
 
+  // Realtime para pagamentos do cliente
+  useEffect(() => {
+    if (!clienteProfile?.id) return;
+
+    console.log('🔔 Configurando realtime para pagamentos do cliente');
+    
+    const channel = supabase
+      .channel('client-pagamentos-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pagamentos',
+          filter: `cliente_id=eq.${clienteProfile.id}`
+        },
+        (payload) => {
+          console.log('🔥 Pagamento atualizado para cliente:', payload);
+          loadPagamentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [clienteProfile?.id]);
+
   const loadPagamentos = async () => {
     if (!clienteProfile) return;
     
@@ -434,7 +462,7 @@ const ClientProfile = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {pagamento.montadores?.profiles?.nome || 'N/A'}
+                          {pagamento.montador_nome || 'N/A'}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
                           R$ {pagamento.valor_total.toFixed(2)}
