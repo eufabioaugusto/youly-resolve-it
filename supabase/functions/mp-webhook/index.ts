@@ -214,6 +214,12 @@ serve(async (req) => {
     if (payment.status === 'approved') {
       console.log('Processando pagamento aprovado');
       
+      // 🛡️ PROTEÇÃO CONTRA DUPLICAÇÃO: Verificar se já foi processado
+      if (pagamentoDB.status === 'pago') {
+        console.log('⏭️ Pagamento já foi processado anteriormente - ignorando duplicação');
+        return new Response('Already processed', { status: 200 });
+      }
+      
       // Processar pagamento aprovado diretamente (sem RPC)
       console.log('⚙️ [1/6] Atualizando status do pagamento...');
       
