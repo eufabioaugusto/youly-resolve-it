@@ -624,11 +624,11 @@ const WorkerDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            <TabsTrigger value="available" className="text-xs sm:text-sm">Disponíveis</TabsTrigger>
-            <TabsTrigger value="my-jobs" className="text-xs sm:text-sm">Meus Jobs</TabsTrigger>
-            <TabsTrigger value="os" className="text-xs sm:text-sm">OS</TabsTrigger>
-            <TabsTrigger value="negotiations" className="relative text-xs sm:text-sm">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-1">
+            <TabsTrigger value="available" className="text-sm">Trabalhos Disponíveis</TabsTrigger>
+            <TabsTrigger value="my-jobs" className="text-sm">Meus Trabalhos</TabsTrigger>
+            <TabsTrigger value="os" className="text-sm">Ordens de Serviço</TabsTrigger>
+            <TabsTrigger value="negotiations" className="relative text-sm">
               Negociações
               {negociacoes.length > 0 && (
                 <Badge 
@@ -639,7 +639,7 @@ const WorkerDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs sm:text-sm">Carteira</TabsTrigger>
+            <TabsTrigger value="wallet" className="text-sm">Carteira</TabsTrigger>
           </TabsList>
           
           <TabsContent value="available" className="mt-6">
