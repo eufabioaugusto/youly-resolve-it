@@ -25,6 +25,7 @@ import SuggestedMontadores from "./pages/SuggestedMontadores";
 import PagamentoSucesso from "./pages/PagamentoSucesso";
 import PagamentoFalha from "./pages/PagamentoFalha";
 import PesquisaSatisfacao from "./pages/PesquisaSatisfacao";
+import OrdemServicoPage from "./pages/OrdemServicoPage";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,11 @@ const App = () => (
               <Route path="/montador/negociacao/:jobId" element={
                 <ProtectedRoute requiredRole="montador">
                   <CentralNegociacao />
+                </ProtectedRoute>
+              } />
+              <Route path="/montador/os/:osId" element={
+                <ProtectedRoute requiredRole="montador">
+                  <OrdemServicoPage />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={

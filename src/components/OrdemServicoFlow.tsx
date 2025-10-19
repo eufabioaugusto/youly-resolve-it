@@ -23,10 +23,11 @@ import { toast } from 'sonner';
 
 interface OrdemServicoFlowProps {
   ordemServico: any;
+  onOSAtualizada?: () => void;
   onStatusChange?: () => void;
 }
 
-export function OrdemServicoFlow({ ordemServico, onStatusChange }: OrdemServicoFlowProps) {
+export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange }: OrdemServicoFlowProps) {
   const { atualizarStatus, uploadFoto, finalizarOS, validarCodigo, loading } = useOrdemServico();
   const { enviarSMSACaminho } = useSMS();
 
@@ -109,6 +110,7 @@ export function OrdemServicoFlow({ ordemServico, onStatusChange }: OrdemServicoF
         motivoPendente: tipoFinalizacao === 'pendente' ? observacoes : undefined,
       });
       
+      onOSAtualizada?.();
       onStatusChange?.();
     } catch (error) {
       console.error('Erro ao finalizar:', error);

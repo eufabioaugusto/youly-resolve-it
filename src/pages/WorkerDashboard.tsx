@@ -33,6 +33,8 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { CarteiraWidget } from "@/components/CarteiraWidget";
+import { OSCard } from "@/components/OSCard";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const WorkerDashboard = () => {
   const { signOut } = useAuth();
@@ -44,8 +46,9 @@ const WorkerDashboard = () => {
   
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
+  const [ordensServico, setOrdensServico] = useState([]);
   const [carteira, setCarteira] = useState(null);
-  const [candidaturas, setCandidaturas] = useState<string[]>([]); // IDs dos jobs que o montador já se candidatou
+  const [candidaturas, setCandidaturas] = useState<string[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -59,8 +62,9 @@ const WorkerDashboard = () => {
     if (montadorProfile) {
       fetchAvailableJobs();
       fetchMyJobs();
+      fetchOrdensServico();
       fetchCarteira();
-      fetchCandidaturas(); // Buscar candidaturas do banco
+      fetchCandidaturas();
     }
   }, [montadorProfile]);
 
@@ -220,6 +224,31 @@ const WorkerDashboard = () => {
       setCarteira(data);
     } catch (error) {
       console.error('Erro ao buscar carteira:', error);
+    }
+  };
+
+  const fetchOrdensServico = async () => {
+    if (!montadorProfile) return;
+
+    try {
+      console.log('🚀 [WorkerDashboard] Buscando ordens de serviço');
+      
+      const { data, error } = await supabase
+        .from('ordem_servico')
+        .select(`
+          *,
+          jobs (*),
+          clientes (*, profiles:user_id(*))
+        `)
+        .eq('montador_id', montadorProfile.id)
+        .order('data_hora_agendamento', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ [WorkerDashboard] Ordens de serviço encontradas', data);
+      setOrdensServico(data || []);
+    } catch (error) {
+      console.error('❌ [WorkerDashboard] Erro ao buscar OS', error);
     }
   };
 
@@ -646,10 +675,21 @@ const WorkerDashboard = () => {
                 <CardDescription>Acompanhe suas ordens de serviço agendadas e em andamento</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Funcionalidade de OS será integrada aqui</p>
-                  <p className="text-sm mt-2">Use o componente OrdemServicoFlow para gerenciar o fluxo completo</p>
-                </div>
+                {ordensServico.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Nenhuma ordem de serviço encontrada</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {ordensServico.map((os) => (
+                      <OSCard
+                        key={os.id}
+                        ordemServico={os}
+                        onAbrirOS={(osData) => navigate(`/montador/os/${osData.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
