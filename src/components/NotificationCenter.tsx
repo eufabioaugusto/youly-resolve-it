@@ -51,36 +51,55 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
   const handleNotificationClick = async (notification: any) => {
     await markAsRead(notification.id);
     
-    // Navegar baseado no tipo da notificação
-    switch (notification.tipo) {
-      case 'negociacao':
-        // Redirecionar para dashboard e depois mudar a aba via hash
-        navigate('/montador#negotiations');
-        setTimeout(() => {
-          const negotiationsTab = document.querySelector('[value="negotiations"]') as HTMLElement;
-          negotiationsTab?.click();
-        }, 100);
-        break;
-      case 'job':
-        navigate('/montador'); // Dashboard do montador
-        break;
-      case 'pagamento':
-        navigate('/montador#negotiations');
-        setTimeout(() => {
-          const negotiationsTab = document.querySelector('[value="negotiations"]') as HTMLElement;
-          negotiationsTab?.click();
-        }, 100);
-        break;
-      case 'saque':
-        navigate('/montador#wallet');
-        setTimeout(() => {
-          const walletTab = document.querySelector('[value="wallet"]') as HTMLElement;
-          walletTab?.click();
-        }, 100);
-        break;
-      default:
-        navigate('/montador');
-        break;
+    const metadata = notification.metadata || {};
+    
+    // Navegar para o item específico usando metadata
+    if (metadata.negociacao_id) {
+      // Abrir negociação específica
+      navigate('/montador', { 
+        state: { 
+          openNegotiationId: metadata.negociacao_id,
+          activeTab: 'negotiations' 
+        } 
+      });
+    } else if (metadata.job_id) {
+      // Abrir job específico
+      navigate('/montador', { 
+        state: { 
+          openJobId: metadata.job_id,
+          activeTab: 'available' 
+        } 
+      });
+    } else if (metadata.ordem_servico_id) {
+      // Abrir ordem de serviço específica
+      navigate('/montador', { 
+        state: { 
+          openOSId: metadata.ordem_servico_id,
+          activeTab: 'os' 
+        } 
+      });
+    } else {
+      // Fallback: navegar baseado no tipo
+      switch (notification.tipo) {
+        case 'negociacao':
+        case 'pagamento':
+          navigate('/montador#negotiations');
+          setTimeout(() => {
+            const negotiationsTab = document.querySelector('[value="negotiations"]') as HTMLElement;
+            negotiationsTab?.click();
+          }, 100);
+          break;
+        case 'saque':
+          navigate('/montador#wallet');
+          setTimeout(() => {
+            const walletTab = document.querySelector('[value="wallet"]') as HTMLElement;
+            walletTab?.click();
+          }, 100);
+          break;
+        default:
+          navigate('/montador');
+          break;
+      }
     }
     
     setOpen(false);

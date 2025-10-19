@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 export const criarNotificacao = async (
   userId: string,
   tipo: 'sistema' | 'job' | 'pagamento' | 'saque' | 'negociacao',
-  mensagem: string
+  mensagem: string,
+  metadata?: { job_id?: string; negociacao_id?: string; ordem_servico_id?: string; [key: string]: any }
 ) => {
   try {
     const { error } = await supabase
@@ -12,7 +13,8 @@ export const criarNotificacao = async (
         user_id: userId,
         tipo,
         mensagem,
-        lida: false
+        lida: false,
+        metadata: metadata || {}
       });
 
     if (error) {

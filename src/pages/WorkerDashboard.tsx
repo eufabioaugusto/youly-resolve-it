@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ const WorkerDashboard = () => {
   const { isComplete: isProfileComplete } = useProfileCompletion();
   const { negociacoes, loading: negociacoesLoading } = useNegociacoes();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
   const [availableJobs, setAvailableJobs] = useState([]);
@@ -54,6 +55,7 @@ const WorkerDashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [activeTab, setActiveTab] = useState('available');
   
   // Modal states
   const [selectedJob, setSelectedJob] = useState(null);
@@ -106,6 +108,38 @@ const WorkerDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [montadorProfile?.id]);
+
+  // 🎯 Detectar navegação vinda de notificações
+  useEffect(() => {
+    const state = location.state as any;
+    if (!state) return;
+
+    // Abrir aba específica
+    if (state.activeTab) {
+      setActiveTab(state.activeTab);
+    }
+
+    // Abrir modal de negociação específica
+    if (state.openNegotiationId && negociacoes.length > 0) {
+      const negociacao = negociacoes.find(n => n.id === state.openNegotiationId);
+      if (negociacao) {
+        setActiveTab('negotiations');
+        // Scroll para a negociação (pode adicionar ref se necessário)
+      }
+    }
+
+    // Abrir modal de job específico
+    if (state.openJobId && availableJobs.length > 0) {
+      const job = availableJobs.find((j: any) => j.id === state.openJobId);
+      if (job) {
+        setSelectedJob(job);
+        setJobDetailsModalOpen(true);
+      }
+    }
+
+    // Limpar o state após processar
+    window.history.replaceState({}, document.title);
+  }, [location.state, negociacoes, availableJobs]);
 
   const fetchAvailableJobs = async () => {
     if (!montadorProfile) return;
@@ -530,7 +564,7 @@ const WorkerDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="available" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="available">Trabalhos Disponíveis</TabsTrigger>
             <TabsTrigger value="my-jobs">Meus Trabalhos</TabsTrigger>

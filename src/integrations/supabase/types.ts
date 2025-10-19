@@ -480,6 +480,7 @@ export type Database = {
           id: string
           lida: boolean | null
           mensagem: string
+          metadata: Json | null
           tipo: Database["public"]["Enums"]["notificacao_tipo"] | null
           user_id: string
         }
@@ -488,6 +489,7 @@ export type Database = {
           id?: string
           lida?: boolean | null
           mensagem: string
+          metadata?: Json | null
           tipo?: Database["public"]["Enums"]["notificacao_tipo"] | null
           user_id: string
         }
@@ -496,6 +498,7 @@ export type Database = {
           id?: string
           lida?: boolean | null
           mensagem?: string
+          metadata?: Json | null
           tipo?: Database["public"]["Enums"]["notificacao_tipo"] | null
           user_id?: string
         }

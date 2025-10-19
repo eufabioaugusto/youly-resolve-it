@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 export const createNotification = async (
   userId: string,
   tipo: 'sistema' | 'job' | 'pagamento' | 'saque' | 'negociacao',
-  mensagem: string
+  mensagem: string,
+  metadata?: { job_id?: string; negociacao_id?: string; ordem_servico_id?: string; [key: string]: any }
 ) => {
   try {
     const { error } = await supabase
@@ -11,7 +12,8 @@ export const createNotification = async (
       .insert({
         user_id: userId,
         tipo,
-        mensagem
+        mensagem,
+        metadata: metadata || {}
       });
 
     if (error) {
@@ -96,15 +98,20 @@ export const notifyNegociacaoUpdate = async (
         break;
     }
 
-    // Enviar notificações
+    // Enviar notificações com metadata
     const promises = [];
     
+    const metadata = {
+      negociacao_id: negociacaoData.id,
+      job_id: negociacaoData.job_id
+    };
+    
     if (mensagemMontador) {
-      promises.push(createNotification(montadorResult.data.user_id, 'negociacao', mensagemMontador));
+      promises.push(createNotification(montadorResult.data.user_id, 'negociacao', mensagemMontador, metadata));
     }
     
     if (mensagemCliente) {
-      promises.push(createNotification(clienteResult.data.user_id, 'negociacao', mensagemCliente));
+      promises.push(createNotification(clienteResult.data.user_id, 'negociacao', mensagemCliente, metadata));
     }
 
     await Promise.all(promises);

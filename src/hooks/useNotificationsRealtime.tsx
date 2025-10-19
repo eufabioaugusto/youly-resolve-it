@@ -10,6 +10,12 @@ export interface NotificacaoRealtime {
   mensagem: string;
   lida: boolean;
   created_at: string;
+  metadata?: {
+    job_id?: string;
+    negociacao_id?: string;
+    ordem_servico_id?: string;
+    [key: string]: any;
+  };
 }
 
 export const useNotificationsRealtime = () => {
@@ -35,7 +41,7 @@ export const useNotificationsRealtime = () => {
         return;
       }
 
-      setNotifications(data || []);
+      setNotifications((data || []) as NotificacaoRealtime[]);
       setUnreadCount(data?.filter(n => !n.lida).length || 0);
     };
 
