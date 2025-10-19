@@ -290,19 +290,15 @@ serve(async (req) => {
       notification_url: `${supabaseUrl}/functions/v1/mp-webhook`,
       statement_descriptor: 'YOULY',
       payment_methods: {
-        excluded_payment_types: [],
-        excluded_payment_methods: [],
         installments: 12,
         default_installments: 1
       },
-      marketplace_fee: 0,
       binary_mode: false
     };
 
     console.log('Criando preferência MP:', {
       valor: preferenceData.items[0].unit_price,
-      excluded_payment_types: preferenceData.payment_methods.excluded_payment_types,
-      excluded_payment_methods: preferenceData.payment_methods.excluded_payment_methods
+      payment_methods: preferenceData.payment_methods
     });
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
