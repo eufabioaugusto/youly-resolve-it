@@ -59,10 +59,20 @@ export default function AdminDashboard() {
         supabase.from('montadores').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('clientes').select('*', { count: 'exact', head: true }),
         supabase.from('pagamentos').select('*', { count: 'exact', head: true }),
-        supabase.from('pagamentos').select('valor_total')
+        supabase.from('pagamentos').select('valor_total').eq('status', 'pago')
       ]);
 
       const valorTotal = pagamentosData?.reduce((acc, p) => acc + (p.valor_total || 0), 0) || 0;
+      
+      console.log('📊 [AdminDashboard] Stats carregados:', {
+        totalJobs,
+        activeJobs,
+        totalMontadores,
+        activeMontadores,
+        totalClientes,
+        totalPagamentos,
+        valorTotal
+      });
 
       setStats({
         totalJobs: totalJobs || 0,
