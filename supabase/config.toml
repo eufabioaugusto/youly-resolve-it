@@ -17,7 +17,7 @@ double_confirm_changes = true
 enable_confirmations = true
 
 # Configure webhook to intercept auth emails
-[auth.hook]
-custom_access_token_hook_uri = ""
-# This will be set via Supabase dashboard to point to our send-email function
-send_email_hook_uri = ""
+[auth.hook.send_email]
+enabled = true
+uri = "https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/send-email"
+secrets = "SEND_EMAIL_HOOK_SECRET"
