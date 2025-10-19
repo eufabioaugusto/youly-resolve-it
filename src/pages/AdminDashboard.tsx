@@ -9,6 +9,7 @@ import { AdminCarteiraGestao } from "@/components/AdminCarteiraGestao";
 import { AdminJobManagement } from "@/components/AdminJobManagement";
 import { AdminFinanceiro } from "@/components/AdminFinanceiro";
 import { AdminRankingMontadores } from "@/components/AdminRankingMontadores";
+import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { 
   Users, 
   DollarSign, 
@@ -19,7 +20,8 @@ import {
   Activity,
   Wrench,
   Clock,
-  Award
+  Award,
+  Shield
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -192,13 +194,25 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="users">
+              <Shield className="w-4 h-4 mr-2" />
+              Usuários
+            </TabsTrigger>
             <TabsTrigger value="jobs">Gestão de Jobs</TabsTrigger>
             <TabsTrigger value="ranking">Ranking</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             <TabsTrigger value="carteiras">Carteiras</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="users">
+            <AdminUserManagement />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <AdminUserManagement />
+          </TabsContent>
 
           <TabsContent value="jobs">
             <AdminJobManagement />
@@ -209,11 +223,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="financeiro">
-            <AdminFinanceiro />
-          </TabsContent>
-
-          <TabsContent value="carteiras">
-            <AdminCarteiraGestao />
+            <div className="space-y-6">
+              <AdminFinanceiro />
+              <AdminCarteiraGestao />
+            </div>
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">

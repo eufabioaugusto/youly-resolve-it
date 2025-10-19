@@ -38,12 +38,13 @@ export default function AdminRegister() {
     }
   }, [user, profile, navigate]);
 
-  // Check if admin already exists
+  // 🔐 SEGURANÇA: Verificar se admin existe usando user_roles
   useEffect(() => {
     const checkAdminExists = async () => {
       try {
+        // Verificar na tabela user_roles (mais seguro)
         const { data, error } = await supabase
-          .from('profiles')
+          .from('user_roles')
           .select('id')
           .eq('role', 'admin')
           .limit(1);
@@ -52,7 +53,7 @@ export default function AdminRegister() {
         setAdminExists(data && data.length > 0);
       } catch (error) {
         console.error('Error checking admin existence:', error);
-        setAdminExists(true); // Assume admin exists to be safe
+        setAdminExists(true); // Assume admin exists para segurança
       }
     };
 
@@ -74,24 +75,27 @@ export default function AdminRegister() {
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password, {
+      // 1. Criar usuário via auth
+      const { error: signUpError } = await signUp(email, password, {
         nome,
         role: 'admin'
       });
 
-      if (error) {
+      if (signUpError) {
         toast({
           variant: "destructive",
           title: "Erro no cadastro",
-          description: error.message,
+          description: signUpError.message,
         });
-      } else {
-        toast({
-          title: "Administrador criado!",
-          description: "Verifique seu email para confirmar a conta.",
-        });
-        navigate('/login');
+        return;
       }
+
+      // 2. ✅ Sucesso - O trigger do banco criará o profile e podemos confiar que o user foi criado
+      toast({
+        title: "Administrador criado!",
+        description: "Verifique seu email para confirmar a conta. Após confirmar, o sistema atribuirá permissões de admin automaticamente.",
+      });
+      navigate('/login');
     } catch (error: any) {
       toast({
         variant: "destructive",
