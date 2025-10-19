@@ -90,7 +90,7 @@ export function CarteiraWidget() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Saldos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-green-50 rounded-lg border">
             <p className="text-sm text-muted-foreground">Disponível</p>
             <p className="text-lg font-bold text-green-600">
@@ -102,6 +102,13 @@ export function CarteiraWidget() {
             <p className="text-sm text-muted-foreground">Em Processamento</p>
             <p className="text-lg font-bold text-yellow-600">
               {formatCurrency(carteira.saldo_em_processamento)}
+            </p>
+          </div>
+
+          <div className="text-center p-3 bg-orange-50 rounded-lg border">
+            <p className="text-sm text-muted-foreground">Saque Pendente</p>
+            <p className="text-lg font-bold text-orange-600">
+              {formatCurrency(carteira.saldo_em_saque || 0)}
             </p>
           </div>
           

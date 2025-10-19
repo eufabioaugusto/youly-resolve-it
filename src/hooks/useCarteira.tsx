@@ -8,13 +8,14 @@ export interface CarteiraInfo {
   saldo_disponivel: number;
   saldo_bloqueado: number;
   saldo_em_processamento: number;
+  saldo_em_saque: number;
   total_sacado: number;
   data_liberacao_admin?: string;
 }
 
 export interface TransacaoCarteira {
   id: string;
-  tipo: 'entrada' | 'saida' | 'bloqueio' | 'liberacao';
+  tipo: 'entrada' | 'saida' | 'bloqueio' | 'liberacao' | 'saque_solicitado' | 'saque_aprovado' | 'saque_recusado';
   valor: number;
   descricao: string;
   created_at: string;

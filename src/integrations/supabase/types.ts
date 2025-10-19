@@ -142,6 +142,7 @@ export type Database = {
           saldo_bloqueado: number | null
           saldo_disponivel: number | null
           saldo_em_processamento: number | null
+          saldo_em_saque: number | null
           total_sacado: number | null
           updated_at: string
         }
@@ -153,6 +154,7 @@ export type Database = {
           saldo_bloqueado?: number | null
           saldo_disponivel?: number | null
           saldo_em_processamento?: number | null
+          saldo_em_saque?: number | null
           total_sacado?: number | null
           updated_at?: string
         }
@@ -164,6 +166,7 @@ export type Database = {
           saldo_bloqueado?: number | null
           saldo_disponivel?: number | null
           saldo_em_processamento?: number | null
+          saldo_em_saque?: number | null
           total_sacado?: number | null
           updated_at?: string
         }
@@ -959,6 +962,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aprovar_saque: {
+        Args: { p_admin_user_id: string; p_saque_id: string }
+        Returns: boolean
+      }
       atualizar_estatisticas_cliente: {
         Args: { p_cliente_id: string }
         Returns: boolean
@@ -1013,6 +1020,10 @@ export type Database = {
       }
       promote_to_admin: {
         Args: { target_user_id: string }
+        Returns: boolean
+      }
+      recusar_saque: {
+        Args: { p_admin_user_id: string; p_saque_id: string }
         Returns: boolean
       }
     }

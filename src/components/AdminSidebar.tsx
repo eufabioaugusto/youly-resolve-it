@@ -7,6 +7,7 @@ import {
   DollarSign,
   Wallet,
   Wrench,
+  Banknote,
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const menuItems = [
   { title: "Ranking", icon: Award, section: "ranking" },
   { title: "Financeiro", icon: DollarSign, section: "financeiro" },
   { title: "Carteiras", icon: Wallet, section: "carteiras" },
+  { title: "Saques", icon: Banknote, section: "saques" },
 ];
 
 interface AdminSidebarProps {
