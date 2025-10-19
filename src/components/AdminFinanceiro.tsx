@@ -22,12 +22,12 @@ export function AdminFinanceiro() {
     loadData();
   }, [filtroPeriodo]);
 
-  // Realtime para pagamentos
+  // Realtime para pagamentos e carteira
   useEffect(() => {
-    console.log('🔔 Configurando realtime para pagamentos no Admin');
+    console.log('🔔 Configurando realtime para pagamentos e carteira no Admin');
     
     const channel = supabase
-      .channel('admin-pagamentos-realtime')
+      .channel('admin-financeiro-realtime')
       .on(
         'postgres_changes',
         {
@@ -37,6 +37,30 @@ export function AdminFinanceiro() {
         },
         (payload) => {
           console.log('🔥 Pagamento atualizado no Admin:', payload);
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'carteira'
+        },
+        (payload) => {
+          console.log('💰 Carteira atualizada no Admin:', payload);
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'montadores'
+        },
+        (payload) => {
+          console.log('👷 Montador atualizado no Admin:', payload);
           loadData();
         }
       )
@@ -95,6 +119,7 @@ export function AdminFinanceiro() {
       setPagamentos(pagamentosCompletos || []);
 
       // Buscar montadores com carteiras
+      console.log('🔍 [AdminFinanceiro] Buscando montadores e carteiras...');
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
         .select(`
@@ -102,6 +127,9 @@ export function AdminFinanceiro() {
           carteira (*)
         `)
         .order('total_valor_movimentado', { ascending: false });
+      
+      console.log('📊 [AdminFinanceiro] Montadores carregados:', montadoresData?.length);
+      console.log('💰 [AdminFinanceiro] Exemplo carteira:', montadoresData?.[0]?.carteira);
       
       // Buscar profiles dos montadores separadamente
       let montadoresComProfiles = montadoresData;
@@ -181,7 +209,9 @@ export function AdminFinanceiro() {
     }, 0);
     const totalProcessamento = montadores.reduce((acc, m) => {
       const carteira = m.carteira?.[0];
-      return acc + (carteira?.saldo_em_processamento || 0);
+      const saldoProcessamento = Number(carteira?.saldo_em_processamento || 0);
+      console.log(`💳 Montador ${m.profiles?.nome}: Em Proc = R$ ${saldoProcessamento.toFixed(2)}`);
+      return acc + saldoProcessamento;
     }, 0);
 
     console.log('💰 [AdminFinanceiro] Resumo calculado:', {
@@ -191,7 +221,9 @@ export function AdminFinanceiro() {
       totalDisponivel,
       totalProcessamento,
       totalPagamentos: pagamentos.length,
-      pagamentosPagos: pagamentosPagos.length
+      pagamentosPagos: pagamentosPagos.length,
+      qtdMontadores: montadores.length,
+      montadoresComCarteira: montadores.filter(m => m.carteira?.[0]).length
     });
 
     return { 
