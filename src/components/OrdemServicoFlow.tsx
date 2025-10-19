@@ -193,11 +193,17 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   };
 
   const handleSelectFoto = async (tipo: string, index: number, file: File | null) => {
-    if (!file) return;
+    console.log('🎯 handleSelectFoto chamado:', { tipo, index, file: file?.name });
+    
+    if (!file) {
+      console.log('⚠️ Nenhum arquivo selecionado');
+      return;
+    }
 
     // Criar preview
     const reader = new FileReader();
     reader.onloadend = () => {
+      console.log('✅ Preview criado para:', { tipo, index });
       setFotosPreview(prev => {
         const novosPreviews = [...prev[tipo]];
         novosPreviews[index] = reader.result as string;
@@ -215,15 +221,23 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
 
     // Upload automático
     setUploadingFoto({ tipo, index });
+    console.log('⏳ Iniciando upload...', { tipo, index });
     
     try {
       const tipoComIndex = index === 0 ? tipo : `${tipo}_${index + 1}`;
+      console.log('📤 Tipo do upload:', tipoComIndex);
+      
       await uploadFoto(ordemServico.id, tipoComIndex, file);
       
-      setFotosEnviadas(prev => ({ ...prev, [tipo]: prev[tipo] + 1 }));
+      setFotosEnviadas(prev => {
+        const novo = { ...prev, [tipo]: prev[tipo] + 1 };
+        console.log('✅ Fotos enviadas atualizado:', novo);
+        return novo;
+      });
+      
       toast.success(`Foto ${index + 1} enviada com sucesso!`);
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error('❌ Erro ao fazer upload:', error);
       toast.error('Erro ao enviar foto');
       
       // Limpar preview em caso de erro
@@ -234,6 +248,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
       });
     } finally {
       setUploadingFoto(null);
+      console.log('✅ Upload finalizado');
     }
   };
 
@@ -492,9 +507,19 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                         <input
                           type="file"
                           accept="image/*"
+                          capture="environment"
                           id={`movel-caixa-${index}`}
+                          key={`movel-caixa-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
                           className="hidden"
-                          onChange={(e) => handleSelectFoto('movel_caixa', index, e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            console.log('📸 Input onChange disparado:', { index, files: e.target.files });
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              handleSelectFoto('movel_caixa', index, file);
+                            }
+                            // Resetar o input
+                            e.target.value = '';
+                          }}
                           disabled={isUploading}
                         />
                         <label
@@ -559,9 +584,18 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                         <input
                           type="file"
                           accept="image/*"
+                          capture="environment"
                           id={`movel-montado-${index}`}
+                          key={`movel-montado-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
                           className="hidden"
-                          onChange={(e) => handleSelectFoto('movel_montado', index, e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            console.log('📸 Input onChange disparado (móvel montado):', { index, files: e.target.files });
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              handleSelectFoto('movel_montado', index, file);
+                            }
+                            e.target.value = '';
+                          }}
                           disabled={isUploading}
                         />
                         <label
@@ -626,9 +660,18 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                         <input
                           type="file"
                           accept="image/*"
+                          capture="environment"
                           id={`portas-abertas-${index}`}
+                          key={`portas-abertas-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
                           className="hidden"
-                          onChange={(e) => handleSelectFoto('portas_abertas', index, e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            console.log('📸 Input onChange disparado (portas abertas):', { index, files: e.target.files });
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              handleSelectFoto('portas_abertas', index, file);
+                            }
+                            e.target.value = '';
+                          }}
                           disabled={isUploading}
                         />
                         <label
@@ -770,9 +813,18 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                           <input
                             type="file"
                             accept="image/*"
+                            capture="environment"
                             id={`assistencia-${index}`}
+                            key={`assistencia-input-${index}-${hasPreview ? 'filled' : 'empty'}`}
                             className="hidden"
-                            onChange={(e) => handleSelectFoto('assistencia', index, e.target.files?.[0] || null)}
+                            onChange={(e) => {
+                              console.log('📸 Input onChange disparado (assistência):', { index, files: e.target.files });
+                              const file = e.target.files?.[0] || null;
+                              if (file) {
+                                handleSelectFoto('assistencia', index, file);
+                              }
+                              e.target.value = '';
+                            }}
                             disabled={isUploading}
                           />
                           <label
