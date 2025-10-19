@@ -62,7 +62,7 @@ const ClientDashboard = () => {
         .from('jobs')
         .select(`
           *,
-          ordem_servico(
+          ordem_servico!jobs_ordem_servico_id_fkey(
             id,
             codigo_validacao,
             status,
