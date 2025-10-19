@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, Clock, DollarSign, User } from "lucide-react";
+import { MapPin, Calendar, Clock, DollarSign, User, CreditCard, CheckCircle2, Shield } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface JobDetailsModalProps {
   job: any;
@@ -29,7 +30,9 @@ const JobDetailsModal = ({ job, open, onOpenChange }: JobDetailsModalProps) => {
       case "aberto":
         return <Badge variant="outline">Aberto</Badge>;
       case "aguardando_pagamento":
-        return <Badge variant="outline">Aguardando pagamento</Badge>;
+        return <Badge variant="outline" className="bg-warning/10">Aguardando pagamento</Badge>;
+      case "pago":
+        return <Badge className="bg-success text-success-foreground">Pago</Badge>;
       case "em_andamento":
         return <Badge className="bg-warning text-warning-foreground">Em andamento</Badge>;
       case "concluido":
@@ -118,6 +121,68 @@ const JobDetailsModal = ({ job, open, onOpenChange }: JobDetailsModalProps) => {
                   <p className="text-sm text-muted-foreground">
                     Avaliação: {job.montador.avaliacao_media?.toFixed(1) || '0.0'} ⭐
                   </p>
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Informações de Pagamento e Ordem de Serviço */}
+          {(job.status === 'pago' || job.ordem_servico) && (
+            <>
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Status do Serviço
+                </h4>
+                <div className="space-y-3">
+                  {job.status === 'pago' && (
+                    <Alert className="bg-success/10 border-success">
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <AlertDescription>
+                        ✅ Pagamento confirmado! O montador foi notificado e o serviço será iniciado em breve.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {job.ordem_servico && (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Ordem de Serviço:</span>
+                          <Badge variant="outline">
+                            {job.ordem_servico.status === 'concluida' ? 'Concluída' :
+                             job.ordem_servico.status === 'iniciada' ? 'Em execução' :
+                             job.ordem_servico.status === 'a_caminho' ? 'Montador a caminho' :
+                             'Agendada'}
+                          </Badge>
+                        </div>
+                        
+                        {job.ordem_servico.data_hora_agendamento && (
+                          <div className="text-sm text-muted-foreground">
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            Agendado: {new Date(job.ordem_servico.data_hora_agendamento).toLocaleDateString('pt-BR')}
+                            {job.ordem_servico.periodo_agendamento && ` - ${job.ordem_servico.periodo_agendamento}`}
+                          </div>
+                        )}
+                        
+                        {job.ordem_servico.codigo_validacao && (
+                          <Alert className="mt-2">
+                            <Shield className="h-4 w-4" />
+                            <AlertDescription className="font-mono font-semibold">
+                              Código: {job.ordem_servico.codigo_validacao}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
+                        {job.ordem_servico.garantia_ativa && (
+                          <div className="text-sm text-success font-medium">
+                            🛡️ Garantia ativa até {new Date(job.ordem_servico.data_expiracao_garantia).toLocaleDateString('pt-BR')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <Separator />

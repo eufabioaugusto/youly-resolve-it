@@ -4,12 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowLeft } from 'lucide-react';
 import { usePagamentos } from '@/hooks/usePagamentos';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { formatCurrency } from '@/lib/utils';
 
 export default function PagamentoSucesso() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { buscarPagamento } = usePagamentos();
+  const { user } = useAuth();
+  const { profile } = useProfile();
   const [pagamento, setPagamento] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +101,13 @@ export default function PagamentoSucesso() {
                 Voltar
               </Button>
               <Button 
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                  // Redirecionar baseado no role do usuário
+                  const dashboardRoute = profile?.role === 'client' ? '/cliente' : 
+                                       profile?.role === 'montador' ? '/montador' : 
+                                       '/';
+                  navigate(dashboardRoute);
+                }}
                 className="flex-1"
               >
                 Ir para Dashboard

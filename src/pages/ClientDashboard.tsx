@@ -53,6 +53,52 @@ const ClientDashboard = () => {
     }
   }, [clienteProfile]);
 
+  // 🔥 REALTIME: Atualizar quando pagamentos/jobs mudarem
+  useEffect(() => {
+    if (!clienteProfile?.id) return;
+
+    console.log('🔔 Configurando realtime para cliente');
+
+    const jobsChannel = supabase
+      .channel('jobs-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'jobs',
+          filter: `cliente_id=eq.${clienteProfile.id}`
+        },
+        (payload) => {
+          console.log('🔥 Job atualizado:', payload);
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    const osChannel = supabase
+      .channel('os-realtime-client')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordem_servico',
+          filter: `cliente_id=eq.${clienteProfile.id}`
+        },
+        (payload) => {
+          console.log('🔥 OS atualizada:', payload);
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(jobsChannel);
+      supabase.removeChannel(osChannel);
+    };
+  }, [clienteProfile?.id]);
+
   const fetchJobs = async () => {
     if (!clienteProfile) return;
     
@@ -443,15 +489,9 @@ const ClientDashboard = () => {
                       >
                         Ver detalhes
                       </Button>
-                      {job.status === 'em_negociacao' || job.status === 'aguardando_pagamento' ? (
-                        <Button 
-                          onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
-                          className="bg-gradient-primary hover:shadow-glow"
-                          size="sm"
-                        >
-                          Ver Negociação
-                        </Button>
-                      ) : job.status === 'aberto' ? (
+                      
+                      {/* Jobs em aberto */}
+                      {job.status === 'aberto' && (
                         <>
                           <Button 
                             onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
@@ -468,7 +508,20 @@ const ClientDashboard = () => {
                             Ver Candidatos ({job.candidaturas_count || 0})
                           </Button>
                         </>
-                      ) : null}
+                      )}
+                      
+                      {/* Jobs em negociação */}
+                      {(job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') && (
+                        <Button 
+                          onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
+                          className="bg-gradient-primary hover:shadow-glow"
+                          size="sm"
+                        >
+                          Ver Negociação
+                        </Button>
+                      )}
+                      
+                      {/* Botão de pagamento */}
                       {job.status === "aguardando_pagamento" && (
                         <Button 
                           size="sm" 
@@ -481,6 +534,21 @@ const ClientDashboard = () => {
                           Pagar agora
                         </Button>
                       )}
+                      
+                      {/* Jobs pagos - mostrar status da OS */}
+                      {(job.status === "pago" || job.ordem_servico) && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success" />
+                          <span className="text-success font-medium">
+                            {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
+                             job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
+                             job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
+                             'Pagamento confirmado - Aguardando início'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Jobs concluídos */}
                       {job.status === "concluido" && (
                         <Button variant="outline" size="sm">Avaliar</Button>
                       )}

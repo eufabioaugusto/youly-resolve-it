@@ -72,29 +72,26 @@ const WorkerDashboard = () => {
     }
   }, [montadorProfile]);
 
-  // 🔥 REALTIME: Atualizar negociações automaticamente
+  // 🔥 REALTIME: Atualizar negociações e OS automaticamente
   useEffect(() => {
     if (!montadorProfile?.id) return;
 
-    console.log('🔔 Configurando realtime para negociações do montador:', montadorProfile.id);
+    console.log('🔔 Configurando realtime para montador:', montadorProfile.id);
 
-    const channel = supabase
+    const negociacoesChannel = supabase
       .channel('negociacoes-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'negociacoes',
           filter: `montador_id=eq.${montadorProfile.id}`
         },
         (payload) => {
-          console.log('🔥 Negociação atualizada em tempo real:', payload);
-          
-          // Recarregar dados automaticamente
+          console.log('🔥 Negociação atualizada:', payload);
           fetchAvailableJobs();
           fetchMyJobs();
-          
           toast({
             title: "Nova atualização!",
             description: "Suas negociações foram atualizadas.",
@@ -103,9 +100,31 @@ const WorkerDashboard = () => {
       )
       .subscribe();
 
+    const osChannel = supabase
+      .channel('os-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordem_servico',
+          filter: `montador_id=eq.${montadorProfile.id}`
+        },
+        (payload) => {
+          console.log('🔥 Ordem de Serviço atualizada:', payload);
+          fetchOrdensServico();
+          toast({
+            title: "Nova Ordem de Serviço!",
+            description: "Você tem uma nova OS disponível.",
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
-      console.log('🔕 Desconectando realtime de negociações');
-      supabase.removeChannel(channel);
+      console.log('🔕 Desconectando realtime');
+      supabase.removeChannel(negociacoesChannel);
+      supabase.removeChannel(osChannel);
     };
   }, [montadorProfile?.id]);
 

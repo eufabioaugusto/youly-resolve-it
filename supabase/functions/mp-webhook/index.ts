@@ -45,16 +45,28 @@ async function validateWebhookSignature(
     const ts = tsPart.split('=')[1];
     const receivedHash = hashPart.split('=')[1];
 
-    // Validate timestamp (prevent replay attacks - 5 minute window)
+    // Validate timestamp (prevent replay attacks - 24 hour window for MP delays)
     const timestamp = parseInt(ts);
     const now = Date.now() / 1000;
-    if (Math.abs(now - timestamp) > 300) {
-      console.error('Webhook timestamp too old or too new', {
+    const timeDiff = Math.abs(now - timestamp);
+    
+    // MP pode demorar para enviar webhooks, aceitar até 24h
+    if (timeDiff > 86400) {
+      console.error('Webhook timestamp too old (>24h)', {
         timestamp,
         now,
-        diff: Math.abs(now - timestamp)
+        diff: timeDiff
       });
       return false;
+    }
+    
+    // Log warning if older than 5 minutes but still accept
+    if (timeDiff > 300) {
+      console.warn('⚠️ Webhook timestamp older than 5 minutes but accepted', {
+        timestamp,
+        now,
+        diff: timeDiff
+      });
     }
 
     // Create validation string according to Mercado Pago spec
@@ -106,15 +118,34 @@ serve(async (req) => {
     
     console.log('Webhook recebido:', JSON.stringify(body, null, 2));
 
-    // Verificar se é notificação de pagamento
-    if (body.type !== 'payment') {
-      console.log('Tipo de notificação ignorado:', body.type);
+    // 🎯 SUPORTE PARA AMBOS OS FORMATOS DO MP
+    let paymentId: string | null = null;
+    
+    // Formato novo: { type: "payment", data: { id: "123" } }
+    if (body.type === 'payment' && body.data?.id) {
+      paymentId = body.data.id;
+      console.log('📦 Formato novo detectado - payment ID:', paymentId);
+    }
+    // Formato antigo: { topic: "payment", resource: "123" }
+    else if (body.topic === 'payment' && body.resource) {
+      // Extrair ID da URL do resource
+      const resourceParts = body.resource.split('/');
+      paymentId = resourceParts[resourceParts.length - 1];
+      console.log('📦 Formato antigo detectado - payment ID:', paymentId);
+    }
+    // Formato merchant_order - ignorar
+    else if (body.topic === 'merchant_order') {
+      console.log('⏭️ Merchant order ignorado');
+      return new Response('OK', { status: 200 });
+    }
+    // Tipo desconhecido
+    else {
+      console.log('❓ Tipo de notificação desconhecido:', body.type || body.topic);
       return new Response('OK', { status: 200 });
     }
 
-    const paymentId = body.data?.id;
     if (!paymentId) {
-      console.log('Payment ID não encontrado no webhook');
+      console.error('❌ Payment ID não encontrado no webhook');
       return new Response('Payment ID not found', { status: 400 });
     }
 
