@@ -417,27 +417,44 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                   </p>
                 </div>
                 
-                {[0, 1, 2].map((index) => (
-                  <div key={index} className="space-y-2">
-                    <Label className="text-sm">
-                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
+                <div className="grid grid-cols-3 gap-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="relative">
+                      <input
                         type="file"
                         accept="image/*"
+                        id={`movel-caixa-${index}`}
+                        className="hidden"
                         onChange={(e) => handleSelectFoto('movel_caixa', index, e.target.files?.[0] || null)}
-                        className="flex-1"
                       />
+                      <label
+                        htmlFor={`movel-caixa-${index}`}
+                        className={`
+                          aspect-square flex flex-col items-center justify-center gap-2 
+                          border-2 border-dashed rounded-lg cursor-pointer
+                          transition-all hover:border-primary hover:bg-accent
+                          ${fotosUpload.movel_caixa[index] ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+                        `}
+                      >
+                        <Camera className="w-8 h-8 text-muted-foreground" />
+                        <span className="text-xs font-medium text-center px-2">
+                          Foto {index + 1}
+                          {index === 0 && <span className="block text-destructive">Obrigatória</span>}
+                        </span>
+                      </label>
                       {fotosUpload.movel_caixa[index] && (
-                        <Button onClick={() => handleUploadFoto('movel_caixa', index)} size="sm">
-                          <Upload className="w-4 h-4 mr-2" />
+                        <Button 
+                          onClick={() => handleUploadFoto('movel_caixa', index)} 
+                          size="sm"
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-6 text-xs"
+                        >
+                          <Upload className="w-3 h-3 mr-1" />
                           Enviar
                         </Button>
                       )}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               <Separator />
@@ -451,27 +468,44 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                   </p>
                 </div>
                 
-                {[0, 1, 2].map((index) => (
-                  <div key={index} className="space-y-2">
-                    <Label className="text-sm">
-                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
+                <div className="grid grid-cols-3 gap-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="relative">
+                      <input
                         type="file"
                         accept="image/*"
+                        id={`movel-montado-${index}`}
+                        className="hidden"
                         onChange={(e) => handleSelectFoto('movel_montado', index, e.target.files?.[0] || null)}
-                        className="flex-1"
                       />
+                      <label
+                        htmlFor={`movel-montado-${index}`}
+                        className={`
+                          aspect-square flex flex-col items-center justify-center gap-2 
+                          border-2 border-dashed rounded-lg cursor-pointer
+                          transition-all hover:border-primary hover:bg-accent
+                          ${fotosUpload.movel_montado[index] ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+                        `}
+                      >
+                        <Camera className="w-8 h-8 text-muted-foreground" />
+                        <span className="text-xs font-medium text-center px-2">
+                          Foto {index + 1}
+                          {index === 0 && <span className="block text-destructive">Obrigatória</span>}
+                        </span>
+                      </label>
                       {fotosUpload.movel_montado[index] && (
-                        <Button onClick={() => handleUploadFoto('movel_montado', index)} size="sm">
-                          <Upload className="w-4 h-4 mr-2" />
+                        <Button 
+                          onClick={() => handleUploadFoto('movel_montado', index)} 
+                          size="sm"
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-6 text-xs"
+                        >
+                          <Upload className="w-3 h-3 mr-1" />
                           Enviar
                         </Button>
                       )}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               <Separator />
@@ -481,31 +515,48 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 <div>
                   <Label className="text-base font-semibold">3. Portas abertas (se aplicável)</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {fotosEnviadas.portas_abertas}/3 fotos enviadas (mínimo 1 se for guarda-roupa/armário)
+                    {fotosEnviadas.portas_abertas}/3 fotos enviadas
                   </p>
                 </div>
                 
-                {[0, 1, 2].map((index) => (
-                  <div key={index} className="space-y-2">
-                    <Label className="text-sm">
-                      Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
+                <div className="grid grid-cols-3 gap-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="relative">
+                      <input
                         type="file"
                         accept="image/*"
+                        id={`portas-abertas-${index}`}
+                        className="hidden"
                         onChange={(e) => handleSelectFoto('portas_abertas', index, e.target.files?.[0] || null)}
-                        className="flex-1"
                       />
+                      <label
+                        htmlFor={`portas-abertas-${index}`}
+                        className={`
+                          aspect-square flex flex-col items-center justify-center gap-2 
+                          border-2 border-dashed rounded-lg cursor-pointer
+                          transition-all hover:border-primary hover:bg-accent
+                          ${fotosUpload.portas_abertas[index] ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+                        `}
+                      >
+                        <Camera className="w-8 h-8 text-muted-foreground" />
+                        <span className="text-xs font-medium text-center px-2">
+                          Foto {index + 1}
+                          {index === 0 && <span className="block text-destructive">Obrigatória</span>}
+                        </span>
+                      </label>
                       {fotosUpload.portas_abertas[index] && (
-                        <Button onClick={() => handleUploadFoto('portas_abertas', index)} size="sm">
-                          <Upload className="w-4 h-4 mr-2" />
+                        <Button 
+                          onClick={() => handleUploadFoto('portas_abertas', index)} 
+                          size="sm"
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-6 text-xs"
+                        >
+                          <Upload className="w-3 h-3 mr-1" />
                           Enviar
                         </Button>
                       )}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -596,27 +647,44 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                     </p>
                   </div>
                   
-                  {[0, 1, 2].map((index) => (
-                    <div key={index} className="space-y-2">
-                      <Label className="text-sm">
-                        Foto {index + 1} {index === 0 ? '(obrigatória)' : '(opcional)'}
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
+                  <div className="grid grid-cols-3 gap-3">
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="relative">
+                        <input
                           type="file"
                           accept="image/*"
+                          id={`assistencia-${index}`}
+                          className="hidden"
                           onChange={(e) => handleSelectFoto('assistencia', index, e.target.files?.[0] || null)}
-                          className="flex-1"
                         />
+                        <label
+                          htmlFor={`assistencia-${index}`}
+                          className={`
+                            aspect-square flex flex-col items-center justify-center gap-2 
+                            border-2 border-dashed rounded-lg cursor-pointer
+                            transition-all hover:border-primary hover:bg-accent
+                            ${fotosUpload.assistencia[index] ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+                          `}
+                        >
+                          <Camera className="w-8 h-8 text-muted-foreground" />
+                          <span className="text-xs font-medium text-center px-2">
+                            Foto {index + 1}
+                            {index === 0 && <span className="block text-destructive">Obrigatória</span>}
+                          </span>
+                        </label>
                         {fotosUpload.assistencia[index] && (
-                          <Button onClick={() => handleUploadFoto('assistencia', index)} size="sm">
-                            <Upload className="w-4 h-4 mr-2" />
+                          <Button 
+                            onClick={() => handleUploadFoto('assistencia', index)} 
+                            size="sm"
+                            className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-6 text-xs"
+                          >
+                            <Upload className="w-3 h-3 mr-1" />
                             Enviar
                           </Button>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 
