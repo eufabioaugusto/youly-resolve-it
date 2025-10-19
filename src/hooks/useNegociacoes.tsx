@@ -301,14 +301,21 @@ export const useNegociacoes = () => {
           .from('montadores')
           .select('*')
           .eq('id', negociacaoData.montador_id)
-          .single()
+          .maybeSingle()
           .then(async (result) => {
+            if (result.error) {
+              console.error('Erro ao buscar montador:', result.error);
+            }
             if (result.data) {
               const profileResult = await supabase
                 .from('profiles')
                 .select('nome')
                 .eq('user_id', result.data.user_id)
-                .single();
+                .maybeSingle();
+              
+              if (profileResult.error) {
+                console.error('Erro ao buscar profile do montador:', profileResult.error);
+              }
               
               return {
                 ...result,
@@ -326,14 +333,21 @@ export const useNegociacoes = () => {
           .from('clientes')
           .select('*')
           .eq('id', negociacaoData.cliente_id)
-          .single()
+          .maybeSingle()
           .then(async (result) => {
+            if (result.error) {
+              console.error('Erro ao buscar cliente:', result.error);
+            }
             if (result.data) {
               const profileResult = await supabase
                 .from('profiles')
                 .select('nome')
                 .eq('user_id', result.data.user_id)
-                .single();
+                .maybeSingle();
+              
+              if (profileResult.error) {
+                console.error('Erro ao buscar profile do cliente:', profileResult.error);
+              }
               
               return {
                 ...result,
