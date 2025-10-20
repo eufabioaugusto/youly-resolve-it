@@ -54,10 +54,10 @@ export function TimeoutMonitor({ dataExpiracao, onExpired }: TimeoutMonitorProps
 
   if (expirado) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Tempo esgotado! Este pedido será redirecionado ao administrador.
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-900">
+          Tempo finalizado! Sua solicitação está sendo direcionada ao nosso time de montadores.
         </AlertDescription>
       </Alert>
     );
@@ -96,10 +96,10 @@ export function TimeoutMonitor({ dataExpiracao, onExpired }: TimeoutMonitorProps
       </div>
       
       {critico && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Atenção! Você tem menos de {minutos} minutos para responder.
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-900">
+            Faltam menos de {minutos} minutos para sua solicitação ser direcionada ao nosso time de montadores.
           </AlertDescription>
         </Alert>
       )}
