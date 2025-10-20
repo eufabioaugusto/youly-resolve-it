@@ -58,6 +58,8 @@ export function useProfile() {
   const fetchProfile = async () => {
     if (!user) return;
 
+    console.log('👤 [useProfile] Iniciando busca de perfil para user:', user.id);
+
     try {
       // Buscar perfil básico
       const { data: profileData, error: profileError } = await supabase
@@ -66,32 +68,40 @@ export function useProfile() {
         .eq('user_id', user.id)
         .single();
 
+      console.log('✅ [useProfile] Profile data:', profileData);
+      console.log('❌ [useProfile] Profile error:', profileError);
+
       if (profileError) throw profileError;
       
       setProfile(profileData);
 
       // Buscar perfil específico baseado no role
       if (profileData.role === 'montador') {
+        console.log('🔧 [useProfile] Buscando perfil de montador...');
         const { data: montadorData } = await supabase
           .from('montadores')
           .select('*')
           .eq('user_id', user.id)
           .single();
         
+        console.log('✅ [useProfile] Montador data:', montadorData);
         setMontadorProfile(montadorData);
       } else if (profileData.role === 'client') {
+        console.log('👥 [useProfile] Buscando perfil de cliente...');
         const { data: clienteData } = await supabase
           .from('clientes')
           .select('*')
           .eq('user_id', user.id)
           .single();
         
+        console.log('✅ [useProfile] Cliente data:', clienteData);
         setClienteProfile(clienteData);
       }
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
+      console.error('❌ [useProfile] Erro ao buscar perfil:', error);
     } finally {
       setLoading(false);
+      console.log('🏁 [useProfile] Busca de perfil finalizada');
     }
   };
 

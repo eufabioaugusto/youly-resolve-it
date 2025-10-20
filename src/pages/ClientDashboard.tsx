@@ -37,6 +37,7 @@ const ClientDashboard = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -101,11 +102,21 @@ const ClientDashboard = () => {
   }, [clienteProfile]);
 
   const fetchJobs = async () => {
-    if (!clienteProfile) return;
+    console.log('🔍 [fetchJobs] Iniciando busca de jobs...');
+    console.log('🔍 [fetchJobs] clienteProfile:', clienteProfile);
     
-    setLoading(true);
+    if (!clienteProfile) {
+      console.warn('⚠️ [fetchJobs] clienteProfile não disponível ainda');
+      return;
+    }
+
     try {
-      const { data: jobsData, error } = await supabase
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 [fetchJobs] Buscando jobs para cliente_id:', clienteProfile.id);
+      
+      const { data: jobsData, error: queryError } = await supabase
         .from('jobs')
         .select(`
           *,
@@ -137,15 +148,22 @@ const ClientDashboard = () => {
         `)
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false });
+
+      console.log('✅ [fetchJobs] Query executada');
+      console.log('✅ [fetchJobs] Dados retornados:', jobsData);
+      console.log('❌ [fetchJobs] Erro da query:', queryError);
+
+      if (queryError) throw queryError;
         
-      // Buscar timeouts para jobs em aberto
+      // IMPORTANTE: Buscar timeouts APENAS para informação visual
+      // TODOS os jobs devem aparecer no dashboard do cliente
       const { data: timeoutsData } = await supabase
         .from('timeout_montador')
         .select('*')
         .in('job_id', jobsData?.map(j => j.id) || [])
         .eq('expirado', false);
 
-      if (error) throw error;
+      console.log('⏱️ [fetchJobs] Timeouts encontrados:', timeoutsData);
 
       const combinedJobs = jobsData?.map(job => ({
         ...job,
@@ -158,12 +176,32 @@ const ClientDashboard = () => {
         return acc;
       }, {} as Record<string, any>);
 
+      console.log('✅ [fetchJobs] Total de jobs processados:', combinedJobs.length);
+      
       setJobs(combinedJobs);
       setJobTimeouts(timeoutsMap);
-    } catch (error) {
-      console.error('Erro ao carregar jobs:', error);
+      
+      if (combinedJobs.length === 0) {
+        console.log('ℹ️ [fetchJobs] Nenhum job encontrado para este cliente');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ [fetchJobs] Erro completo:', error);
+      console.error('❌ [fetchJobs] Mensagem:', error.message);
+      console.error('❌ [fetchJobs] Detalhes:', error.details);
+      console.error('❌ [fetchJobs] Hint:', error.hint);
+      
+      const errorMessage = error.message || 'Erro desconhecido ao carregar pedidos';
+      setError(errorMessage);
+      
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
+      console.log('🏁 [fetchJobs] Busca finalizada');
     }
   };
 
@@ -240,7 +278,44 @@ const ClientDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground text-lg">Carregando...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando seus pedidos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Estado de erro
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full shadow-glow">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Erro ao Carregar Pedidos
+            </CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Não foi possível carregar seus pedidos. Por favor, tente novamente.
+              </AlertDescription>
+            </Alert>
+            <Button onClick={fetchJobs} className="w-full bg-gradient-primary">
+              Tentar Novamente
+            </Button>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              className="w-full"
+            >
+              Voltar ao Login
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
