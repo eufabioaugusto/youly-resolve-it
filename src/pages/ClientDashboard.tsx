@@ -183,7 +183,7 @@ const ClientDashboard = () => {
     }
   }, [clienteProfile, fetchJobs]);
 
-  // Escutar mudanças em tempo real nos jobs
+  // Escutar mudanças em tempo real nos jobs, negociações e OS
   useEffect(() => {
     if (!clienteProfile) return;
 
@@ -199,6 +199,23 @@ const ClientDashboard = () => {
         },
         () => {
           console.log('Job atualizado, recarregando...');
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    const negociacaoChannel = supabase
+      .channel('client-negociacoes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'negociacoes',
+          filter: `cliente_id=eq.${clienteProfile.id}`
+        },
+        () => {
+          console.log('Negociação atualizada, recarregando...');
           fetchJobs();
         }
       )
@@ -222,6 +239,7 @@ const ClientDashboard = () => {
 
     return () => {
       supabase.removeChannel(jobChannel);
+      supabase.removeChannel(negociacaoChannel);
       supabase.removeChannel(osChannel);
     };
   }, [clienteProfile, fetchJobs]);

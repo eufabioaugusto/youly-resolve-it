@@ -167,7 +167,7 @@ export function AdminJobManagement() {
       // Buscar cliente_id do job PRIMEIRO
       const { data: jobData, error: jobFetchError } = await supabase
         .from('jobs')
-        .select('cliente_id')
+        .select('cliente_id, status')
         .eq('id', jobId)
         .single();
 
@@ -180,7 +180,7 @@ export function AdminJobManagement() {
         throw new Error('Job sem cliente_id associado');
       }
 
-      console.log('✅ [AdminJobManagement] Job encontrado', { jobId, cliente_id: jobData.cliente_id });
+      console.log('✅ [AdminJobManagement] Job encontrado', { jobId, cliente_id: jobData.cliente_id, status_atual: jobData.status });
 
       // Criar nova negociação PRIMEIRO
       const { data: negData, error: negError } = await supabase
@@ -201,24 +201,33 @@ export function AdminJobManagement() {
 
       console.log('✅ [AdminJobManagement] Negociação criada', { negociacao_id: negData.id });
 
-      // Atualizar job com novo montador
-      const { error: jobError } = await supabase
+      // Atualizar job com novo montador E status em_negociacao
+      console.log('🔄 [AdminJobManagement] Atualizando job...', { jobId, montadorId, novo_status: 'em_negociacao' });
+      
+      const { data: updatedJob, error: jobError } = await supabase
         .from('jobs')
-        .update({ montador_id: montadorId, status: 'em_negociacao' })
-        .eq('id', jobId);
+        .update({ 
+          montador_id: montadorId, 
+          status: 'em_negociacao' 
+        })
+        .eq('id', jobId)
+        .select()
+        .single();
 
       if (jobError) {
         console.error('❌ [AdminJobManagement] Erro ao atualizar job', jobError);
         throw jobError;
       }
 
-      console.log('✅ [AdminJobManagement] Job atualizado com sucesso');
+      console.log('✅ [AdminJobManagement] Job atualizado com sucesso', updatedJob);
 
       toast({
         title: 'Sucesso!',
         description: 'Montador atribuído ao job com sucesso',
       });
 
+      // Aguardar um pouco e recarregar
+      await new Promise(resolve => setTimeout(resolve, 500));
       await loadData();
     } catch (error: any) {
       console.error('❌ [AdminJobManagement] Erro ao atribuir montador', error);
