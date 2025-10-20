@@ -420,9 +420,14 @@ const SuggestedMontadores = () => {
           <div className="space-y-6">
             {montadores.length === 0 ? (
               <>
-                <h2 className="text-2xl font-bold text-black text-center mb-4">
-                  Seu trabalho foi publicado!
-                </h2>
+                <div className="text-center mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4 animate-scale-in">
+                    <CheckCircle className="w-8 h-8 text-green-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-black">
+                    Seu trabalho foi publicado!
+                  </h2>
+                </div>
                 <Card className="shadow-glow border-0 bg-white text-center p-8">
                   <CardContent>
                     <p className="text-lg text-foreground mb-4">
