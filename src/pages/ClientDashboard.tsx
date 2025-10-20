@@ -132,17 +132,15 @@ const ClientDashboard = () => {
         };
       }));
         
-      // IMPORTANTE: Buscar timeouts APENAS para informação visual
-      // TODOS os jobs devem aparecer no dashboard do cliente
+      // IMPORTANTE: Buscar timeouts expirados para MANTER o badge "Time Youly"
       const { data: timeoutsData } = await supabase
         .from('timeout_montador')
         .select('*')
-        .in('job_id', jobsWithMontadores.map(j => j.id))
-        .eq('expirado', false);
+        .in('job_id', jobsWithMontadores.map(j => j.id));
 
       console.log('⏱️ [fetchJobs] Timeouts encontrados:', timeoutsData);
       
-      // Mapear timeouts por job_id
+      // Mapear timeouts por job_id (incluindo expirados para badge visual)
       const timeoutsMap = (timeoutsData || []).reduce((acc, timeout) => {
         acc[timeout.job_id] = timeout;
         return acc;
@@ -570,8 +568,8 @@ const ClientDashboard = () => {
                       Ver detalhes
                     </Button>
                     
-                    {/* Jobs em aberto */}
-                    {job.status === 'aberto' && (
+                    {/* Jobs em aberto SEM negociação */}
+                    {job.status === 'aberto' && (!job.negociacoes || job.negociacoes.length === 0) && (
                       <>
                         <Button 
                           onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
@@ -590,7 +588,18 @@ const ClientDashboard = () => {
                       </>
                     )}
                     
-                    {/* Jobs em negociação */}
+                    {/* Jobs com negociação ativa (mesmo que status seja 'aberto') */}
+                    {job.negociacoes && job.negociacoes.length > 0 && job.status !== 'aguardando_pagamento' && job.status !== 'pago' && !job.ordem_servico && (
+                      <Button 
+                        onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
+                        className="bg-gradient-primary hover:shadow-glow"
+                        size="sm"
+                      >
+                        Ver Negociação
+                      </Button>
+                    )}
+                    
+                    {/* Jobs em negociação (status explícito) */}
                     {(job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') && (
                       <Button 
                         onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
