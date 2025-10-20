@@ -883,8 +883,8 @@ export type Database = {
           expirado: boolean
           id: string
           job_id: string
-          montador_id: string
-          negociacao_id: string
+          montador_id: string | null
+          negociacao_id: string | null
           respondido: boolean
         }
         Insert: {
@@ -894,8 +894,8 @@ export type Database = {
           expirado?: boolean
           id?: string
           job_id: string
-          montador_id: string
-          negociacao_id: string
+          montador_id?: string | null
+          negociacao_id?: string | null
           respondido?: boolean
         }
         Update: {
@@ -905,8 +905,8 @@ export type Database = {
           expirado?: boolean
           id?: string
           job_id?: string
-          montador_id?: string
-          negociacao_id?: string
+          montador_id?: string | null
+          negociacao_id?: string | null
           respondido?: boolean
         }
         Relationships: [

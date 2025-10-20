@@ -451,7 +451,7 @@ const ClientDashboard = () => {
                       </div>
 
                       {/* Cronômetro de Timeout - apenas para jobs em aberto */}
-                      {job.status === 'aberto' && jobTimeouts[job.id] && (
+                      {job.status === 'aberto' && jobTimeouts[job.id] && !jobTimeouts[job.id].expirado && (
                         <div className="mb-3">
                           <TimeoutMonitor
                             dataExpiracao={jobTimeouts[job.id].data_expiracao}
