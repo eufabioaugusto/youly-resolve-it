@@ -59,14 +59,41 @@ export function AdminJobManagement() {
             clientesData = cData || [];
           }
 
+          // Buscar montadores já atribuídos aos jobs
+          const montadorIds = jobsData?.map(j => j.montador_id).filter(Boolean) || [];
+          let montadoresAtribuidosData: any[] = [];
+          if (montadorIds.length > 0) {
+            const { data: mData } = await supabase
+              .from('montadores')
+              .select('*')
+              .in('id', montadorIds);
+            montadoresAtribuidosData = mData || [];
+
+            // Buscar profiles dos montadores atribuídos
+            const montadorUserIds = montadoresAtribuidosData.map(m => m.user_id);
+            if (montadorUserIds.length > 0) {
+              const { data: pData } = await supabase
+                .from('profiles')
+                .select('*')
+                .in('user_id', montadorUserIds);
+              
+              montadoresAtribuidosData = montadoresAtribuidosData.map(m => ({
+                ...m,
+                profiles: pData?.find(p => p.user_id === m.user_id)
+              }));
+            }
+          }
+
           // Combinar dados
           timeoutDataComJobs = timeoutData.map(t => {
             const job = jobsData?.find(j => j.id === t.job_id);
             const cliente = clientesData.find(c => c.id === job?.cliente_id);
+            const montadorAtribuido = montadoresAtribuidosData.find(m => m.id === job?.montador_id);
             
             return {
               ...t,
               jobs: job,
+              montador_atribuido: montadorAtribuido,
               negociacoes: {
                 jobs: job,
                 clientes: cliente
@@ -123,33 +150,58 @@ export function AdminJobManagement() {
     setAssigningJobId(jobId);
 
     try {
+      console.log('🔄 [AdminJobManagement] Iniciando atribuição', { jobId, montadorId });
+
+      // Buscar cliente_id do job PRIMEIRO
+      const { data: jobData, error: jobFetchError } = await supabase
+        .from('jobs')
+        .select('cliente_id')
+        .eq('id', jobId)
+        .single();
+
+      if (jobFetchError) {
+        console.error('❌ [AdminJobManagement] Erro ao buscar job', jobFetchError);
+        throw jobFetchError;
+      }
+
+      if (!jobData?.cliente_id) {
+        throw new Error('Job sem cliente_id associado');
+      }
+
+      console.log('✅ [AdminJobManagement] Job encontrado', { jobId, cliente_id: jobData.cliente_id });
+
+      // Criar nova negociação PRIMEIRO
+      const { data: negData, error: negError } = await supabase
+        .from('negociacoes')
+        .insert({
+          job_id: jobId,
+          montador_id: montadorId,
+          cliente_id: jobData.cliente_id,
+          status: 'pendente',
+        })
+        .select()
+        .single();
+
+      if (negError) {
+        console.error('❌ [AdminJobManagement] Erro ao criar negociação', negError);
+        throw negError;
+      }
+
+      console.log('✅ [AdminJobManagement] Negociação criada', { negociacao_id: negData.id });
+
       // Atualizar job com novo montador
       const { error: jobError } = await supabase
         .from('jobs')
         .update({ montador_id: montadorId, status: 'em_negociacao' })
         .eq('id', jobId);
 
-      if (jobError) throw jobError;
+      if (jobError) {
+        console.error('❌ [AdminJobManagement] Erro ao atualizar job', jobError);
+        throw jobError;
+      }
 
-      // Criar nova negociação
-      const { data: jobData } = await supabase
-        .from('jobs')
-        .select('cliente_id')
-        .eq('id', jobId)
-        .single();
+      console.log('✅ [AdminJobManagement] Job atualizado com sucesso');
 
-      const { error: negError } = await supabase
-        .from('negociacoes')
-        .insert({
-          job_id: jobId,
-          montador_id: montadorId,
-          cliente_id: jobData?.cliente_id,
-          status: 'pendente',
-        });
-
-      if (negError) throw negError;
-
-      console.log('✅ [AdminJobManagement] Montador atribuído com sucesso');
       toast({
         title: 'Sucesso!',
         description: 'Montador atribuído ao job com sucesso',
@@ -234,11 +286,11 @@ export function AdminJobManagement() {
                 return (
                   <Card key={timeout.id} className="border-destructive/20">
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
+                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h4 className="font-semibold text-lg">{job?.descricao}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Montador original: {montadorOriginal?.profiles?.nome}
+                            Montador original: {montadorOriginal?.profiles?.nome || 'Não informado'}
                           </p>
                           <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                             <Clock className="w-3 h-3" />
@@ -248,6 +300,26 @@ export function AdminJobManagement() {
                         <Badge variant="destructive">Timeout</Badge>
                       </div>
 
+                      {/* Se já tem montador atribuído, mostrar informações dele */}
+                      {timeout.montador_atribuido ? (
+                        <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <h5 className="font-semibold text-green-900 dark:text-green-100">Montador Atribuído</h5>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-sm">
+                              <span className="font-medium">Nome:</span> {timeout.montador_atribuido.profiles?.nome}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span>⭐ {timeout.montador_atribuido.avaliacao_media?.toFixed(1) || '0.0'}</span>
+                              <span>{timeout.montador_atribuido.projetos_realizados || 0} projetos</span>
+                              <span>{timeout.montador_atribuido.nivel_gamificacao}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Campo de busca e atribuição */
                        <div className="space-y-3">
                         <div>
                           <label className="text-sm font-medium mb-2 block">
@@ -299,6 +371,7 @@ export function AdminJobManagement() {
                           ))}
                         </div>
                       </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
