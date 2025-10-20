@@ -67,6 +67,7 @@ const ClientDashboard = () => {
       
       console.log('🔍 [fetchJobs] Buscando jobs para cliente_id:', clienteProfile.id);
       
+      // Query simplificada sem nested joins problemáticos
       const { data: jobsData, error: queryError } = await supabase
         .from('jobs')
         .select(`
@@ -78,14 +79,6 @@ const ClientDashboard = () => {
             garantia_ativa,
             data_expiracao_garantia,
             data_ativacao_garantia
-          ),
-          montador:montador_id (
-            id,
-            avaliacao_media,
-            user_id,
-            profiles:user_id (
-              nome
-            )
           ),
           candidaturas (
             id
@@ -105,21 +98,49 @@ const ClientDashboard = () => {
       console.log('❌ [fetchJobs] Erro da query:', queryError);
 
       if (queryError) throw queryError;
+
+      // Buscar informações dos montadores separadamente quando necessário
+      const jobsWithMontadores = await Promise.all((jobsData || []).map(async (job) => {
+        if (job.montador_id) {
+          const { data: montadorData } = await supabase
+            .from('montadores')
+            .select('id, avaliacao_media, user_id')
+            .eq('id', job.montador_id)
+            .single();
+
+          if (montadorData) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('nome')
+              .eq('user_id', montadorData.user_id)
+              .single();
+
+            return {
+              ...job,
+              montador: {
+                ...montadorData,
+                profiles: profileData
+              },
+              candidaturas_count: job.candidaturas?.length || 0
+            };
+          }
+        }
+        
+        return {
+          ...job,
+          candidaturas_count: job.candidaturas?.length || 0
+        };
+      }));
         
       // IMPORTANTE: Buscar timeouts APENAS para informação visual
       // TODOS os jobs devem aparecer no dashboard do cliente
       const { data: timeoutsData } = await supabase
         .from('timeout_montador')
         .select('*')
-        .in('job_id', jobsData?.map(j => j.id) || [])
+        .in('job_id', jobsWithMontadores.map(j => j.id))
         .eq('expirado', false);
 
       console.log('⏱️ [fetchJobs] Timeouts encontrados:', timeoutsData);
-
-      const combinedJobs = jobsData?.map(job => ({
-        ...job,
-        candidaturas_count: job.candidaturas?.length || 0
-      })) || [];
       
       // Mapear timeouts por job_id
       const timeoutsMap = (timeoutsData || []).reduce((acc, timeout) => {
@@ -127,12 +148,12 @@ const ClientDashboard = () => {
         return acc;
       }, {} as Record<string, any>);
 
-      console.log('✅ [fetchJobs] Total de jobs processados:', combinedJobs.length);
+      console.log('✅ [fetchJobs] Total de jobs processados:', jobsWithMontadores.length);
       
-      setJobs(combinedJobs);
+      setJobs(jobsWithMontadores);
       setJobTimeouts(timeoutsMap);
       
-      if (combinedJobs.length === 0) {
+      if (jobsWithMontadores.length === 0) {
         console.log('ℹ️ [fetchJobs] Nenhum job encontrado para este cliente');
       }
       
