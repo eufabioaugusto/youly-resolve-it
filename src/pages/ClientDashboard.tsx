@@ -519,23 +519,31 @@ const ClientDashboard = () => {
       {/* Modals */}
       {selectedJob && (
         <JobDetailsModal
-          isOpen={detailsModalOpen}
+          open={detailsModalOpen}
           onOpenChange={setDetailsModalOpen}
           job={selectedJob}
         />
       )}
 
-      {selectedJobForPayment && (
-        <PagamentoModal
-          isOpen={pagamentoModalOpen}
-          onOpenChange={setPagamentoModalOpen}
-          jobId={selectedJobForPayment.id}
-          onSuccess={() => {
-            setPagamentoModalOpen(false);
-            fetchJobs();
-          }}
-        />
-      )}
+      {selectedJobForPayment && (() => {
+        const negociacao = selectedJobForPayment.negociacoes?.find(
+          (n: any) => n.status === 'aceito' || n.status === 'orcamento_enviado'
+        );
+        const valorFinal = negociacao?.valor_final || negociacao?.valor_proposto_montador || 0;
+        const montadorNome = selectedJobForPayment.montador?.profiles?.nome || 'Montador';
+        
+        return (
+          <PagamentoModal
+            open={pagamentoModalOpen}
+            onOpenChange={setPagamentoModalOpen}
+            jobId={selectedJobForPayment.id}
+            montadorId={selectedJobForPayment.montador_id || ''}
+            valor={valorFinal}
+            jobDescricao={selectedJobForPayment.descricao}
+            montadorNome={montadorNome}
+          />
+        );
+      })()}
     </div>
   );
 };
