@@ -129,9 +129,13 @@ const SuggestedMontadores = () => {
         );
 
         // Filtrar montadores dentro do raio de 20km
+        // IMPORTANTE: Se a distância não puder ser calculada, NÃO exibir o montador
         const montadoresDentroRaio = montadoresWithProfiles.filter(
-          (m) => m.distancia_km === undefined || m.distancia_km <= 20
+          (m) => m.distancia_km !== undefined && m.distancia_km <= 20
         );
+
+        console.log(`📍 Total de montadores: ${montadoresWithProfiles.length}`);
+        console.log(`✅ Montadores dentro de 20km: ${montadoresDentroRaio.length}`);
 
         // 🎯 Sistema de Scoring Inteligente
         const calculateMontadorScore = (montador: any, jobCategoria: string) => {

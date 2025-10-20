@@ -5,7 +5,8 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
     const cepLimpo = cep.replace(/\D/g, '');
     
     if (cepLimpo.length !== 8) {
-      throw new Error('CEP inválido');
+      console.error(`CEP inválido: ${cep}`);
+      return null;
     }
 
     // Buscar endereço pelo ViaCEP
@@ -13,29 +14,41 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
     const viaCepData = await viaCepResponse.json();
 
     if (viaCepData.erro) {
-      throw new Error('CEP não encontrado');
+      console.error(`CEP não encontrado no ViaCEP: ${cepLimpo}`);
+      return null;
     }
 
-    // Montar query para Nominatim (OpenStreetMap)
-    const endereco = `${viaCepData.logradouro}, ${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
-    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&limit=1`;
+    console.log(`ViaCEP retornou:`, viaCepData);
+
+    // Usar apenas cidade e estado para busca mais ampla e confiável
+    const cidade = viaCepData.localidade;
+    const uf = viaCepData.uf;
+    const query = `${cidade}, ${uf}, Brasil`;
+    
+    console.log(`Buscando coordenadas para: ${query}`);
+    
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
 
     const nominatimResponse = await fetch(nominatimUrl, {
       headers: {
-        'User-Agent': 'Youly-App/1.0', // Nominatim requer User-Agent
+        'User-Agent': 'Youly-App/1.0',
       },
     });
 
     const nominatimData = await nominatimResponse.json();
 
     if (nominatimData.length === 0) {
-      throw new Error('Coordenadas não encontradas');
+      console.error(`Nominatim não encontrou coordenadas para: ${query}`);
+      return null;
     }
 
-    return {
+    const coords = {
       lat: parseFloat(nominatimData[0].lat),
       lng: parseFloat(nominatimData[0].lon),
     };
+    
+    console.log(`✅ Coordenadas encontradas para ${cidade}-${uf}:`, coords);
+    return coords;
   } catch (error) {
     console.error('Erro ao buscar coordenadas:', error);
     return null;
