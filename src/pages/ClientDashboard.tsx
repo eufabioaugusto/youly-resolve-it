@@ -438,7 +438,15 @@ const ClientDashboard = () => {
                 <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors bg-white">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-lg">{job.descricao}</h3>
+                        {job.status === 'aberto' && jobTimeouts[job.id]?.expirado && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Users className="w-3 h-3 mr-1" />
+                            Time Youly
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
