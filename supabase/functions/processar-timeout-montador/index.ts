@@ -29,22 +29,7 @@ serve(async (req) => {
         negociacao_id,
         job_id,
         montador_id,
-        data_expiracao,
-        negociacoes!inner (
-          id,
-          montador_id,
-          cliente_id,
-          job_id,
-          jobs!inner (
-            id,
-            descricao,
-            cliente_id
-          ),
-          montadores!inner (
-            id,
-            user_id
-          )
-        )
+        data_expiracao
       `)
       .eq('expirado', false)
       .eq('respondido', false)
@@ -102,18 +87,29 @@ serve(async (req) => {
         continue;
       }
 
-      // Buscar informações do montador
-      const negociacao = timeout.negociacoes as any;
-      const jobDescricao = negociacao?.jobs?.descricao || 'Pedido';
-      
-      // Buscar nome do montador separadamente
-      const { data: montadorData } = await supabaseAdmin
-        .from('profiles')
-        .select('nome')
-        .eq('user_id', negociacao?.montadores?.user_id)
+      // Buscar informações do job e montador separadamente
+      const { data: jobData } = await supabaseAdmin
+        .from('jobs')
+        .select('descricao')
+        .eq('id', timeout.job_id)
         .single();
       
-      const montadorNome = montadorData?.nome || 'Montador';
+      const jobDescricao = jobData?.descricao || 'Pedido';
+      
+      // Buscar informações do montador
+      const { data: montadorInfo } = await supabaseAdmin
+        .from('montadores')
+        .select('user_id')
+        .eq('id', timeout.montador_id)
+        .single();
+      
+      const { data: montadorProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', montadorInfo?.user_id)
+        .maybeSingle();
+      
+      const montadorNome = montadorProfile?.nome || 'Montador';
 
       for (const admin of admins) {
         const { error: notifError } = await supabaseAdmin

@@ -24,7 +24,7 @@ import {
   MessageSquare,
   Shield
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import JobDetailsModal from "@/components/JobDetailsModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { PagamentoModal } from "@/components/PagamentoModal";
@@ -52,56 +52,7 @@ const ClientDashboard = () => {
     }
   }, [profile, navigate]);
 
-  useEffect(() => {
-    if (clienteProfile) {
-      fetchJobs();
-    }
-  }, [clienteProfile]);
-
-  // Escutar mudanças em tempo real nos jobs
-  useEffect(() => {
-    if (!clienteProfile) return;
-
-    const jobChannel = supabase
-      .channel('client-jobs-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'jobs',
-          filter: `cliente_id=eq.${clienteProfile.id}`
-        },
-        () => {
-          console.log('Job atualizado, recarregando...');
-          fetchJobs();
-        }
-      )
-      .subscribe();
-
-    const osChannel = supabase
-      .channel('client-os-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'ordem_servico'
-        },
-        () => {
-          console.log('Ordem de serviço atualizada, recarregando...');
-          fetchJobs();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(jobChannel);
-      supabase.removeChannel(osChannel);
-    };
-  }, [clienteProfile]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     console.log('🔍 [fetchJobs] Iniciando busca de jobs...');
     console.log('🔍 [fetchJobs] clienteProfile:', clienteProfile);
     
@@ -203,7 +154,56 @@ const ClientDashboard = () => {
       setLoading(false);
       console.log('🏁 [fetchJobs] Busca finalizada');
     }
-  };
+  }, [clienteProfile, toast]);
+
+  useEffect(() => {
+    if (clienteProfile) {
+      fetchJobs();
+    }
+  }, [clienteProfile, fetchJobs]);
+
+  // Escutar mudanças em tempo real nos jobs
+  useEffect(() => {
+    if (!clienteProfile) return;
+
+    const jobChannel = supabase
+      .channel('client-jobs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'jobs',
+          filter: `cliente_id=eq.${clienteProfile.id}`
+        },
+        () => {
+          console.log('Job atualizado, recarregando...');
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    const osChannel = supabase
+      .channel('client-os-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ordem_servico'
+        },
+        () => {
+          console.log('Ordem de serviço atualizada, recarregando...');
+          fetchJobs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(jobChannel);
+      supabase.removeChannel(osChannel);
+    };
+  }, [clienteProfile, fetchJobs]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
