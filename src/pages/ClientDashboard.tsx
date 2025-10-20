@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Wrench, 
@@ -27,9 +28,11 @@ import { useState, useEffect } from "react";
 import JobDetailsModal from "@/components/JobDetailsModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { PagamentoModal } from "@/components/PagamentoModal";
+import { TimeoutMonitor } from "@/components/TimeoutMonitor";
 
 const ClientDashboard = () => {
   const { signOut } = useAuth();
+  const { toast } = useToast();
   const { profile, clienteProfile } = useProfile();
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<any[]>([]);
@@ -39,6 +42,7 @@ const ClientDashboard = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
   const [selectedJobForPayment, setSelectedJobForPayment] = useState<any>(null);
+  const [jobTimeouts, setJobTimeouts] = useState<Record<string, any>>({});
 
   // Redirecionar se não for cliente
   useEffect(() => {
@@ -53,538 +57,485 @@ const ClientDashboard = () => {
     }
   }, [clienteProfile]);
 
-  // 🔥 REALTIME: Atualizar quando pagamentos/jobs mudarem
+  // Escutar mudanças em tempo real nos jobs
   useEffect(() => {
-    if (!clienteProfile?.id) return;
+    if (!clienteProfile) return;
 
-    console.log('🔔 Configurando realtime para cliente');
-
-    const jobsChannel = supabase
-      .channel('jobs-realtime')
+    const jobChannel = supabase
+      .channel('client-jobs-changes')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'jobs',
           filter: `cliente_id=eq.${clienteProfile.id}`
         },
-        (payload) => {
-          console.log('🔥 Job atualizado:', payload);
+        () => {
+          console.log('Job atualizado, recarregando...');
           fetchJobs();
         }
       )
       .subscribe();
 
     const osChannel = supabase
-      .channel('os-realtime-client')
+      .channel('client-os-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'ordem_servico',
-          filter: `cliente_id=eq.${clienteProfile.id}`
+          table: 'ordem_servico'
         },
-        (payload) => {
-          console.log('🔥 OS atualizada:', payload);
+        () => {
+          console.log('Ordem de serviço atualizada, recarregando...');
           fetchJobs();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(jobsChannel);
+      supabase.removeChannel(jobChannel);
       supabase.removeChannel(osChannel);
     };
-  }, [clienteProfile?.id]);
+  }, [clienteProfile]);
 
   const fetchJobs = async () => {
     if (!clienteProfile) return;
     
+    setLoading(true);
     try {
-      // 🎯 Buscar jobs do cliente COM ordem de serviço
-      const { data: jobsData, error: jobsError } = await supabase
+      const { data: jobsData, error } = await supabase
         .from('jobs')
         .select(`
           *,
-          ordem_servico!jobs_ordem_servico_id_fkey(
+          ordem_servico:ordem_servico_id (
             id,
-            codigo_validacao,
             status,
+            codigo_validacao,
             garantia_ativa,
-            data_ativacao_garantia,
             data_expiracao_garantia,
-            data_hora_agendamento,
-            periodo_agendamento
+            data_ativacao_garantia
+          ),
+          montador:montador_id (
+            id,
+            avaliacao_media,
+            user_id,
+            profiles:user_id (
+              nome
+            )
+          ),
+          candidaturas (
+            id
+          ),
+          negociacoes (
+            id,
+            valor_proposto_montador,
+            valor_final,
+            status
           )
         `)
         .eq('cliente_id', clienteProfile.id)
         .order('created_at', { ascending: false });
+        
+      // Buscar timeouts para jobs em aberto
+      const { data: timeoutsData } = await supabase
+        .from('timeout_montador')
+        .select('*')
+        .in('job_id', jobsData?.map(j => j.id) || [])
+        .eq('expirado', false);
 
-      if (jobsError) throw jobsError;
+      if (error) throw error;
 
-      if (jobsData && jobsData.length > 0) {
-        // Buscar montadores associados aos jobs
-        const montadorIds = jobsData
-          .filter(job => job.montador_id)
-          .map(job => job.montador_id);
+      const combinedJobs = jobsData?.map(job => ({
+        ...job,
+        candidaturas_count: job.candidaturas?.length || 0
+      })) || [];
+      
+      // Mapear timeouts por job_id
+      const timeoutsMap = (timeoutsData || []).reduce((acc, timeout) => {
+        acc[timeout.job_id] = timeout;
+        return acc;
+      }, {} as Record<string, any>);
 
-        let montadorData = [];
-        if (montadorIds.length > 0) {
-          const { data: montadores, error: montadoresError } = await supabase
-            .from('montadores')
-            .select('id, user_id, avaliacao_media')
-            .in('id', montadorIds);
-
-          if (montadoresError) throw montadoresError;
-
-          // Buscar nomes dos montadores
-          const userIds = montadores?.map(m => m.user_id) || [];
-          if (userIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('user_id, nome')
-              .in('user_id', userIds);
-
-            montadorData = montadores?.map(montador => ({
-              ...montador,
-              profiles: profiles?.find(p => p.user_id === montador.user_id) || { nome: 'Montador' }
-            })) || [];
-          }
-        }
-
-        // Buscar candidaturas para cada job
-        const { data: candidaturas } = await supabase
-          .from('candidaturas')
-          .select('job_id')
-          .in('job_id', jobsData.map(j => j.id));
-
-        // Buscar negociações para cada job (apenas ativas, não recusadas)
-        const { data: negociacoes } = await supabase
-          .from('negociacoes')
-          .select('job_id, status, valor_proposto_montador, valor_final')
-          .in('job_id', jobsData.map(j => j.id))
-          .neq('status', 'recusado'); // Excluir negociações recusadas
-
-        // Combinar os dados
-        const jobsWithData = jobsData.map(job => {
-          const jobNegociacoes = negociacoes?.filter(n => n.job_id === job.id) || [];
-          
-          return {
-            ...job,
-            montador: job.montador_id ? montadorData.find(m => m.id === job.montador_id) : null,
-            candidaturas_count: candidaturas?.filter(c => c.job_id === job.id).length || 0,
-            negociacoes: jobNegociacoes
-          };
-        });
-
-        setJobs(jobsWithData);
-      } else {
-        setJobs([]);
-      }
+      setJobs(combinedJobs);
+      setJobTimeouts(timeoutsMap);
     } catch (error) {
-      console.error('Erro ao buscar jobs:', error);
+      console.error('Erro ao carregar jobs:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-      console.log('Iniciando logout...');
-      await signOut();
-    } catch (error) {
-      console.error('Erro no logout:', error);
-      // Force redirect even if logout fails
-      window.location.href = "/";
-    } finally {
-      setLoggingOut(false);
-    }
+    setLoggingOut(true);
+    await signOut();
+    navigate('/login');
   };
 
   const getOrcamentoInfo = (job: any) => {
-    const negociacoes = job.negociacoes || [];
-    
-    // Se há orçamento aceito/aprovado, mostrar valor final
-    const aprovada = negociacoes.find(n => n.status === 'aceito');
-    if (aprovada) {
+    if (!job.negociacoes || job.negociacoes.length === 0) {
       return {
-        texto: 'Orçamento aprovado',
-        valor: aprovada.valor_final || aprovada.valor_proposto_montador,
-        classe: 'text-success font-bold'
+        texto: "Aguardando orçamentos",
+        classe: "text-muted-foreground",
+        valor: null
       };
     }
-    
-    // Se há orçamentos enviados, mostrar o melhor (menor valor)
-    const orcamentosEnviados = negociacoes.filter(n => 
-      n.status === 'orcamento_enviado' && n.valor_proposto_montador
+
+    const negociacaoAtiva = job.negociacoes.find((n: any) => 
+      n.status === 'orcamento_enviado' || n.status === 'aceito' || n.status === 'contra_proposta'
     );
-    
-    if (orcamentosEnviados.length > 0) {
-      const melhorOrcamento = Math.min(...orcamentosEnviados.map(n => n.valor_proposto_montador));
+
+    if (!negociacaoAtiva) {
       return {
-        texto: 'Melhor orçamento',
-        valor: melhorOrcamento,
-        classe: 'text-primary font-bold'
+        texto: "Aguardando orçamentos",
+        classe: "text-muted-foreground",
+        valor: null
       };
     }
-    
-    // Se há negociações em andamento mas sem orçamento ainda
-    if (negociacoes.length > 0) {
+
+    if (negociacaoAtiva.status === 'aceito' && negociacaoAtiva.valor_final) {
       return {
-        texto: 'Orçamento em preparação',
-        valor: null,
-        classe: 'text-warning font-medium'
+        texto: "Valor acordado",
+        classe: "text-success",
+        valor: negociacaoAtiva.valor_final
       };
     }
-    
-    // Nenhuma negociação ainda
+
+    if (negociacaoAtiva.valor_proposto_montador) {
+      return {
+        texto: negociacaoAtiva.status === 'contra_proposta' ? "Contra-proposta" : "Orçamento recebido",
+        classe: "text-warning",
+        valor: negociacaoAtiva.valor_proposto_montador
+      };
+    }
+
     return {
-      texto: 'Aguardando orçamentos',
-      valor: null,
-      classe: 'text-muted-foreground font-medium'
+      texto: "Aguardando orçamentos",
+      classe: "text-muted-foreground",
+      valor: null
     };
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "aberto":
-        return <Badge variant="outline">Aberto</Badge>;
-      case "aceito":
-        return <Badge className="bg-success text-success-foreground">Aceito</Badge>;
-      case "em_negociacao":
-        return <Badge className="bg-info text-info-foreground">Em negociação</Badge>;
-      case "aguardando_pagamento":
-        return <Badge className="bg-warning text-warning-foreground">Aguardando pagamento</Badge>;
-      case "pago":
-        return <Badge className="bg-success text-success-foreground">Pago</Badge>;
-      case "em_andamento":
-        return <Badge className="bg-warning text-warning-foreground">Em andamento</Badge>;
-      case "concluido":
-        return <Badge className="bg-success text-success-foreground">Concluído</Badge>;
-      default:
-        return <Badge variant="secondary">Pendente</Badge>;
-    }
+    const statusConfig = {
+      aberto: { variant: "outline", text: "Em aberto", className: "bg-info/10 text-info border-info" },
+      em_negociacao: { variant: "default", text: "Em negociação", className: "bg-warning/20 text-warning-foreground" },
+      aguardando_pagamento: { variant: "default", text: "Aguardando pagamento", className: "bg-warning text-warning-foreground" },
+      pago: { variant: "default", text: "Pago", className: "bg-success text-success-foreground" },
+      em_andamento: { variant: "default", text: "Em andamento", className: "bg-primary text-primary-foreground" },
+      concluido: { variant: "default", text: "Concluído", className: "bg-success text-success-foreground" },
+      cancelado: { variant: "destructive", text: "Cancelado" }
+    };
+    
+    const config = statusConfig[status] || { variant: "secondary", text: status, className: "" };
+    
+    return (
+      <Badge variant={config.variant as any} className={config.className}>
+        {config.text}
+      </Badge>
+    );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <img 
-          src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541291424-Youly-Logo.png" 
-          alt="Youly Logo" 
-          className="h-9 object-contain"
-          />
-          </Link>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
+              <Wrench className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Youly</h1>
+              <p className="text-sm text-muted-foreground">Dashboard Cliente</p>
+            </div>
+          </div>
           
-          
-          <div className="flex items-center space-x-4">
-            <NotificationCenter variant="header" />
-            <Link to="/cliente/perfil">
-              <Button variant="ghost" size="icon">
-                <User className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={handleLogout} disabled={loggingOut}>
+          <div className="flex items-center gap-4">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="hover:bg-destructive/10"
+            >
               {loggingOut ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-destructive border-t-transparent" />
               ) : (
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-5 h-5 text-destructive" />
               )}
             </Button>
           </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Olá, {profile?.nome || 'Cliente'}! 👋</h1>
-          <p className="text-muted-foreground">Aqui estão seus pedidos e atividades recentes.</p>
-        </div>
+        {/* Welcome Card */}
+        <Card className="mb-8 shadow-glow border-0 bg-white">
+          <CardHeader>
+            <CardTitle>Bem-vindo de volta, {profile?.nome || 'Cliente'}!</CardTitle>
+            <CardDescription>
+              Acompanhe seus pedidos e gerencie seus serviços de montagem
+            </CardDescription>
+          </CardHeader>
+        </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Link to="/criar-pedido" aria-label="Criar novo pedido">
-  <Card className="group relative overflow-hidden rounded-xl bg-white shadow-card hover:shadow-elegant transition-all cursor-pointer">
-    {/* Halo sutil no canto direito (efeito premium sem pesar) */}
-    <span className="pointer-events-none absolute -right-10 top-1/2 h-40 w-40 -translate-y-1/2 
-                     rounded-full bg-gradient-to-tr from-rose-500/15 to-transparent blur-2xl 
-                     opacity-60 group-hover:opacity-80 transition-opacity" />
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between gap-6">
-        <div>
-          <h3 className="font-semibold text-lg text-slate-900 transition-colors group-hover:text-rose-600">
-            Novo Pedido
-          </h3>
-          <p className="text-sm text-muted-foreground">Solicitar montagem</p>
-        </div>
-
-        {/* Botão redondo com micro-interação */}
-        <div className="relative">
-          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center 
-                          transition-all group-hover:bg-rose-600 group-hover:scale-105">
-            <Plus className="w-6 h-6 text-rose-600 transition-colors group-hover:text-white" />
-          </div>
-          {/* anel suave, sem “borda de caixa” */}
-          <span className="absolute inset-0 rounded-full ring-1 ring-rose-300/30 
-                           group-hover:ring-rose-400/40 pointer-events-none" />
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-</Link>
-
-
-          <Card className="shadow-card hover:shadow-elegant transition-all cursor-pointer bg-white" onClick={() => navigate('/cliente/negociacoes')}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Link to="/criar-pedido">
+            <Card className="shadow-glow hover:shadow-xl transition-all cursor-pointer border-0 bg-white h-full">
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="p-3 bg-gradient-primary rounded-lg">
+                  <Plus className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Negociações</h3>
-                  <p className="text-sm text-muted-foreground">Acompanhar orçamentos</p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center relative">
-                  <MessageSquare className="w-6 h-6 text-primary-foreground" />
-                  {jobs.filter(job => ['em_negociacao', 'aguardando_pagamento'].includes(job.status)).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {jobs.filter(job => ['em_negociacao', 'aguardando_pagamento'].includes(job.status)).length}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-            <Card className="shadow-card bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{jobs.length}</h3>
-                    <p className="text-sm text-muted-foreground">Pedidos ativos</p>
-                  </div>
-                  <Clock className="w-8 h-8 text-primary" />
+                  <h3 className="font-semibold text-lg">Criar novo pedido</h3>
+                  <p className="text-sm text-muted-foreground">Solicite um novo serviço de montagem</p>
                 </div>
               </CardContent>
             </Card>
+          </Link>
 
-          <Card className="shadow-card bg-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {jobs.filter(job => job.status === 'concluido').length}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Jobs concluídos</p>
+          <Link to="/central-negociacoes">
+            <Card className="shadow-glow hover:shadow-xl transition-all cursor-pointer border-0 bg-white h-full">
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="p-3 bg-gradient-primary rounded-lg">
+                  <MessageSquare className="w-6 h-6 text-white" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-success" />
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <h3 className="font-semibold text-lg">Central de Negociações</h3>
+                  <p className="text-sm text-muted-foreground">Acompanhe suas negociações em andamento</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
-        {/* Recent Orders */}
-        <Card className="shadow-card bg-white">
-          <CardHeader>
-            <CardTitle>Meus Pedidos</CardTitle>
-            <CardDescription>Acompanhe o status dos seus pedidos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-pulse">Carregando pedidos...</div>
-                </div>
-              ) : jobs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhum pedido encontrado.</p>
-                  <Link to="/criar-pedido">
-                    <Button className="mt-4 bg-gradient-primary">Criar primeiro pedido</Button>
-                  </Link>
-                </div>
-              ) : (
-                jobs.map((job) => (
-                  <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors bg-white">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+        {/* Jobs List */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-foreground">Meus Pedidos</h2>
+          </div>
+
+          <div className="space-y-4">
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <div className="animate-pulse">Carregando pedidos...</div>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Nenhum pedido encontrado.</p>
+                <Link to="/criar-pedido">
+                  <Button className="mt-4 bg-gradient-primary">Criar primeiro pedido</Button>
+                </Link>
+              </div>
+            ) : (
+              jobs.map((job) => (
+                <div key={job.id} className="border rounded-lg p-6 hover:bg-muted/30 transition-colors bg-white">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {job.endereco?.rua}, {job.endereco?.bairro}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(job.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+
+                      {/* Cronômetro de Timeout - apenas para jobs em aberto */}
+                      {job.status === 'aberto' && jobTimeouts[job.id] && (
+                        <div className="mb-3">
+                          <TimeoutMonitor
+                            dataExpiracao={jobTimeouts[job.id].data_expiracao}
+                            onExpired={() => {
+                              toast({
+                                title: "Tempo esgotado!",
+                                description: "Nenhum montador respondeu. Nossa equipe vai cuidar disso para você.",
+                                variant: "destructive"
+                              });
+                              fetchJobs();
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* 🎯 CRÍTICO: Exibir código de validação e garantia */}
+                      {job.ordem_servico && (
+                        <div className="mb-3 space-y-2">
+                          {(job.ordem_servico.status === 'a_caminho' || job.ordem_servico.status === 'iniciada') && (
+                            <Alert className="bg-primary/10 border-primary">
+                              <Shield className="h-4 w-4" />
+                              <AlertDescription className="font-semibold">
+                                Código de validação: <span className="text-lg font-mono">{job.ordem_servico.codigo_validacao}</span>
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          {job.ordem_servico.garantia_ativa && (
+                            <Alert className="bg-success/10 border-success">
+                              <Shield className="h-4 w-4 text-success" />
+                              <AlertDescription>
+                                🛡️ Garantia ativa até {new Date(job.ordem_servico.data_expiracao_garantia).toLocaleDateString('pt-BR')}
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </div>
+                      )}
+                      {job.montador && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">{job.montador.profiles?.nome || 'Montador'}</span>
                           <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {job.endereco?.rua}, {job.endereco?.bairro}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(job.created_at).toLocaleDateString('pt-BR')}
+                            <Star className="w-4 h-4 fill-warning text-warning" />
+                            <span className="text-sm">{job.montador.avaliacao_media?.toFixed(1) || '0.0'}</span>
                           </div>
                         </div>
-
-                        {/* 🎯 CRÍTICO: Exibir código de validação e garantia */}
-                        {job.ordem_servico && (
-                          <div className="mb-3 space-y-2">
-                            {(job.ordem_servico.status === 'a_caminho' || job.ordem_servico.status === 'iniciada') && (
-                              <Alert className="bg-primary/10 border-primary">
-                                <Shield className="h-4 w-4" />
-                                <AlertDescription className="font-semibold">
-                                  Código de validação: <span className="text-lg font-mono">{job.ordem_servico.codigo_validacao}</span>
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                            {job.ordem_servico.garantia_ativa && (
-                              <Alert className="bg-success/10 border-success">
-                                <Shield className="h-4 w-4 text-success" />
-                                <AlertDescription>
-                                  🛡️ Garantia ativa até {new Date(job.ordem_servico.data_expiracao_garantia).toLocaleDateString('pt-BR')}
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                          </div>
-                        )}
-                        {job.montador && (
-                          <div className="flex items-center gap-2 mb-3">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium">{job.montador.profiles?.nome || 'Montador'}</span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-warning text-warning" />
-                              <span className="text-sm">{job.montador.avaliacao_media?.toFixed(1) || '0.0'}</span>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          {getStatusBadge(job.status)}
-                          <div className="text-right">
-                            {(() => {
-                              const orcamentoInfo = getOrcamentoInfo(job);
-                              return (
-                                <div className="flex flex-col items-end">
-                                  <span className={`text-sm ${orcamentoInfo.classe}`}>
-                                    {orcamentoInfo.texto}
+                      )}
+                      <div className="flex items-center justify-between">
+                        {getStatusBadge(job.status)}
+                        <div className="text-right">
+                          {(() => {
+                            const orcamentoInfo = getOrcamentoInfo(job);
+                            return (
+                              <div className="flex flex-col items-end">
+                                <span className={`text-sm ${orcamentoInfo.classe}`}>
+                                  {orcamentoInfo.texto}
+                                </span>
+                                {orcamentoInfo.valor && (
+                                  <span className="font-bold text-lg">
+                                    R$ {orcamentoInfo.valor.toFixed(2)}
                                   </span>
-                                  {orcamentoInfo.valor && (
-                                    <span className="font-bold text-lg">
-                                      R$ {orcamentoInfo.valor.toFixed(2)}
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
+                                )
+                                }
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedJob(job);
+                        setDetailsModalOpen(true);
+                      }}
+                    >
+                      Ver detalhes
+                    </Button>
                     
-                    <Separator className="my-4" />
-                    
-                    <div className="flex gap-3">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedJob(job);
-                          setDetailsModalOpen(true);
-                        }}
-                      >
-                        Ver detalhes
-                      </Button>
-                      
-                      {/* Jobs em aberto */}
-                      {job.status === 'aberto' && (
-                        <>
-                          <Button 
-                            onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
-                            className="bg-gradient-primary hover:shadow-glow"
-                            size="sm"
-                          >
-                            Ver Montadores Sugeridos
-                          </Button>
-                          <Button 
-                            onClick={() => navigate(`/pedido/${job.id}/candidatos`)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Ver Candidatos ({job.candidaturas_count || 0})
-                          </Button>
-                        </>
-                      )}
-                      
-                      {/* Jobs em negociação */}
-                      {(job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') && (
+                    {/* Jobs em aberto */}
+                    {job.status === 'aberto' && (
+                      <>
                         <Button 
-                          onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
+                          onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
                           className="bg-gradient-primary hover:shadow-glow"
                           size="sm"
                         >
-                          Ver Negociação
+                          Ver Montadores Sugeridos
                         </Button>
-                      )}
-                      
-                      {/* Botão de pagamento */}
-                      {job.status === "aguardando_pagamento" && (
                         <Button 
-                          size="sm" 
-                          className="bg-gradient-primary"
-                          onClick={() => {
-                            setSelectedJobForPayment(job);
-                            setPagamentoModalOpen(true);
-                          }}
+                          onClick={() => navigate(`/pedido/${job.id}/candidatos`)}
+                          variant="outline"
+                          size="sm"
                         >
-                          Pagar agora
+                          Ver Candidatos ({job.candidaturas_count || 0})
                         </Button>
-                      )}
-                      
-                      {/* Jobs pagos - mostrar status da OS */}
-                      {(job.status === "pago" || job.ordem_servico) && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-success" />
-                          <span className="text-success font-medium">
-                            {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
-                             job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
-                             job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
-                             'Pagamento confirmado - Aguardando início'}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Jobs concluídos */}
-                      {job.status === "concluido" && (
-                        <Button variant="outline" size="sm">Avaliar</Button>
-                      )}
-                    </div>
+                      </>
+                    )}
+                    
+                    {/* Jobs em negociação */}
+                    {(job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') && (
+                      <Button 
+                        onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
+                        className="bg-gradient-primary hover:shadow-glow"
+                        size="sm"
+                      >
+                        Ver Negociação
+                      </Button>
+                    )}
+                    
+                    {/* Botão de pagamento */}
+                    {job.status === "aguardando_pagamento" && (
+                      <Button 
+                        size="sm" 
+                        className="bg-gradient-primary"
+                        onClick={() => {
+                          setSelectedJobForPayment(job);
+                          setPagamentoModalOpen(true);
+                        }}
+                      >
+                        Pagar agora
+                      </Button>
+                    )}
+                    
+                    {/* Jobs pagos - mostrar status da OS */}
+                    {(job.status === "pago" || job.ordem_servico) && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                        <span className="text-success font-medium">
+                          {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
+                           job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
+                           job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
+                           'Pagamento confirmado - Aguardando início'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Botão de ver OS */}
+                    {job.ordem_servico && (
+                      <Button 
+                        onClick={() => navigate(`/ordem-servico/${job.ordem_servico.id}`)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Ver Ordem de Serviço
+                      </Button>
+                    )}
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Modal de Detalhes */}
-        <JobDetailsModal
-          job={selectedJob}
-          open={detailsModalOpen}
-          onOpenChange={setDetailsModalOpen}
-        />
-
-        {/* Modal de Pagamento */}
-        {selectedJobForPayment && (
-          <PagamentoModal
-            open={pagamentoModalOpen}
-            onOpenChange={setPagamentoModalOpen}
-            jobId={selectedJobForPayment.id}
-            montadorId={selectedJobForPayment.montador_id}
-            valor={
-              selectedJobForPayment.negociacoes?.find((n: any) => n.status === 'aceito')?.valor_final ||
-              selectedJobForPayment.negociacoes?.find((n: any) => n.status === 'aceito')?.valor_proposto_montador ||
-              0
-            }
-            jobDescricao={selectedJobForPayment.descricao}
-            montadorNome={selectedJobForPayment.montador?.profiles?.nome || 'Montador'}
-          />
-        )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
+      {selectedJob && (
+        <JobDetailsModal
+          isOpen={detailsModalOpen}
+          onOpenChange={setDetailsModalOpen}
+          job={selectedJob}
+        />
+      )}
+
+      {selectedJobForPayment && (
+        <PagamentoModal
+          isOpen={pagamentoModalOpen}
+          onOpenChange={setPagamentoModalOpen}
+          jobId={selectedJobForPayment.id}
+          onSuccess={() => {
+            setPagamentoModalOpen(false);
+            fetchJobs();
+          }}
+        />
+      )}
     </div>
   );
 };

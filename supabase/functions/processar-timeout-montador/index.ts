@@ -30,27 +30,19 @@ serve(async (req) => {
         job_id,
         montador_id,
         data_expiracao,
-        negociacoes (
+        negociacoes!inner (
           id,
           montador_id,
           cliente_id,
           job_id,
-          jobs (
+          jobs!inner (
             id,
             descricao,
-            cliente_id,
-            clientes (
-              user_id,
-              profiles:user_id (
-                nome
-              )
-            )
+            cliente_id
           ),
-          montadores (
-            user_id,
-            profiles:user_id (
-              nome
-            )
+          montadores!inner (
+            id,
+            user_id
           )
         )
       `)
@@ -110,10 +102,18 @@ serve(async (req) => {
         continue;
       }
 
-      // Notificar todos os admins
+      // Buscar informações do montador
       const negociacao = timeout.negociacoes as any;
       const jobDescricao = negociacao?.jobs?.descricao || 'Pedido';
-      const montadorNome = negociacao?.montadores?.profiles?.nome || 'Montador';
+      
+      // Buscar nome do montador separadamente
+      const { data: montadorData } = await supabaseAdmin
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', negociacao?.montadores?.user_id)
+        .single();
+      
+      const montadorNome = montadorData?.nome || 'Montador';
 
       for (const admin of admins) {
         const { error: notifError } = await supabaseAdmin

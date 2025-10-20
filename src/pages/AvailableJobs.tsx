@@ -95,6 +95,7 @@ const AvailableJobs = () => {
           )
         `)
         .eq('status', 'aberto')
+        .not('id', 'in', `(SELECT job_id FROM timeout_montador WHERE expirado = true)`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
