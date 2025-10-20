@@ -14,7 +14,7 @@ export function AdminJobManagement() {
   const [jobsTimeout, setJobsTimeout] = useState<any[]>([]);
   const [montadores, setMontadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [assigningJobId, setAssigningJobId] = useState<string | null>(null);
 
@@ -156,11 +156,26 @@ export function AdminJobManagement() {
       });
 
       await loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [AdminJobManagement] Erro ao atribuir montador', error);
+      
+      let errorMessage = 'Não foi possível atribuir o montador';
+      
+      if (error?.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      if (error?.code === '23503') {
+        errorMessage = 'Erro: Cliente não encontrado para este job';
+      } else if (error?.code === '23505') {
+        errorMessage = 'Erro: Já existe uma negociação ativa para este job';
+      } else if (error?.code === '22P02') {
+        errorMessage = 'Erro: Dados inválidos. Verifique o montador e o job selecionados';
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Não foi possível atribuir o montador',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -168,12 +183,21 @@ export function AdminJobManagement() {
     }
   };
 
-  const filteredMontadores = montadores.filter((m) => {
+  const getFilteredMontadores = (jobId: string) => {
+    const searchTerm = searchTerms[jobId] || '';
+    
+    // Só filtra se tiver pelo menos 3 caracteres
+    if (searchTerm.length < 3) {
+      return [];
+    }
+    
     const searchLower = searchTerm.toLowerCase();
-    const nome = m.profiles?.nome?.toLowerCase() || '';
-    const cpf = m.profiles?.documento?.toLowerCase() || '';
-    return nome.includes(searchLower) || cpf.includes(searchLower);
-  });
+    return montadores.filter((m) => {
+      const nome = m.profiles?.nome?.toLowerCase() || '';
+      const cpf = m.profiles?.documento?.toLowerCase() || '';
+      return nome.includes(searchLower) || cpf.includes(searchLower);
+    });
+  };
 
   if (loading) {
     return (
@@ -224,24 +248,34 @@ export function AdminJobManagement() {
                         <Badge variant="destructive">Timeout</Badge>
                       </div>
 
-                      <div className="space-y-3">
+                       <div className="space-y-3">
                         <div>
                           <label className="text-sm font-medium mb-2 block">
-                            Buscar montador por nome ou CPF:
+                            Buscar montador por nome ou CPF (mínimo 3 caracteres):
                           </label>
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
-                              placeholder="Digite nome ou CPF..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
+                              placeholder="Digite pelo menos 3 caracteres..."
+                              value={searchTerms[job.id] || ''}
+                              onChange={(e) => setSearchTerms({ ...searchTerms, [job.id]: e.target.value })}
                               className="pl-9"
                             />
                           </div>
+                          {searchTerms[job.id] && searchTerms[job.id].length > 0 && searchTerms[job.id].length < 3 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Digite mais {3 - searchTerms[job.id].length} caractere(s)
+                            </p>
+                          )}
                         </div>
 
                         <div className="max-h-60 overflow-y-auto space-y-2">
-                          {filteredMontadores.slice(0, 5).map((montador) => (
+                          {getFilteredMontadores(job.id).length === 0 && searchTerms[job.id] && searchTerms[job.id].length >= 3 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Nenhum montador encontrado
+                            </p>
+                          )}
+                          {getFilteredMontadores(job.id).slice(0, 5).map((montador) => (
                             <div
                               key={montador.id}
                               className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"

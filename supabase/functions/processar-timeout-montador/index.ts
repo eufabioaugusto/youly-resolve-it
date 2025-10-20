@@ -65,15 +65,19 @@ serve(async (req) => {
         continue;
       }
 
-      // Marcar negociação como timeout expirado
-      const { error: updateNegociacaoError } = await supabaseAdmin
-        .from('negociacoes')
-        .update({ timeout_expirado: true })
-        .eq('id', timeout.negociacao_id);
+      // Marcar negociação como timeout expirado (se existir)
+      if (timeout.negociacao_id) {
+        const { error: updateNegociacaoError } = await supabaseAdmin
+          .from('negociacoes')
+          .update({ timeout_expirado: true })
+          .eq('id', timeout.negociacao_id);
 
-      if (updateNegociacaoError) {
-        console.error(`❌ [processar-timeout-montador] Erro ao marcar negociação`, updateNegociacaoError);
-        continue;
+        if (updateNegociacaoError) {
+          console.error(`❌ [processar-timeout-montador] Erro ao marcar negociação`, updateNegociacaoError);
+          continue;
+        }
+      } else {
+        console.log(`⚠️ [processar-timeout-montador] Timeout ${timeout.id} sem negociacao_id associada`);
       }
 
       // Buscar admins
