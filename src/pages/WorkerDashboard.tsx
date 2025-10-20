@@ -53,6 +53,7 @@ const WorkerDashboard = () => {
   const [carteira, setCarteira] = useState(null);
   const [candidaturas, setCandidaturas] = useState<string[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingAvailableJobs, setLoadingAvailableJobs] = useState(true);
   const [loadingJobId, setLoadingJobId] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [activeTab, setActiveTab] = useState('available');
@@ -164,6 +165,7 @@ const WorkerDashboard = () => {
     if (!montadorProfile) return;
 
     try {
+      setLoadingAvailableJobs(true);
       console.log('Fetching available jobs for montador:', montadorProfile.id);
       
       // Buscar jobs em aberto
@@ -289,6 +291,8 @@ const WorkerDashboard = () => {
         description: "Não foi possível carregar os pedidos disponíveis. Tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setLoadingAvailableJobs(false);
     }
   };
 
@@ -712,10 +716,10 @@ const WorkerDashboard = () => {
                 <CardDescription>Encontre novos trabalhos na sua região</CardDescription>
               </CardHeader>
               <CardContent>
-                {loadingData ? (
+                {loadingAvailableJobs ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Carregando trabalhos...</p>
+                    <p className="text-muted-foreground">Buscando trabalhos próximos a você...</p>
                   </div>
                 ) : availableJobs.length === 0 ? (
                   <div className="text-center py-8">
