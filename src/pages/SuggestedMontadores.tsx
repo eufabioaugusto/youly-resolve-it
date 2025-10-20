@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NivelBadge } from "@/components/ui/nivel-badge";
-import { Star, MapPin, Clock, Users, ArrowLeft, CheckCircle } from "lucide-react";
+import { Star, MapPin, Clock, Users, ArrowLeft, CheckCircle, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useNegociacoes } from "@/hooks/useNegociacoes";
+import { calcularDistanciaEntreCeps } from "@/lib/geoUtils";
 
 interface Montador {
   id: string;
@@ -22,8 +23,10 @@ interface Montador {
   score?: number;
   nivel_gamificacao?: string;
   is_premium?: boolean;
+  distancia_km?: number;
   profiles: {
     nome: string;
+    endereco?: any;
   } | null;
 }
 
@@ -66,7 +69,10 @@ const SuggestedMontadores = () => {
       // Buscar montadores ativos
       const { data: montadoresData, error: montadoresError } = await supabase
         .from("montadores")
-        .select("id, user_id, avaliacao_media, projetos_realizados, especialidades, preco_hora, foto_perfil_url, nivel_gamificacao, is_premium")
+        .select(`
+          id, user_id, avaliacao_media, projetos_realizados, especialidades, 
+          preco_hora, foto_perfil_url, nivel_gamificacao, is_premium
+        `)
         .eq("status", "ativo")
         .order("avaliacao_media", { ascending: false })
         .order("projetos_realizados", { ascending: false });
@@ -85,7 +91,7 @@ const SuggestedMontadores = () => {
         
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
-          .select("user_id, nome")
+          .select("user_id, nome, endereco")
           .in("user_id", userIds);
 
         if (profilesError) {
@@ -95,15 +101,37 @@ const SuggestedMontadores = () => {
 
         console.log("Profiles carregados:", profilesData);
 
-        // Combinar dados dos montadores com seus profiles
-        const montadoresWithProfiles = montadoresData.map((montador) => {
-          const profile = profilesData?.find((p) => p.user_id === montador.user_id);
-          console.log(`Montador ${montador.id} - Profile encontrado:`, profile);
-          return {
-            ...montador,
-            profiles: profile || { nome: "Montador" },
-          };
-        });
+        // Combinar dados dos montadores com seus profiles e calcular distâncias
+        const montadoresWithProfiles = await Promise.all(
+          montadoresData.map(async (montador) => {
+            const profile = profilesData?.find((p) => p.user_id === montador.user_id);
+            let distancia_km: number | undefined;
+
+            // Calcular distância se ambos CEPs estiverem disponíveis
+            const jobCep = (jobData.endereco as any)?.cep;
+            const montadorCep = (profile?.endereco as any)?.cep;
+
+            if (jobCep && montadorCep) {
+              try {
+                distancia_km = await calcularDistanciaEntreCeps(jobCep, montadorCep);
+                console.log(`Distância ${profile?.nome}: ${distancia_km}km`);
+              } catch (error) {
+                console.error(`Erro ao calcular distância para ${profile?.nome}:`, error);
+              }
+            }
+
+            return {
+              ...montador,
+              profiles: profile || { nome: "Montador" },
+              distancia_km,
+            };
+          })
+        );
+
+        // Filtrar montadores dentro do raio de 20km
+        const montadoresDentroRaio = montadoresWithProfiles.filter(
+          (m) => m.distancia_km === undefined || m.distancia_km <= 20
+        );
 
         // 🎯 Sistema de Scoring Inteligente
         const calculateMontadorScore = (montador: any, jobCategoria: string) => {
@@ -148,14 +176,38 @@ const SuggestedMontadores = () => {
           return score;
         };
 
-        // Calcular score para cada montador
-        const montadoresComScore = montadoresWithProfiles.map((montador) => ({
-          ...montador,
-          score: calculateMontadorScore(montador, jobData.categoria || ''),
-        }));
+        // Calcular score para cada montador (somente os dentro do raio)
+        const montadoresComScore = montadoresDentroRaio.map((montador) => {
+          let score = calculateMontadorScore(montador, jobData.categoria || '');
+          
+          // Bonus por proximidade (peso adicional de até 15 pontos)
+          if (montador.distancia_km !== undefined) {
+            const bonusProximidade = Math.max(0, 15 - montador.distancia_km);
+            score += bonusProximidade;
+          }
+          
+          return {
+            ...montador,
+            score,
+          };
+        });
 
-        // Ordenar por score (maior para menor)
-        const montadoresSorted = montadoresComScore.sort((a, b) => b.score - a.score);
+        // Ordenar por distância primeiro, depois por score
+        const montadoresSorted = montadoresComScore.sort((a, b) => {
+          // Priorizar montadores com distância conhecida
+          if (a.distancia_km !== undefined && b.distancia_km === undefined) return -1;
+          if (a.distancia_km === undefined && b.distancia_km !== undefined) return 1;
+          
+          // Se ambos têm distância, ordenar por distância
+          if (a.distancia_km !== undefined && b.distancia_km !== undefined) {
+            if (a.distancia_km !== b.distancia_km) {
+              return a.distancia_km - b.distancia_km;
+            }
+          }
+          
+          // Caso contrário, ordenar por score
+          return b.score - a.score;
+        });
 
         // Pegar os TOP 5 montadores (não apenas 3!)
         const topMontadores = montadoresSorted.slice(0, 5);
@@ -362,19 +414,29 @@ const SuggestedMontadores = () => {
 
           {/* Suggested Montadores */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-black text-center mb-6">Montadores Recomendados</h2>
-
             {montadores.length === 0 ? (
-              <Card className="shadow-glow border-0 bg-white text-center p-8">
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">Ainda não há montadores disponíveis em sua região.</p>
-                  <p className="text-sm text-muted-foreground">
-                    Seu pedido foi enviado e montadores poderão se candidatar através da plataforma. Você será
-                    notificado assim que houver candidaturas.
-                  </p>
-                </CardContent>
-              </Card>
+              <>
+                <h2 className="text-2xl font-bold text-black text-center mb-4">
+                  Seu trabalho foi publicado!
+                </h2>
+                <Card className="shadow-glow border-0 bg-white text-center p-8">
+                  <CardContent>
+                    <p className="text-lg text-foreground mb-4">
+                      Os montadores têm até <strong>40 minutos</strong> para enviar orçamento.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Se não ocorrer, nosso time vai cuidar pra você. Você será notificado assim que houver candidaturas.
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
             ) : (
+              <>
+                <h2 className="text-2xl font-bold text-black text-center mb-6">Montadores Recomendados</h2>
+              </>
+            )}
+
+            {montadores.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {montadores.map((montador) => (
                   <Card key={montador.id} className="shadow-glow border-0 bg-white relative">
@@ -404,6 +466,14 @@ const SuggestedMontadores = () => {
 
                         {/* Stats em coluna */}
                         <div className="w-full space-y-2">
+                          {montador.distancia_km !== undefined && (
+                            <div className="flex items-center justify-center gap-1 text-sm bg-primary/10 py-1 px-3 rounded-full">
+                              <Navigation className="w-4 h-4 text-primary" />
+                              <span className="font-semibold text-primary">
+                                {montador.distancia_km.toFixed(1)} km
+                              </span>
+                            </div>
+                          )}
                           <div className="flex items-center justify-center gap-1 text-sm">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-foreground">{montador.avaliacao_media.toFixed(1)}</span>
