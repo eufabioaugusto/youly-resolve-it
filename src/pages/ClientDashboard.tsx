@@ -588,19 +588,9 @@ const ClientDashboard = () => {
                       </>
                     )}
                     
-                    {/* Jobs com negociação ativa (mesmo que status seja 'aberto') */}
-                    {job.negociacoes && job.negociacoes.length > 0 && job.status !== 'aguardando_pagamento' && job.status !== 'pago' && !job.ordem_servico && (
-                      <Button 
-                        onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
-                        className="bg-gradient-primary hover:shadow-glow"
-                        size="sm"
-                      >
-                        Ver Negociação
-                      </Button>
-                    )}
-                    
-                    {/* Jobs em negociação (status explícito) */}
-                    {(job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') && (
+                    {/* Jobs com negociação ativa (qualquer status exceto pago/com OS) */}
+                    {((job.negociacoes && job.negociacoes.length > 0) || job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') 
+                      && job.status !== 'pago' && !job.ordem_servico && (
                       <Button 
                         onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
                         className="bg-gradient-primary hover:shadow-glow"
