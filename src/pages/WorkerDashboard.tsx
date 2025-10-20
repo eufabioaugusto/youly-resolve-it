@@ -172,7 +172,7 @@ const WorkerDashboard = () => {
         .select('*')
         .eq('status', 'aberto')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(50); // Buscar mais para filtrar depois
 
       if (jobsError) {
         console.error('Error fetching jobs:', jobsError);
@@ -182,8 +182,28 @@ const WorkerDashboard = () => {
       console.log('Jobs found:', jobsData?.length || 0);
 
       if (jobsData && jobsData.length > 0) {
+        // 🔥 Buscar timeouts para filtrar jobs expirados
+        const jobIds = jobsData.map(job => job.id);
+        const { data: timeoutsData } = await supabase
+          .from('timeout_montador')
+          .select('job_id, expirado')
+          .in('job_id', jobIds);
+
+        // 🚫 Filtrar jobs com timeout expirado
+        const jobsSemTimeout = jobsData.filter(job => {
+          const timeout = timeoutsData?.find(t => t.job_id === job.id);
+          return !timeout || !timeout.expirado;
+        });
+
+        console.log('Jobs after timeout filter:', jobsSemTimeout.length);
+
+        if (jobsSemTimeout.length === 0) {
+          setAvailableJobs([]);
+          return;
+        }
+
         // Buscar dados dos clientes
-        const clienteIds = jobsData.map(job => job.cliente_id);
+        const clienteIds = jobsSemTimeout.map(job => job.cliente_id);
         console.log('Fetching cliente data for ids:', clienteIds);
         
         const { data: clientesData, error: clientesError } = await supabase
@@ -202,7 +222,7 @@ const WorkerDashboard = () => {
         
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('user_id, nome')
+          .select('user_id, nome, endereco')
           .in('user_id', userIds);
 
         if (profilesError) {
@@ -210,21 +230,51 @@ const WorkerDashboard = () => {
           throw profilesError;
         }
 
-        // Combinar os dados
-        const jobsWithClientes = jobsData.map(job => {
+        // 🎯 Filtrar por distância (20km) se montador tiver CEP
+        const montadorCep = (profile?.endereco as any)?.cep;
+        let jobsWithClientes = jobsSemTimeout.map(job => {
           const cliente = clientesData?.find(c => c.id === job.cliente_id);
-          const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
+          const clienteProfile = profilesData?.find(p => p.user_id === cliente?.user_id);
           
           return {
             ...job,
             clientes: {
               ...cliente,
               profiles: {
-                nome: profile?.nome || 'Cliente'
+                nome: clienteProfile?.nome || 'Cliente',
+                endereco: clienteProfile?.endereco
               }
             }
           };
         });
+
+        // 📍 Aplicar filtro de distância (20km)
+        if (montadorCep) {
+          const { calcularDistanciaEntreCeps } = await import('@/lib/geoUtils');
+          
+          const jobsComDistancia = await Promise.all(
+            jobsWithClientes.map(async (job) => {
+              try {
+                const jobCep = (job.endereco as any)?.cep;
+                if (!jobCep) return { ...job, distancia: 9999 }; // Job sem CEP fica no final
+                
+                const distancia = await calcularDistanciaEntreCeps(montadorCep, jobCep);
+                return { ...job, distancia };
+              } catch (error) {
+                console.error('Erro ao calcular distância:', error);
+                return { ...job, distancia: 9999 };
+              }
+            })
+          );
+
+          // Filtrar apenas jobs até 20km
+          jobsWithClientes = jobsComDistancia
+            .filter(job => job.distancia <= 20)
+            .sort((a, b) => (a.distancia || 0) - (b.distancia || 0))
+            .slice(0, 10); // Limitar a 10 resultados
+
+          console.log('Jobs após filtro de distância (20km):', jobsWithClientes.length);
+        }
 
         console.log('Combined jobs data:', jobsWithClientes);
         setAvailableJobs(jobsWithClientes);

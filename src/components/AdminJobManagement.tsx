@@ -27,52 +27,57 @@ export function AdminJobManagement() {
     setLoading(true);
 
     try {
-      // Buscar jobs com timeout expirado
+      // 🎯 Buscar timeouts expirados e sem resposta
       const { data: timeoutData, error: timeoutError } = await supabase
         .from('timeout_montador')
-        .select(`
-          *,
-          negociacoes (
-            *,
-            jobs (*),
-            montadores (*)
-          )
-        `)
+        .select('*')
         .eq('expirado', true)
         .eq('respondido', false)
         .order('created_at', { ascending: false });
 
       if (timeoutError) throw timeoutError;
 
-      // Buscar profiles dos montadores dos timeouts separadamente
-      let timeoutDataComProfiles = timeoutData;
+      // 📦 Buscar dados dos jobs relacionados aos timeouts
+      let timeoutDataComJobs: any[] = [];
       if (timeoutData && timeoutData.length > 0) {
-        const montadorIds = timeoutData
-          .map(t => t.negociacoes?.montadores?.user_id)
-          .filter(Boolean);
+        const jobIds = timeoutData.map(t => t.job_id).filter(Boolean);
         
-        if (montadorIds.length > 0) {
-          const { data: profilesData } = await supabase
-            .from('profiles')
+        if (jobIds.length > 0) {
+          const { data: jobsData } = await supabase
+            .from('jobs')
             .select('*')
-            .in('user_id', montadorIds);
-          
+            .in('id', jobIds);
+
+          // Buscar clientes dos jobs
+          const clienteIds = jobsData?.map(j => j.cliente_id).filter(Boolean) || [];
+          let clientesData: any[] = [];
+          if (clienteIds.length > 0) {
+            const { data: cData } = await supabase
+              .from('clientes')
+              .select('*')
+              .in('id', clienteIds);
+            clientesData = cData || [];
+          }
+
           // Combinar dados
-          timeoutDataComProfiles = timeoutData.map(t => ({
-            ...t,
-            negociacoes: t.negociacoes ? {
-              ...t.negociacoes,
-              montadores: t.negociacoes.montadores ? {
-                ...t.negociacoes.montadores,
-                profiles: profilesData?.find(p => p.user_id === t.negociacoes?.montadores?.user_id)
-              } : null
-            } : null
-          }));
+          timeoutDataComJobs = timeoutData.map(t => {
+            const job = jobsData?.find(j => j.id === t.job_id);
+            const cliente = clientesData.find(c => c.id === job?.cliente_id);
+            
+            return {
+              ...t,
+              jobs: job,
+              negociacoes: {
+                jobs: job,
+                clientes: cliente
+              }
+            };
+          }).filter(t => t.jobs); // Apenas timeouts com jobs válidos
         }
       }
 
-      console.log('✅ [AdminJobManagement] Jobs com timeout:', timeoutDataComProfiles);
-      setJobsTimeout(timeoutDataComProfiles || []);
+      console.log('✅ [AdminJobManagement] Jobs com timeout expirado:', timeoutDataComJobs);
+      setJobsTimeout(timeoutDataComJobs || []);
 
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
