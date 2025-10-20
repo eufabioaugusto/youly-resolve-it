@@ -456,7 +456,7 @@ const ClientDashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold text-lg">{job.descricao}</h3>
-                        {job.status === 'aberto' && jobTimeouts[job.id]?.expirado && (
+                        {jobTimeouts[job.id]?.expirado && (
                           <Badge variant="secondary" className="text-xs">
                             <Users className="w-3 h-3 mr-1" />
                             Time Youly
