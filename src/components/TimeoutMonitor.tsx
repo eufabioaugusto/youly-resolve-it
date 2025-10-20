@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { AlertCircle, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TimeoutMonitorProps {
   dataExpiracao: string;
@@ -63,10 +69,28 @@ export function TimeoutMonitor({ dataExpiracao, onExpired }: TimeoutMonitorProps
 
   return (
     <div className="space-y-2">
-      <Badge variant={critico ? "destructive" : "secondary"} className={`text-lg px-4 py-2 ${critico ? 'animate-pulse' : ''}`}>
-        <Clock className="w-4 h-4 mr-2" />
-        Tempo restante: {formatarTempo(tempoRestante)}
-      </Badge>
+      <div className="flex justify-end">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge 
+                variant={critico ? "destructive" : "secondary"} 
+                className={`text-xs px-2 py-1 cursor-help ${critico ? 'animate-pulse' : ''}`}
+              >
+                <Clock className="w-3 h-3 mr-1" />
+                {formatarTempo(tempoRestante)}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs" side="left">
+              <p className="text-sm">
+                Esse é o tempo para o serviço ficar disponível aos entregadores. 
+                Não se preocupe, se não houver nenhum candidato sua solicitação vai direto 
+                para nosso time de montadores. Basta aguardar.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       
       {critico && (
         <Alert variant="destructive">
