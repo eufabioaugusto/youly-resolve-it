@@ -59,14 +59,22 @@ export function AdminJobManagement() {
             clientesData = cData || [];
           }
 
-          // Buscar montadores já atribuídos aos jobs
-          const montadorIds = jobsData?.map(j => j.montador_id).filter(Boolean) || [];
+          // Buscar negociações dos jobs para pegar montadores atribuídos
+          const { data: negociacoesData } = await supabase
+            .from('negociacoes')
+            .select('*')
+            .in('job_id', jobIds)
+            .eq('status', 'pendente')
+            .order('created_at', { ascending: false });
+
+          // Buscar montadores das negociações
+          const montadorIdsNeg = negociacoesData?.map(n => n.montador_id).filter(Boolean) || [];
           let montadoresAtribuidosData: any[] = [];
-          if (montadorIds.length > 0) {
+          if (montadorIdsNeg.length > 0) {
             const { data: mData } = await supabase
               .from('montadores')
               .select('*')
-              .in('id', montadorIds);
+              .in('id', montadorIdsNeg);
             montadoresAtribuidosData = mData || [];
 
             // Buscar profiles dos montadores atribuídos
@@ -88,12 +96,16 @@ export function AdminJobManagement() {
           timeoutDataComJobs = timeoutData.map(t => {
             const job = jobsData?.find(j => j.id === t.job_id);
             const cliente = clientesData.find(c => c.id === job?.cliente_id);
-            const montadorAtribuido = montadoresAtribuidosData.find(m => m.id === job?.montador_id);
+            const negociacaoJob = negociacoesData?.find(n => n.job_id === job?.id);
+            const montadorAtribuido = negociacaoJob 
+              ? montadoresAtribuidosData.find(m => m.id === negociacaoJob.montador_id)
+              : null;
             
             return {
               ...t,
               jobs: job,
               montador_atribuido: montadorAtribuido,
+              negociacao_atual: negociacaoJob,
               negociacoes: {
                 jobs: job,
                 clientes: cliente
