@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, Clock, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface TimeoutMonitorProps {
   dataExpiracao: string;
@@ -69,27 +68,31 @@ export function TimeoutMonitor({ dataExpiracao, onExpired }: TimeoutMonitorProps
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+      <div className="flex justify-end items-center gap-2">
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <div className="flex items-center gap-1 cursor-help">
               <Badge 
                 variant={critico ? "destructive" : "secondary"} 
-                className={`text-xs px-2 py-1 cursor-help ${critico ? 'animate-pulse' : ''}`}
+                className={`text-xs px-2 py-1 ${critico ? 'animate-pulse' : ''}`}
               >
                 <Clock className="w-3 h-3 mr-1" />
                 {formatarTempo(tempoRestante)}
               </Badge>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs" side="left">
-              <p className="text-sm">
+              <Info className="w-3 h-3 text-muted-foreground" />
+            </div>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80" side="left" align="start">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">⏰ Sobre o Cronômetro</h4>
+              <p className="text-sm text-muted-foreground">
                 Esse é o tempo para o serviço ficar disponível aos entregadores. 
                 Não se preocupe, se não houver nenhum candidato sua solicitação vai direto 
                 para nosso time de montadores. Basta aguardar.
               </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
       </div>
       
       {critico && (
