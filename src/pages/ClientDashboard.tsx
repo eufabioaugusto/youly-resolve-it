@@ -456,12 +456,20 @@ const ClientDashboard = () => {
                           <TimeoutMonitor
                             dataExpiracao={jobTimeouts[job.id].data_expiracao}
                             onExpired={() => {
+                              // Atualizar estado local para marcar como expirado
+                              setJobTimeouts(prev => ({
+                                ...prev,
+                                [job.id]: {
+                                  ...prev[job.id],
+                                  expirado: true
+                                }
+                              }));
+                              
                               toast({
                                 title: "Tempo esgotado!",
                                 description: "Nenhum montador respondeu. Nossa equipe vai cuidar disso para você.",
                                 variant: "destructive"
                               });
-                              fetchJobs();
                             }}
                           />
                         </div>
