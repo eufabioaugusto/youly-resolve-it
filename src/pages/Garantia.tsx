@@ -22,7 +22,7 @@ const Garantia = () => {
           <Shield className="h-16 w-16 mx-auto mb-6 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Garantia Youly</h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            90 dias de proteção em todos os serviços realizados pela plataforma
+            30 dias de proteção em todos os serviços realizados pela plataforma
           </p>
         </div>
       </section>
@@ -32,8 +32,9 @@ const Garantia = () => {
           <div className="bg-primary/5 border-l-4 border-primary p-6 rounded-lg mb-12">
             <h2 className="text-2xl font-bold mb-4">O que é a Garantia Youly?</h2>
             <p className="text-muted-foreground">
-              A Garantia Youly é uma proteção de 90 dias que cobre todos os serviços de montagem realizados através da nossa plataforma. 
-              Se algo der errado com a montagem dentro desse período, o montador retorna para corrigir sem custo adicional para você.
+              A Garantia Youly é uma proteção de 30 dias que cobre todos os serviços de montagem realizados através da
+              nossa plataforma. Se algo der errado com a montagem dentro desse período, o montador retorna para corrigir
+              sem custo adicional para você.
             </p>
           </div>
 
@@ -105,9 +106,7 @@ const Garantia = () => {
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
             Nossa equipe está pronta para ajudar com qualquer questão relacionada à garantia dos serviços
           </p>
-          <Button size="lg">
-            Falar com Suporte
-          </Button>
+          <Button size="lg">Falar com Suporte</Button>
         </div>
       </section>
     </div>
