@@ -118,6 +118,15 @@ export function AdminFinanceiro() {
       console.log('✅ [AdminFinanceiro] Pagamentos carregados', pagamentosCompletos);
       setPagamentos(pagamentosCompletos || []);
 
+      // Calcular total movimentado por montador a partir dos pagamentos PAGOS
+      const totalMovimentadoPorMontador = new Map<string, number>();
+      pagamentosCompletos?.forEach(pag => {
+        if (pag.status === 'pago' && pag.montador_id) {
+          const atual = totalMovimentadoPorMontador.get(pag.montador_id) || 0;
+          totalMovimentadoPorMontador.set(pag.montador_id, atual + (pag.valor_montador || 0));
+        }
+      });
+
       // Buscar montadores com carteiras
       console.log('🔍 [AdminFinanceiro] Buscando montadores e carteiras...');
       const { data: montadoresData, error: montadoresError } = await supabase
@@ -143,12 +152,13 @@ export function AdminFinanceiro() {
           .select('*')
           .in('user_id', userIds);
         
-        // Combinar dados
-        montadoresComProfiles = montadoresData.map(m => ({
-          ...m,
-          profiles: profilesData?.find(p => p.user_id === m.user_id)
-        }));
-      }
+      // Combinar dados e adicionar total_movimentado calculado
+      montadoresComProfiles = montadoresData.map(m => ({
+        ...m,
+        profiles: profilesData?.find(p => p.user_id === m.user_id),
+        total_movimentado_calculado: totalMovimentadoPorMontador.get(m.id) || 0
+      }));
+    }
 
       if (montadoresError) throw montadoresError;
 
@@ -176,7 +186,7 @@ export function AdminFinanceiro() {
       return [
         m.profiles?.nome || 'N/A',
         m.profiles?.documento || 'N/A',
-        m.total_valor_movimentado?.toFixed(2) || '0.00',
+        (m.total_movimentado_calculado || 0).toFixed(2),
         carteira?.saldo_disponivel?.toFixed(2) || '0.00',
         carteira?.saldo_em_processamento?.toFixed(2) || '0.00',
         carteira?.total_sacado?.toFixed(2) || '0.00',
@@ -365,7 +375,7 @@ export function AdminFinanceiro() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      R$ {montador.total_valor_movimentado?.toFixed(2) || '0.00'}
+                      R$ {(montador.total_movimentado_calculado || 0).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right text-success">
                       R$ {carteira?.saldo_disponivel?.toFixed(2) || '0.00'}
