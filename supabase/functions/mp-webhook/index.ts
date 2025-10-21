@@ -354,10 +354,7 @@ serve(async (req) => {
         // Buscar negociação aceita para este job
         const { data: negociacao, error: negError } = await supabase
           .from('negociacoes')
-          .select(`
-            *,
-            montadores!inner(id, user_id, profiles:user_id!inner(nome))
-          `)
+          .select('*')
           .eq('job_id', pagamentoDB.job_id)
           .eq('status', 'aceito')
           .single();
@@ -365,6 +362,25 @@ serve(async (req) => {
         if (negError || !negociacao) {
           console.error('❌ Negociação não encontrada para criar OS:', negError);
         } else {
+          // Buscar dados do montador
+          const { data: montadorData } = await supabase
+            .from('montadores')
+            .select('user_id')
+            .eq('id', negociacao.montador_id)
+            .single();
+
+          let montadorNome = 'Montador';
+          if (montadorData) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('nome')
+              .eq('user_id', montadorData.user_id)
+              .single();
+            
+            if (profileData) {
+              montadorNome = profileData.nome;
+            }
+          }
           // Gerar código de validação
           const { data: codigoData } = await supabase.rpc('gerar_codigo_validacao');
           const codigoValidacao = codigoData || 'XXXXXX';
@@ -414,7 +430,7 @@ serve(async (req) => {
               const periodoAgendamento = negociacao.data_selecionada_montador?.periodo || 'A definir';
 
               // Enviar SMS de agendamento
-              const mensagemSMS = `✅ Montagem agendada!\nMontador: ${negociacao.montadores.profiles.nome}\nData: ${dataAgendamento} - ${periodoAgendamento}\nCódigo: ${codigoValidacao}\nGuarde este código para iniciar a montagem.`;
+              const mensagemSMS = `✅ Montagem agendada!\nMontador: ${montadorNome}\nData: ${dataAgendamento} - ${periodoAgendamento}\nCódigo: ${codigoValidacao}\nGuarde este código para iniciar a montagem.`;
 
               const { error: smsError } = await supabase.functions.invoke('sms-send', {
                 body: {
