@@ -1,37 +1,18 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Shield, Search, UserCog, Mail, Phone } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Search, UserCog, Mail, Phone } from 'lucide-react';
 
 export function AdminUserManagement() {
-  const { users, loading, promoteToAdmin } = useAdmin();
+  const { users, loading } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
-  const [promoting, setPromoting] = useState<string | null>(null);
 
   const filteredUsers = users.filter(user => 
     user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.telefone?.includes(searchTerm)
   );
-
-  const handlePromote = async (userId: string) => {
-    setPromoting(userId);
-    await promoteToAdmin(userId);
-    setPromoting(null);
-  };
 
   const getRoleBadge = (role: string) => {
     const variants: Record<string, { label: string; variant: any }> = {
@@ -64,7 +45,7 @@ export function AdminUserManagement() {
             Gestão de Usuários
           </CardTitle>
           <CardDescription>
-            Gerencie permissões e promova usuários a administradores
+            Visualize todos os usuários cadastrados e seus níveis de acesso
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,52 +88,6 @@ export function AdminUserManagement() {
                         </p>
                       </div>
                     </div>
-
-                    {user.role !== 'admin' && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            disabled={promoting === user.user_id}
-                          >
-                            <Shield className="w-4 h-4 mr-2" />
-                            {promoting === user.user_id ? 'Promovendo...' : 'Promover a Admin'}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Promover a Administrador?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja promover <strong>{user.nome}</strong> a administrador?
-                              <br /><br />
-                              Administradores têm acesso total ao sistema, incluindo:
-                              <ul className="list-disc pl-5 mt-2 space-y-1">
-                                <li>Gestão de todos os jobs e usuários</li>
-                                <li>Acesso a informações financeiras</li>
-                                <li>Capacidade de promover outros usuários</li>
-                                <li>Liberação de pagamentos</li>
-                              </ul>
-                              <br />
-                              Esta ação será registrada no sistema.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handlePromote(user.user_id)}>
-                              Confirmar Promoção
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-
-                    {user.role === 'admin' && (
-                      <Badge variant="outline" className="text-xs">
-                        <Shield className="w-3 h-3 mr-1" />
-                        Administrador
-                      </Badge>
-                    )}
                   </div>
                 </CardContent>
               </Card>
