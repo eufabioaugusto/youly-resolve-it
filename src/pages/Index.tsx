@@ -59,10 +59,10 @@ const Index = () => {
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="#" className="text-sm hover:text-primary transition-colors">
+            <Link to="/como-funciona" className="text-sm hover:text-primary transition-colors">
               Como funciona
             </Link>
-            <Link to="#" className="text-sm hover:text-primary transition-colors">
+            <Link to="/para-empresas" className="text-sm hover:text-primary transition-colors">
               Para empresas
             </Link>
             <Link to="/login" className="text-sm hover:text-primary transition-colors">
@@ -83,14 +83,14 @@ const Index = () => {
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col space-y-6 mt-8">
                 <Link
-                  to="#"
+                  to="/como-funciona"
                   className="text-lg hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Como funciona
                 </Link>
                 <Link
-                  to="#"
+                  to="/para-empresas"
                   className="text-lg hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -462,17 +462,17 @@ const Index = () => {
               <h4 className="font-semibold mb-4">Para clientes</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/como-contratar" className="hover:text-primary">
                     Como contratar
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/garantia" className="hover:text-primary">
                     Garantia
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/suporte" className="hover:text-primary">
                     Suporte
                   </Link>
                 </li>
@@ -483,17 +483,17 @@ const Index = () => {
               <h4 className="font-semibold mb-4">Para montadores</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/como-trabalhar" className="hover:text-primary">
                     Como trabalhar
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/requisitos" className="hover:text-primary">
                     Requisitos
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/pagamentos" className="hover:text-primary">
                     Pagamentos
                   </Link>
                 </li>
@@ -504,17 +504,17 @@ const Index = () => {
               <h4 className="font-semibold mb-4">Empresa</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/sobre-nos" className="hover:text-primary">
                     Sobre nós
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/termos-uso" className="hover:text-primary">
                     Termos de uso
                   </Link>
                 </li>
                 <li>
-                  <Link to="#" className="hover:text-primary">
+                  <Link to="/privacidade" className="hover:text-primary">
                     Privacidade
                   </Link>
                 </li>
