@@ -1,9 +1,7 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { Card, CardContent } from '@/components/ui/card';
-import { Wrench } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -14,38 +12,26 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const location = useLocation();
-  const [redirected, setRedirected] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user && !redirected) {
-      setRedirected(true);
-    }
-  }, [user, authLoading, redirected]);
-
+  // Durante o loading inicial, não redirecionar - apenas esperar
   if (authLoading || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-96 shadow-glow border-0">
-          <CardContent className="p-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center animate-pulse">
-                <Wrench className="w-6 h-6 text-primary-foreground" />
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Carregando...</h2>
-            <p className="text-muted-foreground">Verificando sua conta</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
+        </div>
       </div>
     );
   }
 
+  // Só redireciona para login após confirmar que NÃO há usuário
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Verificar role e redirecionar se necessário
   if (requiredRole && profile?.role !== requiredRole) {
-    // Redirecionar para dashboard correto baseado no role
     const dashboardMap = {
       'client': '/cliente',
       'montador': '/montador', 
