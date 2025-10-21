@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Download, Filter, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { DollarSign, Download, Filter, TrendingUp } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 export function AdminFinanceiro() {
@@ -17,7 +17,6 @@ export function AdminFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState('all');
   const [filtroPeriodo, setFiltroPeriodo] = useState('30');
-  const [expandedMontador, setExpandedMontador] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -129,18 +128,6 @@ export function AdminFinanceiro() {
         `)
         .order('total_valor_movimentado', { ascending: false });
       
-      // Buscar transações de todas as carteiras
-      const carteiraIds = montadoresData?.map(m => {
-        const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
-        return carteira?.id;
-      }).filter(Boolean) || [];
-      
-      const { data: transacoesData } = await supabase
-        .from('carteira_transacoes')
-        .select('*')
-        .in('carteira_id', carteiraIds)
-        .order('created_at', { ascending: false });
-      
       console.log('📊 [AdminFinanceiro] Montadores carregados:', montadoresData?.length);
       console.log('💰 [AdminFinanceiro] Exemplo carteira:', montadoresData?.[0]?.carteira);
       console.log('🔍 [AdminFinanceiro] Tipo carteira:', Array.isArray(montadoresData?.[0]?.carteira) ? 'ARRAY' : 'OBJECT');
@@ -156,17 +143,11 @@ export function AdminFinanceiro() {
           .select('*')
           .in('user_id', userIds);
         
-        // Combinar dados incluindo transações
-        montadoresComProfiles = montadoresData.map(m => {
-          const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
-          const transacoesDoMontador = transacoesData?.filter(t => t.carteira_id === carteira?.id) || [];
-          
-          return {
-            ...m,
-            profiles: profilesData?.find(p => p.user_id === m.user_id),
-            transacoes: transacoesDoMontador
-          };
-        });
+        // Combinar dados
+        montadoresComProfiles = montadoresData.map(m => ({
+          ...m,
+          profiles: profilesData?.find(p => p.user_id === m.user_id)
+        }));
       }
 
       if (montadoresError) throw montadoresError;
@@ -368,85 +349,37 @@ export function AdminFinanceiro() {
                 <TableHead className="text-right">Em Processo</TableHead>
                 <TableHead className="text-right">Sacado</TableHead>
                 <TableHead className="text-center">Projetos</TableHead>
-                <TableHead className="text-center">Transações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {montadores.map((montador) => {
                 const carteira = Array.isArray(montador.carteira) ? montador.carteira[0] : montador.carteira;
-                const isExpanded = expandedMontador === montador.id;
-                const transacoes = montador.transacoes || [];
-                
                 return (
-                  <>
-                    <TableRow key={montador.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{montador.profiles?.nome}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {montador.profiles?.documento}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        R$ {montador.total_valor_movimentado?.toFixed(2) || '0.00'}
-                      </TableCell>
-                      <TableCell className="text-right text-success">
-                        R$ {carteira?.saldo_disponivel?.toFixed(2) || '0.00'}
-                      </TableCell>
-                      <TableCell className="text-right text-warning">
-                        R$ {carteira?.saldo_em_processamento?.toFixed(2) || '0.00'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        R$ {carteira?.total_sacado?.toFixed(2) || '0.00'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary">{montador.projetos_realizados || 0}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setExpandedMontador(isExpanded ? null : montador.id)}
-                        >
-                          {transacoes.length} transações
-                          {isExpanded ? <ChevronUp className="ml-1 w-4 h-4" /> : <ChevronDown className="ml-1 w-4 h-4" />}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    {isExpanded && transacoes.length > 0 && (
-                      <TableRow key={`${montador.id}-transacoes`}>
-                        <TableCell colSpan={7} className="bg-muted/30 p-4">
-                          <div className="space-y-2">
-                            <h4 className="font-semibold text-sm mb-3">Histórico de Transações</h4>
-                            {transacoes.map((transacao: any) => (
-                              <div key={transacao.id} className="flex items-center justify-between border-b pb-2">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">{transacao.descricao}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {new Date(transacao.created_at).toLocaleString('pt-BR')}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className={`text-sm font-semibold ${
-                                    transacao.tipo.includes('bloqueio') || transacao.tipo.includes('saque') 
-                                      ? 'text-destructive' 
-                                      : 'text-success'
-                                  }`}>
-                                    {transacao.tipo.includes('bloqueio') || transacao.tipo.includes('saque') ? '-' : '+'}
-                                    R$ {Number(transacao.valor).toFixed(2)}
-                                  </p>
-                                  <Badge variant="outline" className="text-xs mt-1">
-                                    {transacao.tipo}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
+                  <TableRow key={montador.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{montador.profiles?.nome}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {montador.profiles?.documento}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      R$ {montador.total_valor_movimentado?.toFixed(2) || '0.00'}
+                    </TableCell>
+                    <TableCell className="text-right text-success">
+                      R$ {carteira?.saldo_disponivel?.toFixed(2) || '0.00'}
+                    </TableCell>
+                    <TableCell className="text-right text-warning">
+                      R$ {carteira?.saldo_em_processamento?.toFixed(2) || '0.00'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      R$ {carteira?.total_sacado?.toFixed(2) || '0.00'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="secondary">{montador.projetos_realizados || 0}</Badge>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
             </TableBody>
