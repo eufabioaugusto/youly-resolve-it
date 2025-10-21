@@ -245,14 +245,27 @@ serve(async (req) => {
       );
     }
 
-    // Criar pagamento no banco
+    // Calcular comissão da plataforma (20%) e valor do montador (80%)
+    const valorTotal = Number(valor);
+    const comissaoPlataforma = valorTotal * 0.20;
+    const valorMontador = valorTotal * 0.80;
+    
+    console.log('Valores calculados:', {
+      valorTotal,
+      comissaoPlataforma,
+      valorMontador
+    });
+
+    // Criar pagamento no banco com valores já calculados
     const { data: pagamento, error: pagamentoError } = await supabase
       .from('pagamentos')
       .insert({
         job_id: jobId,
         montador_id: montadorId,
         cliente_id: clienteData.id,
-        valor_total: valor,
+        valor_total: valorTotal,
+        valor_montador: valorMontador,
+        comissao_plataforma: comissaoPlataforma,
         status: 'pendente',
         metodo: 'cartao'
       })
