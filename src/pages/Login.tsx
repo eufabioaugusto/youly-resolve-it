@@ -1,4 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,21 +11,29 @@ import { Wrench, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
 const Login = () => {
-  const { signIn, user } = useAuth();
-  const { profile } = useProfile();
+  const { signIn, user, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect se já estiver logado
-  if (user && profile) {
+  // Pegar a URL de onde o usuário veio (ou dashboard padrão)
+  const from = (location.state as any)?.from || null;
+
+  // Só redireciona se tiver usuário E perfil carregados
+  // E NÃO está carregando
+  if (user && profile && !authLoading && !profileLoading) {
     const dashboardMap = {
       'client': '/cliente',
       'montador': '/montador',
       'admin': '/admin'
     };
-    return <Navigate to={dashboardMap[profile.role] || '/'} replace />;
+    
+    // Redirecionar para onde estava OU para o dashboard
+    const destination = from || dashboardMap[profile.role] || '/';
+    return <Navigate to={destination} replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,14 +48,14 @@ const Login = () => {
         description: error.message,
         variant: "destructive"
       });
+      setLoading(false);
     } else {
       toast({
         title: "Login realizado com sucesso!",
-        description: "Redirecionando para seu dashboard..."
+        description: "Redirecionando..."
       });
+      // Não precisa setLoading(false) - o Navigate vai ocorrer
     }
-    
-    setLoading(false);
   };
 
   return (

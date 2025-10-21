@@ -13,21 +13,20 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   const { profile, loading: profileLoading } = useProfile();
   const location = useLocation();
 
-  // Durante o loading inicial, não redirecionar - apenas esperar
+  // Durante o loading, apenas mostrar um spinner discreto
+  // NÃO redirecionar para nada - manter a URL atual
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
-        </div>
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   // Só redireciona para login após confirmar que NÃO há usuário
+  // E salva a URL atual para retornar depois
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   // Verificar role e redirecionar se necessário
