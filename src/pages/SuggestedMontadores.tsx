@@ -333,9 +333,17 @@ const SuggestedMontadores = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Buscando os melhores montadores para você...</p>
+        <div className="text-center">
+          <div className="relative inline-block mb-6">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-primary mx-auto"></div>
+            <Navigation className="w-6 h-6 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            Buscando os melhores montadores para você
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Analisando distância, experiência e especialidades...
+          </p>
         </div>
       </div>
     );
