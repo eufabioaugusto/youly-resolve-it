@@ -602,12 +602,12 @@ const WorkerDashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Horas trabalhadas</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total faturado</p>
                   <p className="text-2xl font-bold">
-                    {montadorProfile?.horas_trabalhadas || 0}h
+                    R$ {montadorProfile?.total_valor_movimentado?.toFixed(2) || '0,00'}
                   </p>
                 </div>
-                <TimeClock className="h-8 w-8 text-purple-600" />
+                <DollarSign className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
