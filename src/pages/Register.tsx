@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 import { Wrench, ArrowLeft, Users, Wrench as WorkerIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { phoneMask, cpfMask, removeMask, validateCPF, validatePhone } from "@/lib/masks";
@@ -26,7 +27,7 @@ const Register = () => {
     name: '', email: '', phone: '', password: ''
   });
   const [workerForm, setWorkerForm] = useState({
-    name: '', email: '', phone: '', cpf: '', hourlyRate: '', bio: '', password: ''
+    name: '', email: '', phone: '', cpf: '', hourlyRate: '', bio: '', password: '', documentoFoto: null as File | null
   });
   
   useEffect(() => {
@@ -76,46 +77,57 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Validações básicas
+    // Validações
     if (!validatePhone(workerForm.phone)) {
-      toast({
-        title: "Telefone inválido",
-        description: "Por favor, insira um telefone válido.",
-        variant: "destructive"
-      });
+      toast({ title: "Telefone inválido", variant: "destructive" });
       setLoading(false);
       return;
     }
 
     if (!validateCPF(workerForm.cpf)) {
-      toast({
-        title: "CPF inválido",
-        description: "Por favor, insira um CPF válido.",
-        variant: "destructive"
-      });
+      toast({ title: "CPF inválido", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
+    if (!workerForm.documentoFoto) {
+      toast({ title: "Envie a foto do documento", variant: "destructive" });
       setLoading(false);
       return;
     }
     
-    const { error } = await signUp(workerForm.email, workerForm.password, {
-      role: 'montador', 
-      nome: workerForm.name,
-      telefone: removeMask(workerForm.phone),
-      documento: removeMask(workerForm.cpf),
-      preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
-      bio: workerForm.bio
-    });
-    
-    if (error) {
+    try {
+      // Upload do documento
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
+      
+      if (uploadError) throw uploadError;
+
+      const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
+
+      // Criar conta
+      const { error } = await signUp(workerForm.email, workerForm.password, {
+        role: 'montador', 
+        nome: workerForm.name,
+        telefone: removeMask(workerForm.phone),
+        documento: removeMask(workerForm.cpf),
+        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
+        bio: workerForm.bio,
+        documento_foto_url: documentoUrl
+      });
+      
+      if (error) throw error;
+
+      toast({
+        title: "Cadastro realizado!",
+        description: "Em até 48 horas você receberá a resposta sobre sua conta."
+      });
+    } catch (error: any) {
       toast({
         title: "Erro ao criar conta",
         description: error.message,
         variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu e-mail para confirmar a conta."
       });
     }
     
@@ -296,6 +308,18 @@ const Register = () => {
                       onChange={(e) => setWorkerForm({...workerForm, bio: e.target.value})}
                       className="resize-none"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="documento-foto">Foto do Documento (RG ou CNH) *</Label>
+                    <Input 
+                      id="documento-foto" 
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setWorkerForm({...workerForm, documentoFoto: e.target.files?.[0] || null})}
+                      className="h-11"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">Envie uma foto clara do seu documento para aprovação</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="worker-password">Senha</Label>

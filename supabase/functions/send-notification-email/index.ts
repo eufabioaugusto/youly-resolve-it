@@ -8,6 +8,9 @@ import { NovaCandidaturaEmail } from './_templates/nova-candidatura.tsx'
 import { OrcamentoEnviadoEmail } from './_templates/orcamento-enviado.tsx'
 import { PagamentoAprovadoEmail } from './_templates/pagamento-aprovado.tsx'
 import { PesquisaSatisfacaoEmail } from './_templates/pesquisa-satisfacao-react.tsx'
+import { CadastroPendenteEmail } from './_templates/cadastro-pendente.tsx'
+import { CadastroAprovadoEmail } from './_templates/cadastro-aprovado.tsx'
+import { CadastroReprovadoEmail } from './_templates/cadastro-reprovado.tsx'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 
@@ -17,7 +20,7 @@ const corsHeaders = {
 }
 
 interface NotificationEmailRequest {
-  type: 'novo_job' | 'nova_candidatura' | 'orcamento_enviado' | 'pagamento' | 'pesquisa_satisfacao'
+  type: 'novo_job' | 'nova_candidatura' | 'orcamento_enviado' | 'pagamento' | 'pesquisa_satisfacao' | 'cadastro_pendente' | 'cadastro_aprovado' | 'cadastro_reprovado'
   to: string
   data: any
 }
@@ -109,6 +112,35 @@ Deno.serve(async (req) => {
           })
         )
         subject = '⭐ Avalie seu serviço - Sua opinião é importante'
+        break
+
+      case 'cadastro_pendente':
+        html = await renderAsync(
+          React.createElement(CadastroPendenteEmail, {
+            montadorNome: data.montadorNome,
+          })
+        )
+        subject = '✅ Cadastro efetuado com sucesso - Aguardando aprovação'
+        break
+
+      case 'cadastro_aprovado':
+        html = await renderAsync(
+          React.createElement(CadastroAprovadoEmail, {
+            montadorNome: data.montadorNome,
+            loginUrl: data.loginUrl || 'https://youly.app/login',
+          })
+        )
+        subject = '🎉 Parabéns! Sua conta foi aprovada'
+        break
+
+      case 'cadastro_reprovado':
+        html = await renderAsync(
+          React.createElement(CadastroReprovadoEmail, {
+            montadorNome: data.montadorNome,
+            motivo: data.motivo,
+          })
+        )
+        subject = '📋 Atualização sobre seu cadastro'
         break
 
       default:

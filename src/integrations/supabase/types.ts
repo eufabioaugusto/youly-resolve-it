@@ -321,20 +321,25 @@ export type Database = {
       }
       montadores: {
         Row: {
+          aprovado_por: string | null
           avaliacao_media: number | null
           badges: string[] | null
           chave_pix: string | null
           created_at: string
+          data_aprovacao: string | null
+          documento_foto_url: string | null
           documentos: Json | null
           especialidades: string[] | null
           foto_perfil_url: string | null
           horas_trabalhadas: number | null
           id: string
           is_premium: boolean | null
+          motivo_reprovacao: string | null
           nivel_gamificacao: string | null
           preco_hora: number | null
           projetos_realizados: number | null
           status: string | null
+          status_cadastro: string | null
           taxa_conclusao_sucesso: number
           total_assistencias: number
           total_avaliacoes: number | null
@@ -343,20 +348,25 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aprovado_por?: string | null
           avaliacao_media?: number | null
           badges?: string[] | null
           chave_pix?: string | null
           created_at?: string
+          data_aprovacao?: string | null
+          documento_foto_url?: string | null
           documentos?: Json | null
           especialidades?: string[] | null
           foto_perfil_url?: string | null
           horas_trabalhadas?: number | null
           id?: string
           is_premium?: boolean | null
+          motivo_reprovacao?: string | null
           nivel_gamificacao?: string | null
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          status_cadastro?: string | null
           taxa_conclusao_sucesso?: number
           total_assistencias?: number
           total_avaliacoes?: number | null
@@ -365,20 +375,25 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aprovado_por?: string | null
           avaliacao_media?: number | null
           badges?: string[] | null
           chave_pix?: string | null
           created_at?: string
+          data_aprovacao?: string | null
+          documento_foto_url?: string | null
           documentos?: Json | null
           especialidades?: string[] | null
           foto_perfil_url?: string | null
           horas_trabalhadas?: number | null
           id?: string
           is_premium?: boolean | null
+          motivo_reprovacao?: string | null
           nivel_gamificacao?: string | null
           preco_hora?: number | null
           projetos_realizados?: number | null
           status?: string | null
+          status_cadastro?: string | null
           taxa_conclusao_sucesso?: number
           total_assistencias?: number
           total_avaliacoes?: number | null
@@ -962,6 +977,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aprovar_cadastro_montador: {
+        Args: { p_admin_user_id: string; p_montador_id: string }
+        Returns: boolean
+      }
       aprovar_saque: {
         Args: { p_admin_user_id: string; p_saque_id: string }
         Returns: boolean
@@ -1015,6 +1034,14 @@ export type Database = {
       promote_to_admin: { Args: { target_user_id: string }; Returns: boolean }
       recusar_saque: {
         Args: { p_admin_user_id: string; p_saque_id: string }
+        Returns: boolean
+      }
+      reprovar_cadastro_montador: {
+        Args: {
+          p_admin_user_id: string
+          p_montador_id: string
+          p_motivo: string
+        }
         Returns: boolean
       }
     }
