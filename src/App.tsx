@@ -84,6 +84,11 @@ const App = () => (
                   <CentralNegociacao />
                 </ProtectedRoute>
               } />
+              <Route path="/cliente/os/:osId" element={
+                <ProtectedRoute requiredRole="client">
+                  <OrdemServicoPage />
+                </ProtectedRoute>
+              } />
               <Route path="/montador" element={
                 <ProtectedRoute requiredRole="montador">
                   <WorkerDashboard />

@@ -60,7 +60,7 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
     const metadata = notification.metadata || {};
     
     // Determinar se é montador ou cliente baseado na URL atual
-    const userRole = window.location.pathname.includes('/montador') ? 'montador' : 'client';
+    const userRole = window.location.pathname.includes('/montador') ? 'montador' : 'cliente';
     
     // Navegar baseado no metadata e tipo de usuário
     if (metadata.ordem_servico_id) {
@@ -68,22 +68,28 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
       if (userRole === 'montador') {
         navigate(`/montador/os/${metadata.ordem_servico_id}`);
       } else {
-        navigate(`/client/ordem-servico/${metadata.ordem_servico_id}`);
+        navigate(`/cliente/os/${metadata.ordem_servico_id}`);
+      }
+    } else if (metadata.negociacao_id && metadata.job_id) {
+      // Negociação específica - ir para a página da negociação
+      if (userRole === 'montador') {
+        navigate(`/montador/negociacao/${metadata.job_id}`);
+      } else {
+        navigate(`/cliente/negociacao/${metadata.job_id}`);
       }
     } else if (metadata.negociacao_id) {
-      // Negociação - abrir na aba de negociações
+      // Negociação sem job_id - ir para lista de negociações
       if (userRole === 'montador') {
-        navigate('/montador#negotiations');
+        navigate('/montador/negociacoes');
       } else {
-        navigate('/client#negotiations');
+        navigate('/cliente/negociacoes');
       }
     } else if (metadata.job_id) {
-      // Job específico
+      // Job específico - ir para a negociação desse job
       if (userRole === 'montador') {
-        navigate('/montador#available');
+        navigate(`/montador/negociacao/${metadata.job_id}`);
       } else {
-        // Cliente vai para "Meus Pedidos"
-        navigate('/client#my-jobs');
+        navigate(`/cliente/negociacao/${metadata.job_id}`);
       }
     } else if (metadata.saque_id) {
       // Saque - só montadores têm carteira
@@ -96,23 +102,23 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
       if (userRole === 'montador') {
         navigate('/montador#wallet');
       } else {
-        navigate('/client#payments');
+        navigate('/cliente');
       }
     } else {
       // Fallback baseado no tipo de notificação
       switch (notification.tipo) {
         case 'negociacao':
           if (userRole === 'montador') {
-            navigate('/montador#negotiations');
+            navigate('/montador/negociacoes');
           } else {
-            navigate('/client#negotiations');
+            navigate('/cliente/negociacoes');
           }
           break;
         case 'pagamento':
           if (userRole === 'montador') {
             navigate('/montador#wallet');
           } else {
-            navigate('/client#payments');
+            navigate('/cliente');
           }
           break;
         case 'saque':
@@ -120,9 +126,9 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
           break;
         case 'job':
           if (userRole === 'montador') {
-            navigate('/montador#available');
+            navigate('/trabalhos-disponiveis');
           } else {
-            navigate('/client#my-jobs');
+            navigate('/cliente');
           }
           break;
         case 'sistema':
@@ -130,14 +136,14 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
           if (userRole === 'montador') {
             navigate('/montador');
           } else {
-            navigate('/client');
+            navigate('/cliente');
           }
           break;
         default:
           if (userRole === 'montador') {
             navigate('/montador');
           } else {
-            navigate('/client');
+            navigate('/cliente');
           }
           break;
       }
