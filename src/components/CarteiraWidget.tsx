@@ -6,10 +6,13 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DollarSign, Clock, ArrowUp, ArrowDown, Wallet, CreditCard } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DollarSign, Clock, ArrowUp, ArrowDown, Wallet, CreditCard, Info } from 'lucide-react';
 import { useCarteira } from '@/hooks/useCarteira';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency, formatDate } from '@/lib/utils';
+
+const VALOR_MINIMO_SAQUE = 300;
 
 export function CarteiraWidget() {
   const { carteira, transacoes, loading, solicitarSaque } = useCarteira();
@@ -30,6 +33,16 @@ export function CarteiraWidget() {
     }
 
     const valor = parseFloat(valorSaque);
+    
+    if (valor < VALOR_MINIMO_SAQUE) {
+      toast({
+        title: "Erro",
+        description: `O valor mínimo para saque é ${formatCurrency(VALOR_MINIMO_SAQUE)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (valor <= 0 || valor > (carteira?.saldo_disponivel || 0)) {
       toast({
         title: "Erro",
@@ -120,6 +133,14 @@ export function CarteiraWidget() {
           </div>
         </div>
 
+        {/* Informações importantes */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Valor mínimo para saque:</strong> {formatCurrency(VALOR_MINIMO_SAQUE)}
+          </AlertDescription>
+        </Alert>
+
         {/* Data de liberação */}
         {carteira.data_liberacao_admin && carteira.saldo_em_processamento > 0 && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -140,7 +161,7 @@ export function CarteiraWidget() {
             <DialogTrigger asChild>
               <Button 
                 className="flex-1"
-                disabled={carteira.saldo_disponivel <= 0}
+                disabled={carteira.saldo_disponivel < VALOR_MINIMO_SAQUE}
               >
                 <ArrowUp className="h-4 w-4 mr-2" />
                 Sacar
@@ -160,9 +181,10 @@ export function CarteiraWidget() {
                     value={valorSaque}
                     onChange={(e) => setValorSaque(e.target.value)}
                     max={carteira.saldo_disponivel}
+                    min={VALOR_MINIMO_SAQUE}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Disponível: {formatCurrency(carteira.saldo_disponivel)}
+                    Disponível: {formatCurrency(carteira.saldo_disponivel)} | Mínimo: {formatCurrency(VALOR_MINIMO_SAQUE)}
                   </p>
                 </div>
                 
