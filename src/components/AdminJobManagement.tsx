@@ -3,20 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Search, AlertCircle, Clock, CheckCircle, Wrench } from 'lucide-react';
+import { Search, AlertCircle, Clock, CheckCircle, Wrench, PlayCircle, Package } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 export function AdminJobManagement() {
   const { toast } = useToast();
+  const [jobsDisponiveis, setJobsDisponiveis] = useState<any[]>([]);
+  const [jobsEmAndamento, setJobsEmAndamento] = useState<any[]>([]);
+  const [jobsFinalizados, setJobsFinalizados] = useState<any[]>([]);
   const [jobsTimeout, setJobsTimeout] = useState<any[]>([]);
   const [montadores, setMontadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
-  const [selectedFilter, setSelectedFilter] = useState('all');
   const [assigningJobId, setAssigningJobId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('disponiveis');
 
   useEffect(() => {
     loadData();
@@ -27,6 +31,150 @@ export function AdminJobManagement() {
     setLoading(true);
 
     try {
+      // 1. JOBS DISPONÍVEIS (abertos e sem timeout expirado)
+      const { data: jobsDisponiveisData, error: disponiveisError } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('status', 'aberto')
+        .order('created_at', { ascending: false });
+
+      if (disponiveisError) throw disponiveisError;
+
+      // Buscar timeouts para filtrar apenas jobs SEM timeout expirado
+      const jobIdsDisponiveis = jobsDisponiveisData?.map(j => j.id) || [];
+      let jobsDisponiveisFiltrados = jobsDisponiveisData || [];
+      
+      if (jobIdsDisponiveis.length > 0) {
+        const { data: timeoutsData } = await supabase
+          .from('timeout_montador')
+          .select('job_id, expirado')
+          .in('job_id', jobIdsDisponiveis);
+
+        jobsDisponiveisFiltrados = jobsDisponiveisData.filter(job => {
+          const timeout = timeoutsData?.find(t => t.job_id === job.id);
+          return !timeout || !timeout.expirado;
+        });
+
+        // Enriquecer com dados do cliente
+        const clienteIdsDisp = jobsDisponiveisFiltrados.map(j => j.cliente_id);
+        if (clienteIdsDisp.length > 0) {
+          const { data: clientesData } = await supabase
+            .from('clientes')
+            .select('id, user_id')
+            .in('id', clienteIdsDisp);
+
+          const userIdsDisp = clientesData?.map(c => c.user_id) || [];
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('user_id, nome')
+            .in('user_id', userIdsDisp);
+
+          jobsDisponiveisFiltrados = jobsDisponiveisFiltrados.map(job => ({
+            ...job,
+            cliente: {
+              ...clientesData?.find(c => c.id === job.cliente_id),
+              profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === job.cliente_id)?.user_id)
+            }
+          }));
+        }
+      }
+
+      setJobsDisponiveis(jobsDisponiveisFiltrados);
+
+      // 2. JOBS EM ANDAMENTO
+      const { data: jobsAndamentoData, error: andamentoError } = await supabase
+        .from('jobs')
+        .select('*')
+        .in('status', ['em_negociacao', 'pago'])
+        .order('created_at', { ascending: false });
+
+      if (andamentoError) throw andamentoError;
+
+      // Enriquecer jobs em andamento
+      let jobsAndamentoEnriquecidos = jobsAndamentoData || [];
+      if (jobsAndamentoData && jobsAndamentoData.length > 0) {
+        const clienteIdsAnd = jobsAndamentoData.map(j => j.cliente_id);
+        const montadorIdsAnd = jobsAndamentoData.map(j => j.montador_id).filter(Boolean);
+
+        const [{ data: clientesData }, { data: montadoresData }] = await Promise.all([
+          supabase.from('clientes').select('id, user_id').in('id', clienteIdsAnd),
+          montadorIdsAnd.length > 0 
+            ? supabase.from('montadores').select('id, user_id').in('id', montadorIdsAnd)
+            : Promise.resolve({ data: [] })
+        ]);
+
+        const allUserIds = [
+          ...(clientesData?.map(c => c.user_id) || []),
+          ...(montadoresData?.map(m => m.user_id) || [])
+        ];
+
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', allUserIds);
+
+        jobsAndamentoEnriquecidos = jobsAndamentoData.map(job => ({
+          ...job,
+          cliente: {
+            ...clientesData?.find(c => c.id === job.cliente_id),
+            profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === job.cliente_id)?.user_id)
+          },
+          montador: job.montador_id ? {
+            ...montadoresData?.find(m => m.id === job.montador_id),
+            profile: profilesData?.find(p => p.user_id === montadoresData?.find(m => m.id === job.montador_id)?.user_id)
+          } : null
+        }));
+      }
+
+      setJobsEmAndamento(jobsAndamentoEnriquecidos);
+
+      // 3. JOBS FINALIZADOS
+      const { data: jobsFinalizadosData, error: finalizadosError } = await supabase
+        .from('ordem_servico')
+        .select('*, jobs(*)')
+        .in('status', ['concluida', 'concluida_com_assistencia', 'pendente_pecas'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (finalizadosError) throw finalizadosError;
+
+      // Enriquecer OS finalizadas
+      let osFinalizadasEnriquecidas = jobsFinalizadosData || [];
+      if (jobsFinalizadosData && jobsFinalizadosData.length > 0) {
+        const clienteIdsFin = jobsFinalizadosData.map(os => os.cliente_id);
+        const montadorIdsFin = jobsFinalizadosData.map(os => os.montador_id);
+
+        const [{ data: clientesData }, { data: montadoresData }] = await Promise.all([
+          supabase.from('clientes').select('id, user_id').in('id', clienteIdsFin),
+          supabase.from('montadores').select('id, user_id').in('id', montadorIdsFin)
+        ]);
+
+        const allUserIds = [
+          ...(clientesData?.map(c => c.user_id) || []),
+          ...(montadoresData?.map(m => m.user_id) || [])
+        ];
+
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', allUserIds);
+
+        osFinalizadasEnriquecidas = jobsFinalizadosData.map(os => ({
+          ...os,
+          cliente: {
+            ...clientesData?.find(c => c.id === os.cliente_id),
+            profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === os.cliente_id)?.user_id)
+          },
+          montador: {
+            ...montadoresData?.find(m => m.id === os.montador_id),
+            profile: profilesData?.find(p => p.user_id === montadoresData?.find(m => m.id === os.montador_id)?.user_id)
+          }
+        }));
+      }
+
+      setJobsFinalizados(osFinalizadasEnriquecidas);
+
+      // 4. JOBS COM TIMEOUT (código existente)
       // 🎯 Buscar timeouts expirados e sem resposta
       const { data: timeoutData, error: timeoutError } = await supabase
         .from('timeout_montador')
@@ -280,25 +428,122 @@ export function AdminJobManagement() {
     );
   }
 
+  const renderJobCard = (job: any, tipo: 'disponivel' | 'andamento' | 'finalizado') => {
+    return (
+      <Card key={job.id}>
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h4 className="font-semibold">{tipo === 'finalizado' ? job.jobs?.descricao : job.descricao}</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Cliente: {job.cliente?.profile?.nome || 'Cliente'}
+                </p>
+                {job.montador && (
+                  <p className="text-sm text-muted-foreground">
+                    Montador: {job.montador.profile?.nome || 'Montador'}
+                  </p>
+                )}
+              </div>
+              <Badge variant={
+                tipo === 'disponivel' ? 'default' :
+                tipo === 'andamento' ? 'secondary' : 'outline'
+              }>
+                {tipo === 'disponivel' ? 'Disponível' :
+                 tipo === 'andamento' ? job.status === 'pago' ? 'Pago' : 'Em negociação' :
+                 job.status === 'concluida' ? 'Concluída' :
+                 job.status === 'concluida_com_assistencia' ? 'Com assistência' : 'Pendente peças'}
+              </Badge>
+            </div>
+            
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>📍 {(tipo === 'finalizado' ? job.jobs?.endereco : job.endereco)?.cidade}, {(tipo === 'finalizado' ? job.jobs?.endereco : job.endereco)?.estado}</p>
+              <p>💰 R$ {tipo === 'finalizado' ? job.jobs?.valor_estimado?.toFixed(2) : job.valor_estimado?.toFixed(2) || '0.00'}</p>
+              <p>📅 {new Date(job.created_at).toLocaleDateString('pt-BR')} às {new Date(job.created_at).toLocaleTimeString('pt-BR')}</p>
+              {tipo === 'finalizado' && job.garantia_ativa && (
+                <p className="text-success">🛡️ Garantia ativa</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-destructive" />
-            Jobs com Timeout Expirado
-          </CardTitle>
-          <CardDescription>
-            Montadores que não responderam em 40 minutos - atribuição manual necessária
-          </CardDescription>
+          <CardTitle>Gestão de Jobs</CardTitle>
+          <CardDescription>Visualize e gerencie todos os jobs da plataforma</CardDescription>
         </CardHeader>
         <CardContent>
-          {jobsTimeout.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
-              <p>Nenhum job com timeout expirado no momento</p>
-            </div>
-          ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="disponiveis">
+                <Package className="w-4 h-4 mr-2" />
+                Disponíveis ({jobsDisponiveis.length})
+              </TabsTrigger>
+              <TabsTrigger value="andamento">
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Em Andamento ({jobsEmAndamento.length})
+              </TabsTrigger>
+              <TabsTrigger value="finalizados">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Finalizados ({jobsFinalizados.length})
+              </TabsTrigger>
+              <TabsTrigger value="timeout">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Timeout ({jobsTimeout.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="disponiveis" className="mt-6">
+              {jobsDisponiveis.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-4" />
+                  <p>Nenhum job disponível no momento</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {jobsDisponiveis.map(job => renderJobCard(job, 'disponivel'))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="andamento" className="mt-6">
+              {jobsEmAndamento.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <PlayCircle className="w-12 h-12 mx-auto mb-4" />
+                  <p>Nenhum job em andamento no momento</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {jobsEmAndamento.map(job => renderJobCard(job, 'andamento'))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="finalizados" className="mt-6">
+              {jobsFinalizados.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4" />
+                  <p>Nenhum job finalizado no momento</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {jobsFinalizados.map(job => renderJobCard(job, 'finalizado'))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="timeout" className="mt-6">
+              {jobsTimeout.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+                  <p>Nenhum job com timeout expirado no momento</p>
+                </div>
+              ) : (
             <div className="space-y-4">
               {jobsTimeout.map((timeout) => {
                 const job = timeout.negociacoes?.jobs;
@@ -397,8 +642,10 @@ export function AdminJobManagement() {
                   </Card>
                 );
               })}
-            </div>
-          )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
