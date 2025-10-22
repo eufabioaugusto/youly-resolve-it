@@ -627,16 +627,6 @@ const ClientDashboard = () => {
                       </div>
                     )}
 
-                    {/* Botão de ver OS */}
-                    {job.ordem_servico && (
-                      <Button 
-                        onClick={() => navigate(`/cliente/os/${job.ordem_servico.id}`)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Ver Ordem de Serviço
-                      </Button>
-                    )}
                   </div>
                 </div>
               ))
