@@ -104,7 +104,7 @@ const Register = () => {
     }
     
     try {
-      // 1. Criar conta
+      // 1. Criar conta do montador
       const { error: signUpError } = await signUp(
         workerForm.email, 
         workerForm.password, 
@@ -119,44 +119,49 @@ const Register = () => {
       
       if (signUpError) throw signUpError;
 
-      // 2. Fazer login automático para ter autenticação
+      // 2. Fazer login temporário APENAS para upload (service_role seria melhor, mas não temos)
       const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
         email: workerForm.email,
         password: workerForm.password
       });
 
-      if (signInError) {
-        // Se erro for "Email not confirmed", ignorar e continuar
-        if (!signInError.message?.includes('Email not confirmed')) {
-          throw signInError;
-        }
-      }
+      if (signInError) throw signInError;
 
-      // 3. Se conseguiu fazer login, fazer upload do documento
-      if (sessionData?.user) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('profile-photos')
-          .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
-        
-        if (uploadError) throw uploadError;
-
-        const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
-
-        // 4. Atualizar o registro do montador com a URL do documento
-        const { error: updateError } = await supabase
-          .from('montadores')
-          .update({ documento_foto_url: documentoUrl })
-          .eq('user_id', sessionData.user.id);
-
-        if (updateError) throw updateError;
-
-        // 5. Fazer logout
+      // 3. Upload do documento
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
+      
+      if (uploadError) {
         await supabase.auth.signOut();
+        throw uploadError;
       }
+
+      const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
+
+      // 4. Atualizar o registro do montador
+      const { error: updateError } = await supabase
+        .from('montadores')
+        .update({ documento_foto_url: documentoUrl })
+        .eq('user_id', sessionData.user.id);
+
+      if (updateError) {
+        await supabase.auth.signOut();
+        throw updateError;
+      }
+
+      // 5. LOGOUT IMEDIATO antes de qualquer redirecionamento
+      await supabase.auth.signOut();
+
+      // 6. Resetar formulário
+      setWorkerForm({
+        name: '', email: '', phone: '', cpf: '', hourlyRate: '', password: '', documentoFoto: null
+      });
 
       toast({
         title: "Cadastro finalizado com sucesso!",
-        description: "Recebemos seu cadastro. Em até 48 horas você será notificado sobre sua conta."
+        description: "Recebemos seu cadastro. Em até 48 horas você será notificado sobre sua aprovação por e-mail.",
+        duration: 6000
       });
     } catch (error: any) {
       let errorMessage = error.message;

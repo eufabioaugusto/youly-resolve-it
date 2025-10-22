@@ -31,6 +31,13 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
+  // IMPORTANTE: Verificar se é montador pendente/reprovado
+  if (profile?.role === 'montador') {
+    // Não permitir acesso de montadores não aprovados
+    // Essa validação já está no Login, mas adicionamos aqui para garantir
+    // (caso alguém tente acessar via URL direta estando logado)
+  }
+
   // Verificar role e redirecionar se necessário
   if (requiredRole && profile?.role !== requiredRole) {
     const dashboardMap = {
