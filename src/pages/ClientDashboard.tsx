@@ -295,7 +295,7 @@ const ClientDashboard = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       aberto: { variant: "outline", text: "Em aberto", className: "bg-info/10 text-info border-info" },
-      em_negociacao: { variant: "default", text: "Em negociação", className: "bg-warning/20 text-warning-foreground" },
+      em_negociacao: { variant: "default", text: "Em negociação", className: "bg-warning/20 text-foreground" },
       aguardando_pagamento: { variant: "default", text: "Aguardando pagamento", className: "bg-warning text-warning-foreground" },
       pago: { variant: "default", text: "Pago", className: "bg-success text-success-foreground" },
       em_andamento: { variant: "default", text: "Em andamento", className: "bg-primary text-primary-foreground" },
