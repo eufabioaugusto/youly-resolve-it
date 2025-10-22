@@ -79,6 +79,11 @@ export function AdminUserManagement() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 hover:text-primary transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const numeroLimpo = user.telefone.replace(/\D/g, '');
+                              window.open(`https://wa.me/55${numeroLimpo}`, '_blank', 'noopener,noreferrer');
+                            }}
                           >
                             <Phone className="w-3 h-3" />
                             {user.telefone}
