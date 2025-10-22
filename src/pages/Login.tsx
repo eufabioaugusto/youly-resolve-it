@@ -18,7 +18,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // Pegar a URL de onde o usuário veio (ou dashboard padrão)
   const from = (location.state as any)?.from || null;
@@ -100,7 +99,6 @@ const Login = () => {
       }
 
       // Tudo OK - redirecionar para dashboard apropriado
-      setShouldRedirect(true);
       toast({
         title: "Login realizado com sucesso!",
         description: "Redirecionando..."
@@ -113,13 +111,7 @@ const Login = () => {
       };
       
       const destination = from || dashboardMap[userRole] || '/';
-      
-      // Pequeno delay para garantir que o signOut completou se houver
-      setTimeout(() => {
-        if (shouldRedirect) {
-          navigate(destination, { replace: true });
-        }
-      }, 100);
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error('Erro ao verificar status:', err);
       setLoading(false);
