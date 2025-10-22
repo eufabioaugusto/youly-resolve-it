@@ -18,6 +18,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // Pegar a URL de onde o usuário veio (ou dashboard padrão)
   const from = (location.state as any)?.from || null;
@@ -73,21 +74,25 @@ const Login = () => {
           if (montadorData) {
             if (montadorData.status_cadastro === 'pendente') {
               await signOut();
+              setLoading(false);
+              setEmail('');
+              setPassword('');
               toast({
                 title: "Cadastro pendente de aprovação",
                 description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
                 variant: "destructive"
               });
-              setLoading(false);
               return;
             } else if (montadorData.status_cadastro === 'reprovado') {
               await signOut();
+              setLoading(false);
+              setEmail('');
+              setPassword('');
               toast({
                 title: "Cadastro não aprovado",
                 description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado. Entre em contato com o suporte.",
                 variant: "destructive"
               });
-              setLoading(false);
               return;
             }
           }
@@ -95,6 +100,7 @@ const Login = () => {
       }
 
       // Tudo OK - redirecionar para dashboard apropriado
+      setShouldRedirect(true);
       toast({
         title: "Login realizado com sucesso!",
         description: "Redirecionando..."
@@ -107,7 +113,13 @@ const Login = () => {
       };
       
       const destination = from || dashboardMap[userRole] || '/';
-      navigate(destination, { replace: true });
+      
+      // Pequeno delay para garantir que o signOut completou se houver
+      setTimeout(() => {
+        if (shouldRedirect) {
+          navigate(destination, { replace: true });
+        }
+      }, 100);
     } catch (err) {
       console.error('Erro ao verificar status:', err);
       setLoading(false);
