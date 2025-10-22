@@ -22,7 +22,7 @@ export const CadastroAprovadoEmail = ({ montadorNome, loginUrl }: CadastroAprova
     <Preview>Parabéns! Sua conta foi aprovada - Youly</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>🎉 Parabéns! Sua Conta Foi Aprovada!</Heading>
+        <Heading style={h1}>Parabéns! Sua Conta Foi Aprovada!</Heading>
         
         <Text style={text}>
           Olá, {montadorNome}!

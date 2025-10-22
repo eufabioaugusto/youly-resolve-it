@@ -54,6 +54,29 @@ serve(async (req) => {
 
     const documentoUrl = urlData.publicUrl;
 
+    // Aguardar criação do montador (o trigger pode levar alguns ms)
+    let tentativas = 0;
+    let montadorCriado = false;
+    
+    while (tentativas < 10 && !montadorCriado) {
+      const { data: montadorExiste } = await supabase
+        .from('montadores')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
+      if (montadorExiste) {
+        montadorCriado = true;
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 300)); // Esperar 300ms
+        tentativas++;
+      }
+    }
+
+    if (!montadorCriado) {
+      throw new Error('Montador não foi criado pelo trigger. Verifique os triggers do banco.');
+    }
+
     // Atualizar montador com URL do documento
     const { error: updateError } = await supabase
       .from('montadores')

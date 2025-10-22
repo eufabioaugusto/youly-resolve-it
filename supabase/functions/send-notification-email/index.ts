@@ -127,10 +127,10 @@ Deno.serve(async (req) => {
         html = await renderAsync(
           React.createElement(CadastroAprovadoEmail, {
             montadorNome: data.montadorNome,
-            loginUrl: data.loginUrl || 'https://youly.app/login',
+            loginUrl: data.loginUrl || 'https://www.youly.com.br/login',
           })
         )
-        subject = '🎉 Parabéns! Sua conta foi aprovada'
+        subject = 'Parabéns! Sua conta foi aprovada'
         break
 
       case 'cadastro_reprovado':
