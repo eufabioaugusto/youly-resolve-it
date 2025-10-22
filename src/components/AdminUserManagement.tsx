@@ -74,10 +74,15 @@ export function AdminUserManagement() {
                       
                       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                         {user.telefone && (
-                          <div className="flex items-center gap-2">
+                          <a 
+                            href={`https://wa.me/55${user.telefone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 hover:text-primary transition-colors"
+                          >
                             <Phone className="w-3 h-3" />
                             {user.telefone}
-                          </div>
+                          </a>
                         )}
                         <div className="flex items-center gap-2">
                           <Mail className="w-3 h-3" />
