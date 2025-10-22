@@ -1,9 +1,7 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,38 +9,11 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const location = useLocation();
-  const { toast } = useToast();
 
-  // Verificar status do cadastro do montador
-  useEffect(() => {
-    const checkMontadorStatus = async () => {
-      if (user && profile && profile.role === 'montador' && !authLoading && !profileLoading) {
-        const { data: montadorData } = await supabase
-          .from('montadores')
-          .select('status_cadastro, motivo_reprovacao')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (montadorData && montadorData.status_cadastro !== 'aprovado') {
-          await signOut();
-          const message = montadorData.status_cadastro === 'pendente'
-            ? "Seu cadastro está pendente de aprovação. Você receberá um e-mail quando for aprovado."
-            : montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado. Entre em contato com o suporte.";
-          
-          toast({
-            title: "Acesso não autorizado",
-            description: message,
-            variant: "destructive"
-          });
-        }
-      }
-    };
-    
-    checkMontadorStatus();
-  }, [user, profile, authLoading, profileLoading]);
+  // Validação de status do montador é feita no login - não precisa aqui
 
   // Durante o loading, apenas mostrar um spinner discreto
   // NÃO redirecionar para nada - manter a URL atual
