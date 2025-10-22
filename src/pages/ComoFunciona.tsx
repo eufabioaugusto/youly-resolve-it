@@ -45,7 +45,8 @@ const ComoFunciona = () => {
                   <h3 className="text-2xl font-semibold">Publique seu Pedido</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Descreva o serviço de montagem que você precisa, anexe fotos dos produtos e informe suas datas disponíveis. É rápido e fácil!
+                  Descreva o serviço de montagem que você precisa, anexe fotos dos produtos e informe suas datas
+                  disponíveis. É rápido e fácil!
                 </p>
               </div>
             </div>
@@ -63,7 +64,8 @@ const ComoFunciona = () => {
                   <h3 className="text-2xl font-semibold">Receba Propostas</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Montadores verificados enviam propostas personalizadas para o seu serviço. Compare preços, avaliações e escolha o melhor profissional.
+                  Montadores verificados enviam propostas personalizadas para o seu serviço. Compare preços, avaliações
+                  e escolha o melhor profissional.
                 </p>
               </div>
             </div>
@@ -81,7 +83,8 @@ const ComoFunciona = () => {
                   <h3 className="text-2xl font-semibold">Agende e Pague</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  Confirme a data e horário com o montador escolhido. Pague de forma segura através da plataforma com PIX ou cartão de crédito.
+                  Confirme a data e horário com o montador escolhido. Pague de forma segura através da plataforma com
+                  PIX ou cartão de crédito.
                 </p>
               </div>
             </div>
@@ -99,7 +102,8 @@ const ComoFunciona = () => {
                   <h3 className="text-2xl font-semibold">Receba o Serviço</h3>
                 </div>
                 <p className="text-muted-foreground">
-                  O montador realiza o serviço na data agendada. Após a conclusão, você valida o trabalho e conta com 90 dias de garantia.
+                  O montador realiza o serviço na data agendada. Após a conclusão, você valida o trabalho e conta com
+                  até 60 dias de garantia.
                 </p>
               </div>
             </div>
@@ -121,7 +125,7 @@ const ComoFunciona = () => {
             <div className="bg-background p-6 rounded-lg">
               <h3 className="text-xl font-semibold mb-3">Garantia Estendida</h3>
               <p className="text-muted-foreground">
-                90 dias de garantia em todos os serviços. Se algo der errado, o montador retorna sem custo adicional.
+                60 dias de garantia em todos os serviços. Se algo der errado, o montador retorna sem custo adicional.
               </p>
             </div>
             <div className="bg-background p-6 rounded-lg">
@@ -138,9 +142,7 @@ const ComoFunciona = () => {
       <section className="py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Pronto para Começar?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Publique seu pedido agora e receba propostas em minutos
-          </p>
+          <p className="text-xl text-muted-foreground mb-8">Publique seu pedido agora e receba propostas em minutos</p>
           <Button size="lg" onClick={() => navigate("/register")}>
             Criar Conta Grátis
           </Button>
