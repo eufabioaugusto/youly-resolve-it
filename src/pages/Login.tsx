@@ -8,10 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Wrench, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, signOut, user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
   const location = useLocation();
@@ -21,6 +22,39 @@ const Login = () => {
 
   // Pegar a URL de onde o usuário veio (ou dashboard padrão)
   const from = (location.state as any)?.from || null;
+
+  // Verificar status do cadastro do montador após login
+  useEffect(() => {
+    const checkMontadorStatus = async () => {
+      if (user && profile && profile.role === 'montador' && !authLoading && !profileLoading) {
+        const { data: montadorData } = await supabase
+          .from('montadores')
+          .select('status_cadastro, motivo_reprovacao')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (montadorData) {
+          if (montadorData.status_cadastro === 'pendente') {
+            await signOut();
+            toast({
+              title: "Cadastro pendente de aprovação",
+              description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
+              variant: "destructive"
+            });
+          } else if (montadorData.status_cadastro === 'reprovado') {
+            await signOut();
+            toast({
+              title: "Cadastro não aprovado",
+              description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado. Entre em contato com o suporte.",
+              variant: "destructive"
+            });
+          }
+        }
+      }
+    };
+    
+    checkMontadorStatus();
+  }, [user, profile, authLoading, profileLoading]);
 
   // Só redireciona se tiver usuário E perfil carregados
   // E NÃO está carregando

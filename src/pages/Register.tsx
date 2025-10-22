@@ -144,8 +144,8 @@ const Register = () => {
       await supabase.auth.signOut();
 
       toast({
-        title: "Cadastro realizado!",
-        description: "Em até 48 horas você receberá a resposta sobre sua conta."
+        title: "Cadastro efetuado com sucesso!",
+        description: "Verifique seu e-mail para confirmar sua conta. Após a confirmação, seu cadastro será analisado pela nossa equipe."
       });
     } catch (error: any) {
       let errorMessage = error.message;
