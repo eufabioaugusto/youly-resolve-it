@@ -416,7 +416,7 @@ const ClientDashboard = () => {
             </Card>
           </Link>
 
-          <Link to="/central-negociacoes">
+          <Link to="/cliente/negociacoes">
             <Card className="shadow-glow hover:shadow-xl transition-all cursor-pointer border-0 bg-white h-full">
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="p-3 bg-gradient-primary rounded-lg">
