@@ -40,8 +40,8 @@ const Pagamentos = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-2">Cliente Realiza o Pagamento</h3>
                 <p className="text-muted-foreground">
-                  Quando o cliente aceita sua proposta, ele realiza o pagamento através da plataforma. 
-                  O valor fica retido em segurança até a conclusão do serviço.
+                  Quando o cliente aceita sua proposta, ele realiza o pagamento através da plataforma. O valor fica
+                  retido em segurança até a conclusão do serviço.
                 </p>
               </div>
             </div>
@@ -55,8 +55,8 @@ const Pagamentos = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-2">Você Executa o Serviço</h3>
                 <p className="text-muted-foreground">
-                  Realize a montagem com qualidade na data e horário agendados. Tire fotos do trabalho concluído 
-                  e solicite a validação do cliente através do código de validação.
+                  Realize a montagem com qualidade na data e horário agendados. Tire fotos do trabalho concluído e
+                  solicite a validação do cliente através do código de validação.
                 </p>
               </div>
             </div>
@@ -70,8 +70,8 @@ const Pagamentos = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-2">Cliente Valida o Trabalho</h3>
                 <p className="text-muted-foreground">
-                  O cliente confirma que o serviço foi realizado conforme o acordado. 
-                  Após a validação, o valor é liberado para sua carteira Youly.
+                  O cliente confirma que o serviço foi realizado conforme o acordado. Após a validação, o valor é
+                  liberado para sua carteira Youly.
                 </p>
               </div>
             </div>
@@ -85,8 +85,8 @@ const Pagamentos = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-2">Solicite o Saque</h3>
                 <p className="text-muted-foreground">
-                  Com o valor em sua carteira, você pode solicitar o saque a qualquer momento. 
-                  O pagamento é feito via PIX em até 48 horas úteis.
+                  Com o valor em sua carteira, você pode solicitar o saque a qualquer momento. O pagamento é feito via
+                  PIX em até 48 horas úteis.
                 </p>
               </div>
             </div>
@@ -103,8 +103,8 @@ const Pagamentos = () => {
               <div>
                 <h3 className="text-2xl font-semibold mb-3">Taxa da Plataforma</h3>
                 <p className="text-muted-foreground mb-4">
-                  A Youly cobra uma comissão de <strong>15%</strong> sobre o valor total de cada serviço concluído. 
-                  Esta taxa cobre:
+                  A Youly cobra uma comissão de <strong>20%</strong> sobre o valor total de cada serviço concluído. Esta
+                  taxa cobre:
                 </p>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>• Processamento de pagamentos</li>
@@ -119,9 +119,13 @@ const Pagamentos = () => {
             <div className="bg-primary/5 p-6 rounded-lg">
               <h4 className="font-semibold mb-2">Exemplo de Cálculo:</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>Valor do serviço: <strong>R$ 200,00</strong></p>
-                <p>Taxa da plataforma (15%): <strong>R$ 30,00</strong></p>
-                <p className="text-lg font-semibold text-primary">Você recebe: R$ 170,00</p>
+                <p>
+                  Valor do serviço: <strong>R$ 200,00</strong>
+                </p>
+                <p>
+                  Taxa da plataforma (20%): <strong>R$ 40,00</strong>
+                </p>
+                <p className="text-lg font-semibold text-primary">Você recebe: R$ 160,00</p>
               </div>
             </div>
           </div>
@@ -136,8 +140,8 @@ const Pagamentos = () => {
               <Clock className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-3">Saldo Disponível</h3>
               <p className="text-muted-foreground">
-                Valores de serviços concluídos e validados ficam disponíveis para saque imediato. 
-                Você controla quando quer receber.
+                Valores de serviços concluídos e validados ficam disponíveis para saque dentro de 03 dias. Você controla
+                quando quer receber.
               </p>
             </div>
 
@@ -145,8 +149,8 @@ const Pagamentos = () => {
               <Shield className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-3">Saldo Bloqueado</h3>
               <p className="text-muted-foreground">
-                Valores de serviços concluídos mas ainda dentro do período de garantia (90 dias) 
-                ficam retidos como garantia de qualidade.
+                Valores de serviços concluídos mas ainda dentro do período de garantia (60 dias) podem ser estornados no
+                caso de cancelamento pelo cliente.
               </p>
             </div>
           </div>
@@ -156,15 +160,21 @@ const Pagamentos = () => {
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex items-start gap-2">
                 <DollarSign className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <span><strong>Valor mínimo:</strong> R$ 50,00 por saque</span>
+                <span>
+                  <strong>Valor mínimo:</strong> R$ 300,00 por saque
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <span><strong>Prazo:</strong> Pagamento via PIX em até 48 horas úteis após solicitação</span>
+                <span>
+                  <strong>Prazo:</strong> Pagamento via PIX em até 48 horas úteis após solicitação
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <span><strong>Sem taxas:</strong> Não cobramos taxa adicional para saques via PIX</span>
+                <span>
+                  <strong>Sem taxas:</strong> Não cobramos taxa adicional para saques via PIX
+                </span>
               </li>
             </ul>
           </div>
@@ -178,32 +188,33 @@ const Pagamentos = () => {
             <div className="bg-background p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Quando recebo meu pagamento?</h3>
               <p className="text-muted-foreground">
-                Após o cliente validar o serviço, o valor é creditado na sua carteira Youly. 
-                Você pode solicitar o saque imediatamente, e receberá em até 48 horas úteis via PIX.
+                Após o cliente validar o serviço, o valor é creditado na sua carteira Youly. Você pode solicitar o saque
+                após 03 dias úteis, e receberá em até 48 horas úteis via PIX.
               </p>
             </div>
 
             <div className="bg-background p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">E se o cliente não validar o serviço?</h3>
               <p className="text-muted-foreground">
-                Após 48 horas da conclusão do serviço, se o cliente não se manifestar, 
-                o sistema valida automaticamente e libera o pagamento.
+                A validação é feita no instante do serviço através do seu formulário de OS. Se mesmo assim, após 48
+                horas da conclusão do serviço, o cliente não se manifestar, nossa equipe irá entrar em contato para
+                validar automaticamente e seguir com o fluxo de pagamento.
               </p>
             </div>
 
             <div className="bg-background p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Posso receber em dinheiro?</h3>
               <p className="text-muted-foreground">
-                Não. Todos os pagamentos devem ser processados exclusivamente através da plataforma 
-                para garantir a segurança de ambas as partes e a proteção da garantia.
+                Não. Todos os pagamentos devem ser processados exclusivamente através da plataforma para garantir a
+                segurança de ambas as partes e a proteção da garantia.
               </p>
             </div>
 
             <div className="bg-background p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Como emito nota fiscal?</h3>
               <p className="text-muted-foreground">
-                Se você possui MEI ou CNPJ, pode emitir nota fiscal diretamente. 
-                A plataforma gera um recibo de cada serviço que pode ser usado para sua contabilidade.
+                Se você possui MEI ou CNPJ, pode emitir nota fiscal diretamente. A plataforma gera um recibo de cada
+                serviço que pode ser usado para sua contabilidade.
               </p>
             </div>
           </div>
