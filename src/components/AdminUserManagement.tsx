@@ -74,15 +74,10 @@ export function AdminUserManagement() {
                       
                       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                         {user.telefone && (
-                          <a 
-                            href={`https://api.whatsapp.com/send/?phone=55${user.telefone.replace(/\D/g, '')}&text&type=phone_number&app_absent=0`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 hover:text-primary transition-colors"
-                          >
+                          <div className="flex items-center gap-2">
                             <Phone className="w-3 h-3" />
                             {user.telefone}
-                          </a>
+                          </div>
                         )}
                         <div className="flex items-center gap-2">
                           <Mail className="w-3 h-3" />
