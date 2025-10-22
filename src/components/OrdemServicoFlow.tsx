@@ -759,7 +759,13 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
 
               <Button 
                 onClick={handleFinalizar} 
-                disabled={loading || !tipoFinalizacao || codigoValidacao.length !== 6 || ((tipoFinalizacao === 'assistencia' || tipoFinalizacao === 'pendente') && observacoes.length < 20)}
+                disabled={
+                  loading || 
+                  !tipoFinalizacao || 
+                  codigoValidacao.length !== 6 || 
+                  (tipoFinalizacao === 'assistencia' && (observacoes.length < 20 || !fotosPreview.assistencia)) ||
+                  (tipoFinalizacao === 'pendente' && observacoes.length < 20)
+                }
                 className="w-full"
               >
                 Validar código e finalizar
