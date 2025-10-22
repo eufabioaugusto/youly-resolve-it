@@ -30,15 +30,21 @@ export function OSCard({ ordemServico, onAbrirOS }: OSCardProps) {
     );
   };
 
-  const formatData = (data: string) => {
-    return new Date(data).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+  const formatData = (data: string | null | undefined) => {
+    if (!data) return 'Data a definir';
+    try {
+      return new Date(data).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Data a definir';
+    }
   };
 
-  const formatPeriodo = (periodo: string) => {
+  const formatPeriodo = (periodo: string | null | undefined) => {
+    if (!periodo) return 'A definir';
     return periodo === 'manha' ? 'Manhã (08h-12h)' : 'Tarde (13h-18h)';
   };
 

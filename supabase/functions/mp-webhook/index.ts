@@ -362,6 +362,25 @@ serve(async (req) => {
         if (negError || !negociacao) {
           console.error('❌ Negociação não encontrada para criar OS:', negError);
         } else {
+          // Buscar job para pegar a data selecionada
+          const { data: jobData } = await supabase
+            .from('jobs')
+            .select('data_opcoes')
+            .eq('id', pagamentoDB.job_id)
+            .single();
+
+          // Extrair data selecionada das opções
+          let dataHoraAgendamento = null;
+          let periodoAgendamento = null;
+          
+          if (jobData?.data_opcoes && Array.isArray(jobData.data_opcoes)) {
+            const dataSelecionada = jobData.data_opcoes.find((opcao: any) => opcao.selecionado === true);
+            if (dataSelecionada) {
+              dataHoraAgendamento = dataSelecionada.data;
+              periodoAgendamento = dataSelecionada.periodo;
+            }
+          }
+
           // Buscar dados do montador
           const { data: montadorData } = await supabase
             .from('montadores')
@@ -395,8 +414,8 @@ serve(async (req) => {
               cliente_id: pagamentoDB.cliente_id,
               status: 'pendente',
               codigo_validacao: codigoValidacao,
-              data_hora_agendamento: negociacao.data_selecionada_montador?.data_hora,
-              periodo_agendamento: negociacao.data_selecionada_montador?.periodo,
+              data_hora_agendamento: dataHoraAgendamento,
+              periodo_agendamento: periodoAgendamento,
             })
             .select()
             .single();
@@ -424,13 +443,13 @@ serve(async (req) => {
 
             if (telefoneCliente) {
               // Formatar data e período
-              const dataAgendamento = negociacao.data_selecionada_montador?.data_hora
-                ? new Date(negociacao.data_selecionada_montador.data_hora).toLocaleDateString('pt-BR')
+              const dataAgendamento = dataHoraAgendamento
+                ? new Date(dataHoraAgendamento).toLocaleDateString('pt-BR')
                 : 'A definir';
-              const periodoAgendamento = negociacao.data_selecionada_montador?.periodo || 'A definir';
+              const periodoFormatado = periodoAgendamento || 'A definir';
 
               // Enviar SMS de agendamento
-              const mensagemSMS = `✅ Montagem agendada!\nMontador: ${montadorNome}\nData: ${dataAgendamento} - ${periodoAgendamento}\nCódigo: ${codigoValidacao}\nGuarde este código para iniciar a montagem.`;
+              const mensagemSMS = `✅ Montagem agendada!\nMontador: ${montadorNome}\nData: ${dataAgendamento} - ${periodoFormatado}\nCódigo: ${codigoValidacao}\nGuarde este código para iniciar a montagem.`;
 
               const { error: smsError } = await supabase.functions.invoke('sms-send', {
                 body: {

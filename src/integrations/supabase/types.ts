@@ -982,10 +982,7 @@ export type Database = {
         }
         Returns: Json
       }
-      gerar_codigo_validacao: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      gerar_codigo_validacao: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -993,10 +990,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { user_uuid?: string }; Returns: boolean }
       liberar_valor_carteira: {
         Args: { p_admin_user_id: string; p_carteira_id: string }
         Returns: boolean
@@ -1018,10 +1012,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      promote_to_admin: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
+      promote_to_admin: { Args: { target_user_id: string }; Returns: boolean }
       recusar_saque: {
         Args: { p_admin_user_id: string; p_saque_id: string }
         Returns: boolean
