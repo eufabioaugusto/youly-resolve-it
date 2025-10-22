@@ -81,7 +81,7 @@ export function OSCard({ ordemServico, onAbrirOS }: OSCardProps) {
             {getStatusBadge(ordemServico.status)}
             {ordemServico.codigo_validacao && ordemServico.status !== 'concluida' && (
               <div className="mt-2 text-xs text-muted-foreground">
-                Código: <span className="font-mono font-bold">{ordemServico.codigo_validacao}</span>
+                Código: <span className="font-mono font-bold">******</span>
               </div>
             )}
           </div>
