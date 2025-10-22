@@ -58,9 +58,18 @@ const Register = () => {
     });
     
     if (error) {
+      let errorMessage = error.message;
+      
+      // Verificar se é erro de e-mail duplicado
+      if (error.message?.includes('already') || error.message?.includes('exists') || error.message?.includes('User already registered')) {
+        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
+      } else if (error.message?.includes('row-level security')) {
+        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
+      }
+      
       toast({
         title: "Erro ao criar conta",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } else {
@@ -124,9 +133,18 @@ const Register = () => {
         description: "Em até 48 horas você receberá a resposta sobre sua conta."
       });
     } catch (error: any) {
+      let errorMessage = error.message;
+      
+      // Verificar se é erro de e-mail duplicado
+      if (error.message?.includes('already') || error.message?.includes('exists') || error.message?.includes('User already registered')) {
+        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
+      } else if (error.message?.includes('row-level security')) {
+        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
+      }
+      
       toast({
         title: "Erro ao criar conta",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
