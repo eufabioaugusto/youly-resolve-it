@@ -23,18 +23,35 @@ export function AdminRankingMontadores() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // Buscar montadores
+      const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
-        .select(`
-          *,
-          profiles:user_id(*)
-        `)
+        .select('*')
         .order('avaliacao_media', { ascending: false });
 
-      if (error) throw error;
+      if (montadoresError) throw montadoresError;
 
-      logger.info('admin', 'Ranking de montadores carregado', { total: data?.length });
-      setMontadores(data || []);
+      // Buscar profiles dos montadores
+      if (montadoresData && montadoresData.length > 0) {
+        const userIds = montadoresData.map(m => m.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('user_id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Fazer o join manualmente
+        const montadoresComPerfil = montadoresData.map(montador => ({
+          ...montador,
+          profiles: profilesData?.find(p => p.user_id === montador.user_id)
+        }));
+
+        logger.info('admin', 'Ranking de montadores carregado', { total: montadoresComPerfil.length });
+        setMontadores(montadoresComPerfil);
+      } else {
+        setMontadores([]);
+      }
     } catch (error: any) {
       logger.apiError('admin', 'AdminRankingMontadores.loadMontadores', error);
     } finally {
