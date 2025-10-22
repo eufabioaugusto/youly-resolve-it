@@ -105,63 +105,56 @@ const Register = () => {
     
     try {
       // 1. Criar conta do montador
-      const { error: signUpError } = await signUp(
-        workerForm.email, 
-        workerForm.password, 
-        {
-          role: 'montador', 
-          nome: workerForm.name,
-          telefone: removeMask(workerForm.phone),
-          documento: removeMask(workerForm.cpf),
-          preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: workerForm.email,
+        password: workerForm.password,
+        options: {
+          data: {
+            role: 'montador',
+            nome: workerForm.name,
+            telefone: removeMask(workerForm.phone),
+            documento: removeMask(workerForm.cpf),
+            preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null
+          }
         }
-      );
+      });
       
       if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('Erro ao criar usuário');
 
-      // 2. Fazer login temporário APENAS para upload (service_role seria melhor, mas não temos)
-      const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: workerForm.email,
-        password: workerForm.password
+      // 2. Converter imagem para base64
+      const reader = new FileReader();
+      const fileBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          resolve(base64.split(',')[1]); // Remove o prefixo data:image/...;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(workerForm.documentoFoto);
       });
 
-      if (signInError) throw signInError;
+      // 3. Fazer upload via edge function (com service role)
+      const { error: uploadError } = await supabase.functions.invoke('upload-montador-documento', {
+        body: {
+          userId: authData.user.id,
+          fileName: workerForm.documentoFoto.name,
+          fileBase64,
+          contentType: workerForm.documentoFoto.type
+        }
+      });
 
-      // 3. Upload do documento
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile-photos')
-        .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
-      
-      if (uploadError) {
-        await supabase.auth.signOut();
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
-
-      // 4. Atualizar o registro do montador
-      const { error: updateError } = await supabase
-        .from('montadores')
-        .update({ documento_foto_url: documentoUrl })
-        .eq('user_id', sessionData.user.id);
-
-      if (updateError) {
-        await supabase.auth.signOut();
-        throw updateError;
-      }
-
-      // 5. LOGOUT IMEDIATO antes de qualquer redirecionamento
-      await supabase.auth.signOut();
-
-      // 6. Resetar formulário
+      // 4. Resetar formulário
       setWorkerForm({
         name: '', email: '', phone: '', cpf: '', hourlyRate: '', password: '', documentoFoto: null
       });
 
+      // 5. Mostrar sucesso
       toast({
-        title: "Cadastro finalizado com sucesso!",
-        description: "Recebemos seu cadastro. Em até 48 horas você será notificado sobre sua aprovação por e-mail.",
-        duration: 6000
+        title: "Cadastro enviado com sucesso!",
+        description: "Recebemos seu cadastro e documentos. Você será notificado por e-mail em até 48 horas sobre a aprovação.",
+        duration: 8000
       });
     } catch (error: any) {
       let errorMessage = error.message;
