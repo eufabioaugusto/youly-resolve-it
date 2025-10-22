@@ -91,5 +91,6 @@ export async function calcularDistanciaEntreCeps(cep1: string, cep2: string): Pr
   }
 
   const distancia = calcularDistanciaHaversine(coord1.lat, coord1.lng, coord2.lat, coord2.lng);
-  return distancia;
+  // Arredondar para 1 casa decimal e garantir mínimo de 0.1km
+  return Math.max(0.1, Math.round(distancia * 10) / 10);
 }

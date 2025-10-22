@@ -487,7 +487,7 @@ const SuggestedMontadores = () => {
                             <div className="flex items-center justify-center gap-1 text-sm bg-primary/10 py-1 px-3 rounded-full">
                               <Navigation className="w-4 h-4 text-primary" />
                               <span className="font-semibold text-primary">
-                                {montador.distancia_km.toFixed(1)} km
+                                {montador.distancia_km < 1 ? "≈ 1 km" : `${montador.distancia_km.toFixed(1)} km`}
                               </span>
                             </div>
                           )}
