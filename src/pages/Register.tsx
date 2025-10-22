@@ -104,7 +104,27 @@ const Register = () => {
     }
     
     try {
-      // Upload do documento
+      // 1. Criar conta PRIMEIRO (sem documento_foto_url ainda)
+      const { error: signUpError } = await signUp(workerForm.email, workerForm.password, {
+        role: 'montador', 
+        nome: workerForm.name,
+        telefone: removeMask(workerForm.phone),
+        documento: removeMask(workerForm.cpf),
+        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
+        bio: workerForm.bio
+      });
+      
+      if (signUpError) throw signUpError;
+
+      // 2. Fazer login automático para ter autenticação
+      const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: workerForm.email,
+        password: workerForm.password
+      });
+
+      if (signInError) throw signInError;
+
+      // 3. Agora que está autenticado, fazer upload do documento
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profile-photos')
         .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
@@ -113,18 +133,16 @@ const Register = () => {
 
       const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
 
-      // Criar conta
-      const { error } = await signUp(workerForm.email, workerForm.password, {
-        role: 'montador', 
-        nome: workerForm.name,
-        telefone: removeMask(workerForm.phone),
-        documento: removeMask(workerForm.cpf),
-        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
-        bio: workerForm.bio,
-        documento_foto_url: documentoUrl
-      });
-      
-      if (error) throw error;
+      // 4. Atualizar o registro do montador com a URL do documento
+      const { error: updateError } = await supabase
+        .from('montadores')
+        .update({ documento_foto_url: documentoUrl })
+        .eq('user_id', sessionData.user.id);
+
+      if (updateError) throw updateError;
+
+      // 5. Fazer logout para que ele precise confirmar email
+      await supabase.auth.signOut();
 
       toast({
         title: "Cadastro realizado!",
