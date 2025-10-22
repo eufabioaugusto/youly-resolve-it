@@ -48,7 +48,6 @@ const WorkerDashboard = () => {
   const { toast } = useToast();
   
   const [availableJobs, setAvailableJobs] = useState([]);
-  const [myJobs, setMyJobs] = useState([]);
   const [ordensServico, setOrdensServico] = useState([]);
   const [carteira, setCarteira] = useState(null);
   const [candidaturas, setCandidaturas] = useState<string[]>([]);
@@ -66,7 +65,6 @@ const WorkerDashboard = () => {
   useEffect(() => {
     if (montadorProfile) {
       fetchAvailableJobs();
-      fetchMyJobs();
       fetchOrdensServico();
       fetchCarteira();
       fetchCandidaturas();
@@ -92,7 +90,6 @@ const WorkerDashboard = () => {
         (payload) => {
           console.log('🔥 Negociação atualizada:', payload);
           fetchAvailableJobs();
-          fetchMyJobs();
           toast({
             title: "Nova atualização!",
             description: "Suas negociações foram atualizadas.",
@@ -296,75 +293,6 @@ const WorkerDashboard = () => {
     }
   };
 
-  const fetchMyJobs = async () => {
-    if (!montadorProfile) return;
-
-    try {
-      // Buscar jobs do montador que ainda NÃO viraram ordem de serviço
-      const { data: jobsData, error: jobsError } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('montador_id', montadorProfile.id)
-        .is('ordem_servico_id', null) // Apenas jobs sem ordem de serviço
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (jobsError) throw jobsError;
-
-      if (jobsData && jobsData.length > 0) {
-        // Buscar dados dos clientes
-        const clienteIds = jobsData.map(job => job.cliente_id);
-        const { data: clientesData, error: clientesError } = await supabase
-          .from('clientes')
-          .select('id, user_id, avaliacao_media, pedidos_total')
-          .in('id', clienteIds);
-
-        if (clientesError) throw clientesError;
-
-        // Buscar nomes dos clientes
-        const userIds = clientesData?.map(cliente => cliente.user_id) || [];
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, nome')
-          .in('user_id', userIds);
-
-        if (profilesError) throw profilesError;
-
-        // Buscar negociações para pegar o valor do orçamento
-        const jobIds = jobsData.map(job => job.id);
-        const { data: negociacoesData } = await supabase
-          .from('negociacoes')
-          .select('job_id, valor_proposto_montador, status')
-          .in('job_id', jobIds);
-
-        // Combinar os dados
-        const jobsWithClientes = jobsData.map(job => {
-          const cliente = clientesData?.find(c => c.id === job.cliente_id);
-          const profile = profilesData?.find(p => p.user_id === cliente?.user_id);
-          const negociacao = negociacoesData?.find(n => n.job_id === job.id);
-          
-          return {
-            ...job,
-            clientes: {
-              ...cliente,
-              profiles: {
-                nome: profile?.nome || 'Cliente'
-              }
-            },
-            negociacao: negociacao
-          };
-        });
-
-        setMyJobs(jobsWithClientes);
-      } else {
-        setMyJobs([]);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar meus trabalhos:', error);
-    } finally {
-      setLoadingData(false);
-    }
-  };
 
   const fetchCarteira = async () => {
     if (!montadorProfile) return;
@@ -687,9 +615,8 @@ const WorkerDashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-1">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 gap-1">
             <TabsTrigger value="available" className="text-sm">Trabalhos Disponíveis</TabsTrigger>
-            <TabsTrigger value="my-jobs" className="text-sm">Meus Trabalhos</TabsTrigger>
             <TabsTrigger value="os" className="text-sm">Ordens de Serviço</TabsTrigger>
             <TabsTrigger value="negotiations" className="relative text-sm">
               Negociações
@@ -804,97 +731,6 @@ const WorkerDashboard = () => {
                                     size="sm"
                                   >
                                     {loadingJobId === job.id ? 'Candidatando...' : 'Candidatar-se'}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="my-jobs" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Meus Trabalhos</CardTitle>
-                <CardDescription>Acompanhe seus trabalhos aceitos e histórico</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingData ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Carregando seus trabalhos...</p>
-                  </div>
-                ) : myJobs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">Você ainda não tem trabalhos.</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Candidate-se aos trabalhos disponíveis para começar!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {myJobs.map((job) => (
-                      <Card key={job.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex flex-col gap-3">
-                            <div>
-                              <h3 className="font-semibold text-lg mb-2">{job.descricao}</h3>
-                              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-2">
-                                <span className="flex items-center gap-1">
-                                  <User className="w-4 h-4" />
-                                  {job.clientes?.profiles?.nome || 'Cliente'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-4 h-4" />
-                                  {job.endereco?.bairro}, {job.endereco?.cidade}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {new Date(job.created_at).toLocaleDateString('pt-BR')}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
-                              <div>
-                                {job.negociacao?.valor_proposto_montador ? (
-                                  <div className="mb-2">
-                                    <p className="text-xs text-muted-foreground mb-1">Meu Orçamento</p>
-                                    <p className="text-xl sm:text-2xl font-bold text-primary">
-                                      R$ {job.negociacao.valor_proposto_montador.toFixed(2)}
-                                    </p>
-                                  </div>
-                                ) : job.valor_estimado && (
-                                  <div className="mb-2">
-                                    <p className="text-xs text-muted-foreground mb-1">Valor Estimado</p>
-                                    <p className="text-lg font-semibold text-muted-foreground">
-                                      R$ {job.valor_estimado.toFixed(2)}
-                                    </p>
-                                  </div>
-                                )}
-                                <Badge variant={
-                                  job.status === 'em_andamento' ? 'default' :
-                                  job.status === 'concluido' ? 'secondary' : 'outline'
-                                }>
-                                  {job.status === 'em_andamento' ? 'Em Andamento' : 
-                                   job.status === 'concluido' ? 'Concluído' : 
-                                   job.status === 'aberto' ? 'Aberto' : job.status}
-                                </Badge>
-                              </div>
-                              
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                                  Ver detalhes
-                                </Button>
-                                {job.status === 'em_andamento' && (
-                                  <Button size="sm" className="w-full sm:w-auto">
-                                    Finalizar trabalho
                                   </Button>
                                 )}
                               </div>
