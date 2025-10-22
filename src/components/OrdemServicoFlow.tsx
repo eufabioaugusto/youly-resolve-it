@@ -20,7 +20,9 @@ import {
 } from 'lucide-react';
 import { useOrdemServico } from '@/hooks/useOrdemServico';
 import { useSMS } from '@/hooks/useSMS';
+import { useAvaliacoes } from '@/hooks/useAvaliacoes';
 import { toast } from 'sonner';
+import { Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface OrdemServicoFlowProps {
@@ -32,11 +34,16 @@ interface OrdemServicoFlowProps {
 export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange }: OrdemServicoFlowProps) {
   const { atualizarStatus, uploadFoto, finalizarOS, validarCodigo, loading } = useOrdemServico();
   const { enviarSMSACaminho } = useSMS();
+  const { criarAvaliacao } = useAvaliacoes();
 
   const storageKey = `os_progress_${ordemServico.id}`;
 
   const [codigoValidacao, setCodigoValidacao] = useState('');
   const [codigoValidado, setCodigoValidado] = useState(false);
+  const [mostrarAvaliacao, setMostrarAvaliacao] = useState(false);
+  const [avaliacaoFeita, setAvaliacaoFeita] = useState(false);
+  const [notaAvaliacao, setNotaAvaliacao] = useState(0);
+  const [comentarioAvaliacao, setComentarioAvaliacao] = useState('');
   const [fotosEnviadas, setFotosEnviadas] = useState<{ [key: string]: boolean }>({
     movel_caixa: false,
     movel_montado: false,
@@ -227,8 +234,38 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     const valido = await validarCodigo(ordemServico.id, codigoValidacao);
     if (valido) {
       setCodigoValidado(true);
-      toast.success('Código validado com sucesso!');
+      setMostrarAvaliacao(true);
+      toast.success('Código validado! Ofereça a avaliação ao cliente.');
     }
+  };
+
+  const handleAvaliarAgora = async () => {
+    if (notaAvaliacao === 0) {
+      toast.error('Selecione uma nota de 1 a 5 estrelas');
+      return;
+    }
+
+    try {
+      await criarAvaliacao({
+        ordemServicoId: ordemServico.id,
+        jobId: ordemServico.job_id,
+        clienteId: ordemServico.cliente_id,
+        montadorId: ordemServico.montador_id,
+        nota: notaAvaliacao,
+        comentario: comentarioAvaliacao || undefined,
+      });
+
+      setAvaliacaoFeita(true);
+      setMostrarAvaliacao(false);
+      toast.success('Avaliação recebida! Garantia estendida para 60 dias! 🎉');
+    } catch (error) {
+      console.error('Erro ao criar avaliação:', error);
+    }
+  };
+
+  const handleRecusarAvaliacao = () => {
+    setMostrarAvaliacao(false);
+    toast.info('Cliente optou por não avaliar agora. Garantia padrão de 30 dias.');
   };
 
   const handleFinalizar = async () => {
@@ -248,115 +285,18 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
       await finalizarOS({
         osId: ordemServico.id,
         tipoFinalizacao,
-        observacoes,
-        motivoAssistencia: tipoFinalizacao === 'assistencia' ? observacoes : undefined,
-        motivoPendente: tipoFinalizacao === 'pendente' ? observacoes : undefined,
+        observacoes: tipoFinalizacao !== 'sucesso' ? observacoes : undefined,
+        diasGarantia: avaliacaoFeita ? 60 : 30, // 60 dias se avaliou, 30 se não
       });
-      
-      // 🎯 CRÍTICO: Enviar pesquisa de satisfação após finalização com sucesso
-      if (tipoFinalizacao === 'sucesso' || tipoFinalizacao === 'assistencia') {
-        console.log('📧 [OrdemServicoFlow] Enviando pesquisa de satisfação');
 
-        try {
-          // Gerar token único para a pesquisa
-          const token = crypto.randomUUID();
-          
-          const { error: tokenError } = await supabase
-            .from('pesquisa_tokens')
-            .insert({
-              token,
-              ordem_servico_id: ordemServico.id,
-            });
-
-          if (tokenError) {
-            console.error('❌ Erro ao criar token de pesquisa:', tokenError);
-          } else {
-            // Buscar dados do cliente para enviar SMS e email
-            const { data: clienteData } = await supabase
-              .from('clientes')
-              .select('user_id')
-              .eq('id', ordemServico.cliente_id)
-              .single();
-
-            let telefoneCliente = null;
-            let emailCliente = null;
-
-            if (clienteData) {
-              const { data: profileCliente } = await supabase
-                .from('profiles')
-                .select('telefone, nome, user_id')
-                .eq('user_id', clienteData.user_id)
-                .single();
-
-              telefoneCliente = profileCliente?.telefone;
-              emailCliente = profileCliente?.user_id;
-            }
-
-            // Buscar dados do montador
-            const { data: montadorData } = await supabase
-              .from('montadores')
-              .select('user_id')
-              .eq('id', ordemServico.montador_id)
-              .single();
-
-            let nomeMontador = 'Montador';
-
-            if (montadorData) {
-              const { data: profileMontador } = await supabase
-                .from('profiles')
-                .select('nome')
-                .eq('user_id', montadorData.user_id)
-                .single();
-
-              nomeMontador = profileMontador?.nome || 'Montador';
-            }
-
-            // Link da pesquisa (ajustar com seu domínio)
-            const linkPesquisa = `${window.location.origin}/pesquisa/${token}`;
-
-            // Enviar SMS
-            if (telefoneCliente) {
-              const mensagemSMS = `⭐ Como foi sua experiência com ${nomeMontador}? Avalie o serviço: ${linkPesquisa}`;
-              
-              await supabase.functions.invoke('sms-send', {
-                body: {
-                  telefone: telefoneCliente,
-                  mensagem: mensagemSMS,
-                  tipo: 'pesquisa',
-                  ordem_servico_id: ordemServico.id,
-                },
-              });
-
-              console.log('✅ SMS de pesquisa enviado');
-            }
-
-            // Enviar email (se já tiver a função configurada)
-            if (emailCliente) {
-              try {
-                await supabase.functions.invoke('send-email', {
-                  body: {
-                    to: emailCliente,
-                    template: 'pesquisa-satisfacao',
-                    data: {
-                      linkPesquisa,
-                      nomeMontador,
-                    },
-                  },
-                });
-                console.log('✅ Email de pesquisa enviado');
-              } catch (emailError) {
-                console.log('⚠️ Email não enviado (função pode não estar configurada)');
-              }
-            }
-          }
-        } catch (pesquisaError) {
-          console.error('❌ Erro ao processar pesquisa:', pesquisaError);
-        }
-      }
-      
-      // 🧹 Limpar progresso salvo após finalização bem-sucedida
+      // Limpar localStorage
       localStorage.removeItem(storageKey);
-      console.log('🧹 Progresso local limpo após finalização');
+      
+      toast.success(
+        avaliacaoFeita 
+          ? 'Ordem finalizada! Garantia de 60 dias ativada! 🎉'
+          : 'Ordem finalizada! Garantia de 30 dias ativada.'
+      );
       
       onOSAtualizada?.();
       onStatusChange?.();
@@ -631,7 +571,9 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 Finalizar ordem de serviço
               </CardTitle>
               <CardDescription>
-                O código de validação ativa a garantia de 30 dias
+                {avaliacaoFeita 
+                  ? '🎉 Cliente avaliou! Garantia de 60 dias será ativada'
+                  : 'O código de validação ativa a garantia'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -664,10 +606,105 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {codigoValidado 
-                    ? '✓ Código validado! Agora você pode finalizar.' 
+                    ? '✓ Código validado!' 
                     : 'Solicite o código ao cliente e valide antes de finalizar'}
                 </p>
               </div>
+
+              {/* Oferta de avaliação após validar código */}
+              {mostrarAvaliacao && !avaliacaoFeita && (
+                <>
+                  <Separator />
+                  <Alert className="border-primary bg-primary/5">
+                    <Star className="h-5 w-5 text-primary" />
+                    <AlertDescription className="space-y-4">
+                      <div>
+                        <p className="font-semibold text-base mb-2">
+                          🎁 Oferta especial para o cliente!
+                        </p>
+                        <p className="text-sm">
+                          Se o cliente avaliar agora, a garantia será <strong>dobrada de 30 para 60 dias</strong>!
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>Avaliação do serviço (1 a 5 estrelas)</Label>
+                        <div className="flex gap-2 justify-center py-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setNotaAvaliacao(star)}
+                              className="transition-transform hover:scale-110"
+                            >
+                              <Star
+                                className={`w-10 h-10 ${
+                                  star <= notaAvaliacao
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-muted-foreground'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="comentario-avaliacao">Comentário (opcional)</Label>
+                          <Textarea
+                            id="comentario-avaliacao"
+                            value={comentarioAvaliacao}
+                            onChange={(e) => setComentarioAvaliacao(e.target.value)}
+                            placeholder="O que o cliente achou do serviço?"
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleAvaliarAgora}
+                            disabled={notaAvaliacao === 0}
+                            className="flex-1"
+                          >
+                            <Star className="w-4 h-4 mr-2" />
+                            Avaliar e ganhar 60 dias
+                          </Button>
+                          <Button
+                            onClick={handleRecusarAvaliacao}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Não avaliar agora
+                          </Button>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                </>
+              )}
+
+              {avaliacaoFeita && (
+                <>
+                  <Separator />
+                  <Alert className="border-green-500 bg-green-500/10">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-700 dark:text-green-400">
+                      ✓ Cliente avaliou! Garantia de <strong>60 dias</strong> será ativada na finalização.
+                    </AlertDescription>
+                  </Alert>
+                </>
+              )}
+
+              {codigoValidado && !mostrarAvaliacao && !avaliacaoFeita && (
+                <>
+                  <Separator />
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Cliente optou por não avaliar. Garantia padrão de 30 dias será aplicada.
+                    </AlertDescription>
+                  </Alert>
+                </>
+              )}
 
               <Separator />
 
@@ -774,8 +811,8 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
-                    {tipoFinalizacao === 'sucesso' && 'Garantia de 30 dias será ativada automaticamente'}
-                    {tipoFinalizacao === 'assistencia' && 'Garantia de 30 dias será ativada. O admin será notificado.'}
+                    {tipoFinalizacao === 'sucesso' && `Garantia de ${avaliacaoFeita ? '60' : '30'} dias será ativada automaticamente`}
+                    {tipoFinalizacao === 'assistencia' && `Garantia de ${avaliacaoFeita ? '60' : '30'} dias será ativada. O admin será notificado.`}
                     {tipoFinalizacao === 'pendente' && 'Pagamento NÃO será liberado. Cliente e admin serão notificados.'}
                   </AlertDescription>
                 </Alert>

@@ -19,6 +19,7 @@ interface FinalizarOSParams {
   observacoes?: string;
   motivoAssistencia?: string;
   motivoPendente?: string;
+  diasGarantia?: number;
 }
 
 export function useOrdemServico() {
@@ -149,12 +150,14 @@ export function useOrdemServico() {
         data_hora_conclusao: new Date().toISOString(),
       };
 
+      const diasGarantia = params.diasGarantia || 30;
+
       if (params.tipoFinalizacao === 'sucesso') {
         updateData.status = 'concluida';
         updateData.garantia_ativa = true;
         updateData.data_ativacao_garantia = new Date().toISOString();
         const dataExpiracao = new Date();
-        dataExpiracao.setDate(dataExpiracao.getDate() + 30);
+        dataExpiracao.setDate(dataExpiracao.getDate() + diasGarantia);
         updateData.data_expiracao_garantia = dataExpiracao.toISOString();
       } else if (params.tipoFinalizacao === 'assistencia') {
         if (!params.motivoAssistencia) {
@@ -165,7 +168,7 @@ export function useOrdemServico() {
         updateData.garantia_ativa = true;
         updateData.data_ativacao_garantia = new Date().toISOString();
         const dataExpiracao = new Date();
-        dataExpiracao.setDate(dataExpiracao.getDate() + 30);
+        dataExpiracao.setDate(dataExpiracao.getDate() + diasGarantia);
         updateData.data_expiracao_garantia = dataExpiracao.toISOString();
       } else if (params.tipoFinalizacao === 'pendente') {
         if (!params.motivoPendente) {
