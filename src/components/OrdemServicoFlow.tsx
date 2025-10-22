@@ -380,7 +380,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
             <div>
               <CardTitle>Ordem de Serviço #{ordemServico.id.slice(0, 8)}</CardTitle>
               <CardDescription>
-                Código de validação: <strong>{ordemServico.codigo_validacao}</strong>
+                Código de validação: <strong>*****</strong>
               </CardDescription>
             </div>
             {renderStatusBadge(ordemServico.status)}
