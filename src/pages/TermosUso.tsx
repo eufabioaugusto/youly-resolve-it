@@ -79,7 +79,7 @@ const TermosUso = () => {
                 <li>Enviar propostas realistas e honestas</li>
                 <li>Comparecer nas datas e horários agendados</li>
                 <li>Executar serviços com qualidade profissional</li>
-                <li>Respeitar o período de garantia de 90 dias</li>
+                <li>Respeitar o período de garantia de até 60 dias</li>
                 <li>Manter conduta profissional e respeitosa</li>
               </ul>
             </section>
