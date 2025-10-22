@@ -36,6 +36,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const storageKey = `os_progress_${ordemServico.id}`;
 
   const [codigoValidacao, setCodigoValidacao] = useState('');
+  const [codigoValidado, setCodigoValidado] = useState(false);
   const [fotosEnviadas, setFotosEnviadas] = useState<{ [key: string]: boolean }>({
     movel_caixa: false,
     movel_montado: false,
@@ -214,27 +215,33 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     }
   };
 
+  const handleValidarCodigo = async () => {
+    if (!codigoValidacao || codigoValidacao.length !== 6) {
+      toast.error('Digite o código de 6 dígitos');
+      return;
+    }
+
+    console.log('🔐 [OrdemServicoFlow] Validando código');
+    
+    const valido = await validarCodigo(ordemServico.id, codigoValidacao);
+    if (valido) {
+      setCodigoValidado(true);
+      toast.success('Código validado com sucesso!');
+    }
+  };
+
   const handleFinalizar = async () => {
     if (!tipoFinalizacao) {
       toast.error('Selecione o tipo de finalização');
       return;
     }
 
-    // Validar código antes de finalizar (ativa a garantia)
-    if (!codigoValidacao || codigoValidacao.length !== 6) {
-      toast.error('Digite o código de validação fornecido pelo cliente');
+    if (!codigoValidado) {
+      toast.error('Valide o código antes de finalizar');
       return;
     }
 
-    console.log('✅ [OrdemServicoFlow] Validando código e finalizando OS', { tipoFinalizacao });
-
-    // Validar código
-    const valido = await validarCodigo(ordemServico.id, codigoValidacao);
-    if (!valido) {
-      return; // O erro já é mostrado no validarCodigo
-    }
-
-    console.log('✅ [OrdemServicoFlow] Código validado, finalizando OS');
+    console.log('✅ [OrdemServicoFlow] Finalizando OS', { tipoFinalizacao });
 
     try {
       await finalizarOS({
@@ -633,15 +640,31 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                   <Shield className="w-4 h-4" />
                   Código de validação (fornecido pelo cliente)
                 </Label>
-                <Input
-                  id="codigo-final"
-                  value={codigoValidacao}
-                  onChange={(e) => setCodigoValidacao(e.target.value.toUpperCase())}
-                  placeholder="Digite o código"
-                  maxLength={6}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="codigo-final"
+                    value={codigoValidacao}
+                    onChange={(e) => {
+                      setCodigoValidacao(e.target.value.toUpperCase());
+                      setCodigoValidado(false); // Reset validação ao mudar código
+                    }}
+                    placeholder="Digite o código"
+                    maxLength={6}
+                    disabled={codigoValidado}
+                    className={codigoValidado ? 'border-green-500' : ''}
+                  />
+                  <Button
+                    onClick={handleValidarCodigo}
+                    disabled={loading || codigoValidacao.length !== 6 || codigoValidado}
+                    variant={codigoValidado ? 'default' : 'outline'}
+                  >
+                    {codigoValidado ? <CheckCircle className="w-4 h-4" /> : 'Validar'}
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Solicite o código ao cliente para ativar a garantia
+                  {codigoValidado 
+                    ? '✓ Código validado! Agora você pode finalizar.' 
+                    : 'Solicite o código ao cliente e valide antes de finalizar'}
                 </p>
               </div>
 
@@ -761,18 +784,33 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
                 onClick={handleFinalizar} 
                 disabled={
                   loading || 
+                  !codigoValidado ||
                   !tipoFinalizacao || 
-                  codigoValidacao.length !== 6 || 
                   (tipoFinalizacao === 'assistencia' && (observacoes.length < 20 || !fotosPreview.assistencia)) ||
                   (tipoFinalizacao === 'pendente' && observacoes.length < 20)
                 }
                 className="w-full"
               >
-                Validar código e finalizar
+                Finalizar ordem de serviço
               </Button>
-              {codigoValidacao.length !== 6 && (
+              {!codigoValidado && (
                 <p className="text-sm text-destructive text-center">
-                  Digite o código de 6 dígitos para finalizar
+                  Valide o código antes de finalizar
+                </p>
+              )}
+              {codigoValidado && !tipoFinalizacao && (
+                <p className="text-sm text-destructive text-center">
+                  Selecione o tipo de finalização
+                </p>
+              )}
+              {codigoValidado && tipoFinalizacao === 'assistencia' && observacoes.length < 20 && (
+                <p className="text-sm text-destructive text-center">
+                  Descreva o motivo da assistência (mínimo 20 caracteres)
+                </p>
+              )}
+              {codigoValidado && tipoFinalizacao === 'pendente' && observacoes.length < 20 && (
+                <p className="text-sm text-destructive text-center">
+                  Descreva o motivo da pendência (mínimo 20 caracteres)
                 </p>
               )}
             </CardContent>
