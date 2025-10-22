@@ -60,10 +60,8 @@ const Register = () => {
     if (error) {
       let errorMessage = error.message;
       
-      // Verificar se é erro de e-mail duplicado
-      if (error.message?.includes('already') || error.message?.includes('exists') || error.message?.includes('User already registered')) {
-        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
-      } else if (error.message?.includes('row-level security')) {
+      // Verificar se é erro de e-mail duplicado (apenas do Auth do Supabase)
+      if (error.message?.includes('User already registered')) {
         errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
       }
       
@@ -135,10 +133,8 @@ const Register = () => {
     } catch (error: any) {
       let errorMessage = error.message;
       
-      // Verificar se é erro de e-mail duplicado
-      if (error.message?.includes('already') || error.message?.includes('exists') || error.message?.includes('User already registered')) {
-        errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
-      } else if (error.message?.includes('row-level security')) {
+      // Verificar se é erro de e-mail duplicado (apenas do Auth do Supabase)
+      if (error.message?.includes('User already registered')) {
         errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
       }
       
