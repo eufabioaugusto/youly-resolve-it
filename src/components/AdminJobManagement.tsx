@@ -131,7 +131,7 @@ export function AdminJobManagement() {
       // 3. JOBS FINALIZADOS
       const { data: jobsFinalizadosData, error: finalizadosError } = await supabase
         .from('ordem_servico')
-        .select('*, jobs(*)')
+        .select('*, jobs!ordem_servico_job_id_fkey(*)')
         .in('status', ['concluida', 'concluida_com_assistencia', 'pendente_pecas'])
         .order('created_at', { ascending: false })
         .limit(50);
