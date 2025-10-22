@@ -17,10 +17,10 @@ export default function OrdemServicoPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (osId && montadorProfile) {
+    if (osId && profile) {
       loadOrdemServico();
     }
-  }, [osId, montadorProfile]);
+  }, [osId, profile]);
 
   const loadOrdemServico = async () => {
     setLoading(true);
@@ -119,18 +119,22 @@ export default function OrdemServicoPage() {
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground mb-4">Ordem de serviço não encontrada</p>
-            <Button onClick={() => navigate('/montador')}>Voltar ao Dashboard</Button>
+            <Button onClick={() => navigate(profile?.role === 'client' ? '/cliente' : '/montador')}>
+              Voltar ao Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const dashboardPath = profile?.role === 'client' ? '/cliente' : '/montador';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
-          to="/montador"
+          to={dashboardPath}
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

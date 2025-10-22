@@ -104,6 +104,11 @@ const App = () => (
                   <OrdemServicoPage />
                 </ProtectedRoute>
               } />
+              <Route path="/cliente/os/:osId" element={
+                <ProtectedRoute requiredRole="client">
+                  <OrdemServicoPage />
+                </ProtectedRoute>
+              } />
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
