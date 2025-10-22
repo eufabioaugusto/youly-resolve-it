@@ -27,7 +27,7 @@ const Register = () => {
     name: '', email: '', phone: '', password: ''
   });
   const [workerForm, setWorkerForm] = useState({
-    name: '', email: '', phone: '', cpf: '', hourlyRate: '', bio: '', password: '', documentoFoto: null as File | null
+    name: '', email: '', phone: '', cpf: '', hourlyRate: '', password: '', documentoFoto: null as File | null
   });
   
   useEffect(() => {
@@ -110,8 +110,7 @@ const Register = () => {
         nome: workerForm.name,
         telefone: removeMask(workerForm.phone),
         documento: removeMask(workerForm.cpf),
-        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null,
-        bio: workerForm.bio
+        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null
       });
       
       if (signUpError) throw signUpError;
@@ -329,16 +328,6 @@ const Register = () => {
                       className="h-11"
                       step="0.01"
                       min="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="worker-bio">Experiência profissional</Label>
-                    <Textarea 
-                      id="worker-bio" 
-                      placeholder="Conte sobre sua experiência com montagem de móveis..."
-                      value={workerForm.bio}
-                      onChange={(e) => setWorkerForm({...workerForm, bio: e.target.value})}
-                      className="resize-none"
                     />
                   </div>
                   <div className="space-y-2">
