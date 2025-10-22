@@ -306,7 +306,7 @@ const JobCandidates = () => {
       <div className="container mx-auto px-4 py-8">
         <Link 
           to="/cliente" 
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar aos meus pedidos
@@ -316,7 +316,7 @@ const JobCandidates = () => {
           {/* Informações do Job */}
           <Card className="mb-6 shadow-glow border-0 bg-white">
             <CardHeader>
-              <CardTitle className="text-xl">{job.descricao}</CardTitle>
+              <CardTitle className="text-xl text-foreground">{job.descricao}</CardTitle>
               <CardDescription>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <Badge variant="outline">{job.categoria}</Badge>
@@ -354,10 +354,10 @@ const JobCandidates = () => {
           {/* Candidaturas */}
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-2">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Candidaturas Recebidas ({candidaturas.length})
               </h2>
-              <p className="text-white/80">Escolha o montador ideal para seu projeto</p>
+              <p className="text-muted-foreground">Escolha o montador ideal para seu projeto</p>
             </div>
 
             {candidaturas.length === 0 ? (
