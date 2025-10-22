@@ -1,4 +1,4 @@
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,38 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
 import { Wrench, ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const { signIn, signOut, user, loading: authLoading } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { signIn, signOut } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Pegar a URL de onde o usuário veio (ou dashboard padrão)
   const from = (location.state as any)?.from || null;
-
-  // Redirecionamento removido daqui - será tratado após validação no handleLogin
-
-  // Só redireciona se tiver usuário E perfil carregados
-  // E NÃO está carregando
-  if (user && profile && !authLoading && !profileLoading) {
-    const dashboardMap = {
-      'client': '/cliente',
-      'montador': '/montador',
-      'admin': '/admin'
-    };
-    
-    // Redirecionar para onde estava OU para o dashboard
-    const destination = from || dashboardMap[profile.role] || '/';
-    return <Navigate to={destination} replace />;
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +50,7 @@ const Login = () => {
     // Login bem-sucedido - verificar se é montador e seu status
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      let userRole = '';
       
       if (currentUser) {
         // Buscar perfil para saber o role
@@ -75,9 +59,11 @@ const Login = () => {
           .select('role')
           .eq('user_id', currentUser.id)
           .single();
+        
+        userRole = profileData?.role || '';
 
         // Se for montador, verificar status_cadastro
-        if (profileData?.role === 'montador') {
+        if (userRole === 'montador') {
           const { data: montadorData } = await supabase
             .from('montadores')
             .select('status_cadastro, motivo_reprovacao')
@@ -108,12 +94,20 @@ const Login = () => {
         }
       }
 
-      // Tudo OK - pode redirecionar
+      // Tudo OK - redirecionar para dashboard apropriado
       toast({
         title: "Login realizado com sucesso!",
         description: "Redirecionando..."
       });
-      // Não precisa setLoading(false) - o Navigate vai ocorrer
+      
+      const dashboardMap: Record<string, string> = {
+        'client': '/cliente',
+        'montador': '/montador',
+        'admin': '/admin'
+      };
+      
+      const destination = from || dashboardMap[userRole] || '/';
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error('Erro ao verificar status:', err);
       setLoading(false);
