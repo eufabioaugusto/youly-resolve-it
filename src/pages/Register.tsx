@@ -104,14 +104,18 @@ const Register = () => {
     }
     
     try {
-      // 1. Criar conta PRIMEIRO (sem documento_foto_url ainda)
-      const { error: signUpError } = await signUp(workerForm.email, workerForm.password, {
-        role: 'montador', 
-        nome: workerForm.name,
-        telefone: removeMask(workerForm.phone),
-        documento: removeMask(workerForm.cpf),
-        preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null
-      });
+      // 1. Criar conta
+      const { error: signUpError } = await signUp(
+        workerForm.email, 
+        workerForm.password, 
+        {
+          role: 'montador', 
+          nome: workerForm.name,
+          telefone: removeMask(workerForm.phone),
+          documento: removeMask(workerForm.cpf),
+          preco_hora: workerForm.hourlyRate ? parseFloat(workerForm.hourlyRate) : null
+        }
+      );
       
       if (signUpError) throw signUpError;
 
@@ -121,36 +125,43 @@ const Register = () => {
         password: workerForm.password
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // Se erro for "Email not confirmed", ignorar e continuar
+        if (!signInError.message?.includes('Email not confirmed')) {
+          throw signInError;
+        }
+      }
 
-      // 3. Agora que está autenticado, fazer upload do documento
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile-photos')
-        .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
-      
-      if (uploadError) throw uploadError;
+      // 3. Se conseguiu fazer login, fazer upload do documento
+      if (sessionData?.user) {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(`documentos/${Date.now()}-${workerForm.documentoFoto.name}`, workerForm.documentoFoto);
+        
+        if (uploadError) throw uploadError;
 
-      const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
+        const documentoUrl = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path).data.publicUrl;
 
-      // 4. Atualizar o registro do montador com a URL do documento
-      const { error: updateError } = await supabase
-        .from('montadores')
-        .update({ documento_foto_url: documentoUrl })
-        .eq('user_id', sessionData.user.id);
+        // 4. Atualizar o registro do montador com a URL do documento
+        const { error: updateError } = await supabase
+          .from('montadores')
+          .update({ documento_foto_url: documentoUrl })
+          .eq('user_id', sessionData.user.id);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
 
-      // 5. Fazer logout para que ele precise confirmar email
-      await supabase.auth.signOut();
+        // 5. Fazer logout
+        await supabase.auth.signOut();
+      }
 
       toast({
-        title: "Cadastro efetuado com sucesso!",
-        description: "Verifique seu e-mail para confirmar sua conta. Após a confirmação, seu cadastro será analisado pela nossa equipe."
+        title: "Cadastro finalizado com sucesso!",
+        description: "Recebemos seu cadastro. Em até 48 horas você será notificado sobre sua conta."
       });
     } catch (error: any) {
       let errorMessage = error.message;
       
-      // Verificar se é erro de e-mail duplicado (apenas do Auth do Supabase)
+      // Verificar se é erro de e-mail duplicado
       if (error.message?.includes('User already registered')) {
         errorMessage = 'Este e-mail já existe como usuário. Use um e-mail diferente.';
       }

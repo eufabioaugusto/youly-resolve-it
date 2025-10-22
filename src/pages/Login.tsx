@@ -77,11 +77,20 @@ const Login = () => {
     const { error } = await signIn(email, password);
     
     if (error) {
-      toast({
-        title: "Erro ao fazer login",
-        description: error.message,
-        variant: "destructive"
-      });
+      // Se for erro de "Email not confirmed", verificar se é montador pendente
+      if (error.message?.includes('Email not confirmed') || error.message?.includes('email_not_confirmed')) {
+        toast({
+          title: "Cadastro pendente",
+          description: "Seu cadastro está aguardando aprovação. Você receberá um e-mail quando for aprovado.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro ao fazer login",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
       setLoading(false);
     } else {
       toast({
