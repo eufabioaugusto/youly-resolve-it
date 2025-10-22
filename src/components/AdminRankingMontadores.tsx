@@ -25,7 +25,10 @@ export function AdminRankingMontadores() {
     try {
       const { data, error } = await supabase
         .from('montadores')
-        .select('*, profiles!montadores_user_id_fkey(*)')
+        .select(`
+          *,
+          profiles:user_id(*)
+        `)
         .order('avaliacao_media', { ascending: false });
 
       if (error) throw error;
