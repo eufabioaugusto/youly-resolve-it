@@ -91,14 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn('Error during logout process (ignoring):', error);
       // Continue with logout process even if there are errors
     } finally {
-      // Always clear local state and redirect
+      // Always clear local state
       setSession(null);
       setUser(null);
-      
-      // Clear any cached data and redirect to home
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
     }
   };
 
