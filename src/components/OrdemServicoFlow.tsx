@@ -180,6 +180,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     try {
       await atualizarStatus(ordemServico.id, 'iniciada');
       toast.success('Montagem iniciada!');
+      onOSAtualizada?.();
       onStatusChange?.();
     } catch (error) {
       console.error('Erro ao iniciar montagem:', error);
