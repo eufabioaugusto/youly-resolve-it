@@ -23,7 +23,7 @@ const CreateJob = () => {
   const [formData, setFormData] = useState({
     descricao: "",
     categoria: "",
-    tipo_servico: [] as string[],
+    tipo_servico: "",
     endereco: {
       rua: "",
       numero: "",
@@ -60,10 +60,10 @@ const CreateJob = () => {
       return;
     }
 
-    if (formData.tipo_servico.length === 0) {
+    if (!formData.tipo_servico) {
       toast({
         title: "Erro",
-        description: "Selecione pelo menos um tipo de serviço",
+        description: "Selecione o tipo de serviço",
         variant: "destructive",
       });
       setLoading(false);
@@ -193,9 +193,7 @@ const CreateJob = () => {
   const toggleTipoServico = (tipo: string) => {
     setFormData({
       ...formData,
-      tipo_servico: formData.tipo_servico.includes(tipo)
-        ? formData.tipo_servico.filter((t) => t !== tipo)
-        : [...formData.tipo_servico, tipo],
+      tipo_servico: tipo,
     });
   };
 
@@ -235,7 +233,7 @@ const CreateJob = () => {
                         type="button"
                         onClick={() => toggleTipoServico(tipo)}
                         className={`px-4 py-3 rounded-lg border-2 transition-all font-medium ${
-                          formData.tipo_servico.includes(tipo)
+                          formData.tipo_servico === tipo
                             ? "border-destructive bg-destructive text-destructive-foreground"
                             : "border-input bg-background text-foreground hover:border-destructive/50"
                         }`}
