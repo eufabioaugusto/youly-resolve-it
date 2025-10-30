@@ -124,7 +124,7 @@ const Index = () => {
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Chamou. <span className="opacity-90">Resolveu.</span>
+              Chamou. <span className="opacity-90">Montou.</span>
             </h1>
 
             <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl">
