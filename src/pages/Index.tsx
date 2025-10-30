@@ -12,7 +12,7 @@ const logos = [
   "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Casas_Bahia_logo_2020.svg/2560px-Casas_Bahia_logo_2020.svg.png",
-  "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSbOrww9sXArBccJEf8aIFq45tiUTlw8itUjrYBWohhg4NeRdGXcUxuwtoT2jz9qjAFTjxJWXyxdY6McVtl6aWSVMNxig2rN6Cs-u7Hydov5pJz_nV1jHXzMohSBWij7npsOVX/s1600/etna+logo.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/1/1b/MadeiraMadeira_Logo.png",
   "https://logodownload.org/wp-content/uploads/2017/05/leroy-merlin-logo.png",
 ];
 
