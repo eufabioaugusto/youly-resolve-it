@@ -19,40 +19,40 @@ const CreateJob = () => {
   const { clienteProfile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    descricao: '',
-    categoria: '',
+    descricao: "",
+    categoria: "",
     endereco: {
-      rua: '',
-      numero: '',
-      bairro: '',
-      cidade: '',
-      estado: '',
-      cep: ''
+      rua: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: "",
     },
     data_opcoes: [
-      { data: '', periodo: 'manha', selecionado: false },
-      { data: '', periodo: 'tarde', selecionado: false },
-      { data: '', periodo: 'manha', selecionado: false }
+      { data: "", periodo: "manha", selecionado: false },
+      { data: "", periodo: "tarde", selecionado: false },
+      { data: "", periodo: "manha", selecionado: false },
     ],
-    valor_estimado: '',
-    imagens_produtos: [] as string[]
+    valor_estimado: "",
+    imagens_produtos: [] as string[],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clienteProfile) return;
-    
+
     setLoading(true);
-    
-    const opcoesSelecionadas = formData.data_opcoes.filter(opcao => opcao.selecionado && opcao.data);
-    
+
+    const opcoesSelecionadas = formData.data_opcoes.filter((opcao) => opcao.selecionado && opcao.data);
+
     if (opcoesSelecionadas.length === 0) {
       toast({
         title: "Erro",
         description: "Selecione pelo menos uma data disponível",
-        variant: "destructive"
+        variant: "destructive",
       });
       setLoading(false);
       return;
@@ -60,7 +60,7 @@ const CreateJob = () => {
 
     try {
       const { data: jobData, error } = await supabase
-        .from('jobs')
+        .from("jobs")
         .insert({
           cliente_id: clienteProfile.id,
           descricao: formData.descricao,
@@ -68,7 +68,7 @@ const CreateJob = () => {
           endereco: formData.endereco,
           data_opcoes: opcoesSelecionadas,
           valor_estimado: parseFloat(formData.valor_estimado) || null,
-          imagens_produtos: formData.imagens_produtos
+          imagens_produtos: formData.imagens_produtos,
         })
         .select()
         .single();
@@ -76,20 +76,20 @@ const CreateJob = () => {
       if (error) throw error;
 
       // Pequeno delay para dar tempo das notificações serem criadas
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast({
         title: "Pedido criado com sucesso!",
-        description: "Redirecionando para montadores sugeridos..."
+        description: "Redirecionando para montadores sugeridos...",
       });
-      
+
       // Redirecionar para página de montadores sugeridos
       navigate(`/pedido/${jobData.id}/montadores-sugeridos`);
     } catch (error: any) {
       toast({
         title: "Erro ao criar pedido",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -104,36 +104,36 @@ const CreateJob = () => {
 
   const searchCEP = async (cep: string) => {
     if (cep.length !== 8) return;
-    
+
     setCepLoading(true);
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await response.json();
-      
+
       if (!data.erro) {
         setFormData({
           ...formData,
           endereco: {
             ...formData.endereco,
             cep: cep,
-            rua: data.logradouro || '',
-            bairro: data.bairro || '',
-            cidade: data.localidade || '',
-            estado: data.uf || ''
-          }
+            rua: data.logradouro || "",
+            bairro: data.bairro || "",
+            cidade: data.localidade || "",
+            estado: data.uf || "",
+          },
         });
       } else {
         toast({
           title: "CEP não encontrado",
           description: "Verifique se o CEP está correto",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } catch (error) {
       toast({
         title: "Erro ao buscar CEP",
         description: "Tente novamente em alguns momentos",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setCepLoading(false);
@@ -141,10 +141,10 @@ const CreateJob = () => {
   };
 
   const handleCepChange = (value: string) => {
-    const cleanCEP = value.replace(/\D/g, '');
+    const cleanCEP = value.replace(/\D/g, "");
     setFormData({
       ...formData,
-      endereco: { ...formData.endereco, cep: cleanCEP }
+      endereco: { ...formData.endereco, cep: cleanCEP },
     });
 
     if (cleanCEP.length === 8) {
@@ -156,14 +156,14 @@ const CreateJob = () => {
   const getMinDate = () => {
     const now = new Date();
     now.setDate(now.getDate() + 2);
-    return now.toISOString().split('T')[0];
+    return now.toISOString().split("T")[0];
   };
 
   // Função para verificar períodos disponíveis para uma data
   const getAvailablePeriodos = (currentIndex: number, selectedDate: string) => {
     const allPeriodos = [
-      { value: 'manha', label: 'Manhã (08h–12h)' },
-      { value: 'tarde', label: 'Tarde (13h–18h)' }
+      { value: "manha", label: "Manhã (08h–12h)" },
+      { value: "tarde", label: "Tarde (13h–18h)" },
     ];
 
     if (!selectedDate) return allPeriodos;
@@ -171,23 +171,23 @@ const CreateJob = () => {
     // Pegar todas as outras opções selecionadas (exceto a atual)
     const otherSelectedOptions = formData.data_opcoes
       .filter((opcao, index) => index !== currentIndex && opcao.selecionado && opcao.data === selectedDate)
-      .map(opcao => opcao.periodo);
+      .map((opcao) => opcao.periodo);
 
     // Filtrar períodos que já foram selecionados para a mesma data
-    return allPeriodos.filter(periodo => !otherSelectedOptions.includes(periodo.value));
+    return allPeriodos.filter((periodo) => !otherSelectedOptions.includes(periodo.value));
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <Link 
-          to="/cliente" 
+        <Link
+          to="/cliente"
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar ao dashboard
         </Link>
-        
+
         <div className="max-w-2xl mx-auto">
           <Card className="shadow-glow border-0 bg-white">
             <CardHeader className="space-y-1">
@@ -201,12 +201,12 @@ const CreateJob = () => {
                 Descreva o serviço que precisa e encontre o montador ideal
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="descricao">Descrição do serviço *</Label>
-                  <Textarea 
+                  <Textarea
                     id="descricao"
                     placeholder="Ex: Montagem de guarda-roupa 6 portas MadeiraMadeira..."
                     value={formData.descricao}
@@ -220,8 +220,8 @@ const CreateJob = () => {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="space-y-2 md:col-span-3">
                     <Label htmlFor="categoria">Categoria</Label>
-                    <Select 
-                      value={formData.categoria} 
+                    <Select
+                      value={formData.categoria}
                       onValueChange={(value) => setFormData({ ...formData, categoria: value })}
                     >
                       <SelectTrigger>
@@ -237,10 +237,10 @@ const CreateJob = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="valor_estimado">Valor estimado (R$)</Label>
-                    <Input 
+                    <Input
                       id="valor_estimado"
                       type="number"
                       placeholder="150,00"
@@ -251,9 +251,7 @@ const CreateJob = () => {
                     />
                     <div className="flex items-center gap-1">
                       <InfoIcon className="w-3 h-3 text-destructive" />
-                      <p className="text-[10px] text-muted-foreground">
-                        Valor estimado do produto a ser montado
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">Valor estimado do produto a ser montado</p>
                     </div>
                   </div>
                 </div>
@@ -265,10 +263,10 @@ const CreateJob = () => {
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="cep">CEP *</Label>
                       <div className="relative">
-                        <Input 
+                        <Input
                           id="cep"
                           placeholder="00000-000"
-                          value={formData.endereco.cep.replace(/(\d{5})(\d)/, '$1-$2')}
+                          value={formData.endereco.cep.replace(/(\d{5})(\d)/, "$1-$2")}
                           onChange={(e) => handleCepChange(e.target.value)}
                           maxLength={9}
                           required
@@ -277,68 +275,76 @@ const CreateJob = () => {
                           <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Digite o CEP para preenchimento automático
-                      </p>
+                      <p className="text-sm text-muted-foreground">Digite o CEP para preenchimento automático</p>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="rua">Rua *</Label>
-                      <Input 
+                      <Input
                         id="rua"
                         value={formData.endereco.rua}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, rua: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, rua: e.target.value },
+                          })
+                        }
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="numero">Número *</Label>
-                      <Input 
+                      <Label htmlFor="numero">Número e Complemento *</Label>
+                      <Input
                         id="numero"
                         value={formData.endereco.numero}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, numero: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, numero: e.target.value },
+                          })
+                        }
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="bairro">Bairro *</Label>
-                      <Input 
+                      <Input
                         id="bairro"
                         value={formData.endereco.bairro}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, bairro: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, bairro: e.target.value },
+                          })
+                        }
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cidade">Cidade *</Label>
-                      <Input 
+                      <Input
                         id="cidade"
                         value={formData.endereco.cidade}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, cidade: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, cidade: e.target.value },
+                          })
+                        }
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="estado">Estado *</Label>
-                      <Input 
+                      <Input
                         id="estado"
                         value={formData.endereco.estado}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          endereco: { ...formData.endereco, estado: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, estado: e.target.value },
+                          })
+                        }
                         required
                       />
                     </div>
@@ -365,28 +371,26 @@ const CreateJob = () => {
                   </div>
                   {formData.data_opcoes.map((opcao, index) => (
                     <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <Checkbox 
+                      <Checkbox
                         checked={opcao.selecionado}
-                        onCheckedChange={(checked) => 
-                          updateDataOpcao(index, 'selecionado', checked)
-                        }
+                        onCheckedChange={(checked) => updateDataOpcao(index, "selecionado", checked)}
                       />
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input 
+                        <Input
                           type="date"
                           value={opcao.data}
-                          onChange={(e) => updateDataOpcao(index, 'data', e.target.value)}
+                          onChange={(e) => updateDataOpcao(index, "data", e.target.value)}
                           min={getMinDate()}
                         />
-                        <Select 
-                          value={opcao.periodo} 
-                          onValueChange={(value) => updateDataOpcao(index, 'periodo', value)}
+                        <Select
+                          value={opcao.periodo}
+                          onValueChange={(value) => updateDataOpcao(index, "periodo", value)}
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {getAvailablePeriodos(index, opcao.data).map(periodo => (
+                            {getAvailablePeriodos(index, opcao.data).map((periodo) => (
                               <SelectItem key={periodo.value} value={periodo.value}>
                                 {periodo.label}
                               </SelectItem>
@@ -398,11 +402,7 @@ const CreateJob = () => {
                   ))}
                 </div>
 
-                <Button 
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-gradient-primary hover:shadow-glow"
-                >
+                <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-primary hover:shadow-glow">
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
