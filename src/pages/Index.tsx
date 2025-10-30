@@ -203,7 +203,8 @@ const Index = () => {
                 key={i}
                 src={src}
                 alt={`Logo ${i}`}
-                className="h-4 md:h-6 object-contain opacity-80 hover:opacity-100 hover:scale-105 transition-transform duration-300"
+                className="max-h-8 md:max-h-10 lg:max-h-12 object-contain opacity-80 hover:opacity-100 hover:scale-105 transition-transform duration-300"
+                style={{ width: "auto", height: "auto", maxWidth: "120px" }}
                 loading="lazy"
               />
             ))}
