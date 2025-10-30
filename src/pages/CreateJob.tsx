@@ -23,6 +23,7 @@ const CreateJob = () => {
   const [formData, setFormData] = useState({
     descricao: "",
     categoria: "",
+    tipo_servico: [] as string[],
     endereco: {
       rua: "",
       numero: "",
@@ -59,6 +60,16 @@ const CreateJob = () => {
       return;
     }
 
+    if (formData.tipo_servico.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione pelo menos um tipo de serviço",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: jobData, error } = await supabase
         .from("jobs")
@@ -66,6 +77,7 @@ const CreateJob = () => {
           cliente_id: clienteProfile.id,
           descricao: formData.descricao,
           categoria: formData.categoria,
+          tipo_servico: formData.tipo_servico,
           endereco: formData.endereco,
           data_opcoes: opcoesSelecionadas,
           valor_estimado: parseFloat(formData.valor_estimado) || null,
@@ -178,6 +190,15 @@ const CreateJob = () => {
     return allPeriodos.filter((periodo) => !otherSelectedOptions.includes(periodo.value));
   };
 
+  const toggleTipoServico = (tipo: string) => {
+    setFormData({
+      ...formData,
+      tipo_servico: formData.tipo_servico.includes(tipo)
+        ? formData.tipo_servico.filter((t) => t !== tipo)
+        : [...formData.tipo_servico, tipo],
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -205,6 +226,26 @@ const CreateJob = () => {
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-3">
+                  <Label>Tipo de Serviço *</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {["Móvel novo", "Móvel usado", "Desmontagem"].map((tipo) => (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => toggleTipoServico(tipo)}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all font-medium ${
+                          formData.tipo_servico.includes(tipo)
+                            ? "border-destructive bg-destructive text-destructive-foreground"
+                            : "border-input bg-background text-foreground hover:border-destructive/50"
+                        }`}
+                      >
+                        {tipo}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="descricao">Descrição do serviço *</Label>
                   <Textarea

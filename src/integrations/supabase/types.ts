@@ -258,6 +258,7 @@ export type Database = {
           nota_fiscal: string | null
           ordem_servico_id: string | null
           status: Database["public"]["Enums"]["job_status"] | null
+          tipo_servico: string[] | null
           updated_at: string
           valor_estimado: number | null
         }
@@ -275,6 +276,7 @@ export type Database = {
           nota_fiscal?: string | null
           ordem_servico_id?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null
+          tipo_servico?: string[] | null
           updated_at?: string
           valor_estimado?: number | null
         }
@@ -292,6 +294,7 @@ export type Database = {
           nota_fiscal?: string | null
           ordem_servico_id?: string | null
           status?: Database["public"]["Enums"]["job_status"] | null
+          tipo_servico?: string[] | null
           updated_at?: string
           valor_estimado?: number | null
         }
