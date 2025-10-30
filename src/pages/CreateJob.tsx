@@ -30,6 +30,7 @@ const CreateJob = () => {
       cidade: "",
       estado: "",
       cep: "",
+      ponto_referencia: "",
     },
     data_opcoes: [
       { data: "", periodo: "manha", selecionado: false },
@@ -346,6 +347,20 @@ const CreateJob = () => {
                           })
                         }
                         required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ponto_referencia">Ponto de Referência</Label>
+                      <Input
+                        id="ponto_referencia"
+                        placeholder="Ex: Próximo ao mercado..."
+                        value={formData.endereco.ponto_referencia}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            endereco: { ...formData.endereco, ponto_referencia: e.target.value },
+                          })
+                        }
                       />
                     </div>
                   </div>
