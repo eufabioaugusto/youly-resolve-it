@@ -120,7 +120,7 @@ const Index = () => {
           {/* Lado esquerdo: texto */}
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-5">
-              🚀 Nova plataforma de serviços
+              🚀 Plataforma de montagem de móveis
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
