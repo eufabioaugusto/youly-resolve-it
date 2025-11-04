@@ -102,16 +102,16 @@ export function PagamentoModal({
                   <Button 
                     className="w-full h-auto p-4" 
                     variant="outline"
-                    onClick={() => handlePagamento('cartao')}
+                    onClick={() => handlePagamento('pix')}
                     disabled={loading}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3">
-                        <CreditCard className="h-6 w-6" />
+                        <QrCode className="h-6 w-6" />
                         <div className="text-left">
-                          <p className="font-medium">Cartão de Crédito</p>
+                          <p className="font-medium">PIX</p>
                           <p className="text-sm text-muted-foreground">
-                            Parcele em até 12x sem juros
+                            Pagamento instantâneo
                           </p>
                         </div>
                       </div>
@@ -126,20 +126,19 @@ export function PagamentoModal({
                   <Button 
                     className="w-full h-auto p-4" 
                     variant="outline"
-                    onClick={() => handlePagamento('pix')}
+                    onClick={() => handlePagamento('cartao')}
                     disabled={loading}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3">
-                        <QrCode className="h-6 w-6" />
+                        <CreditCard className="h-6 w-6" />
                         <div className="text-left">
-                          <p className="font-medium">PIX</p>
+                          <p className="font-medium">Cartão de Crédito</p>
                           <p className="text-sm text-muted-foreground">
-                            Pagamento instantâneo
+                            Parcele em até 12x sem juros
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline">À vista</Badge>
                     </div>
                   </Button>
                 </CardContent>
