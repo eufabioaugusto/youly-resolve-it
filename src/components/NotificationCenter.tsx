@@ -73,9 +73,9 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
     } else if (metadata.negociacao_id && metadata.job_id) {
       // Negociação específica - ir para a página da negociação
       if (userRole === 'montador') {
-        navigate(`/montador/negociacoes/${metadata.job_id}`);
+        navigate(`/montador/negociacao/${metadata.job_id}`);
       } else {
-        navigate(`/cliente/negociacoes/${metadata.job_id}`);
+        navigate(`/cliente/negociacao/${metadata.job_id}`);
       }
     } else if (metadata.negociacao_id) {
       // Negociação sem job_id - ir para lista de negociações
@@ -87,9 +87,9 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
     } else if (metadata.job_id) {
       // Job específico - ir para a negociação desse job
       if (userRole === 'montador') {
-        navigate(`/montador/negociacoes/${metadata.job_id}`);
+        navigate(`/montador/negociacao/${metadata.job_id}`);
       } else {
-        navigate(`/cliente/negociacoes/${metadata.job_id}`);
+        navigate(`/cliente/negociacao/${metadata.job_id}`);
       }
     } else if (metadata.saque_id) {
       // Saque - só montadores têm carteira
