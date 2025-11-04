@@ -3,6 +3,7 @@ import { Resend } from 'npm:resend@4.0.0'
 import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { ConfirmationEmail } from './_templates/confirmation-email.tsx'
+import { PasswordRecoveryEmail } from './_templates/password-recovery.tsx'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 // O secret do Supabase vem no formato 'v1,whsec_xxx' ou 'whsec_xxx'
@@ -32,8 +33,6 @@ Deno.serve(async (req) => {
     const headers = Object.fromEntries(req.headers)
     const wh = new Webhook(hookSecret)
     
-    console.log('Received webhook payload for email confirmation')
-    
     const {
       user,
       email_data: { token, token_hash, redirect_to, email_action_type },
@@ -50,25 +49,45 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`📧 Sending confirmation email to: ${user.email}`)
+    console.log(`📧 Sending ${email_action_type} email to: ${user.email}`)
 
-    // Generate HTML using React Email template
-    const html = await renderAsync(
-      React.createElement(ConfirmationEmail, {
-        supabase_url: Deno.env.get('SUPABASE_URL') ?? '',
-        token,
-        token_hash,
-        redirect_to,
-        email_action_type,
-        user_email: user.email,
-      })
-    )
+    // Determine which template to use based on email_action_type
+    let html: string
+    let subject: string
+
+    if (email_action_type === 'recovery') {
+      // Password recovery email
+      html = await renderAsync(
+        React.createElement(PasswordRecoveryEmail, {
+          supabase_url: Deno.env.get('SUPABASE_URL') ?? '',
+          token,
+          token_hash,
+          redirect_to,
+          email_action_type,
+          user_email: user.email,
+        })
+      )
+      subject = '🔑 Recuperação de Senha - YOULY'
+    } else {
+      // Default to confirmation email
+      html = await renderAsync(
+        React.createElement(ConfirmationEmail, {
+          supabase_url: Deno.env.get('SUPABASE_URL') ?? '',
+          token,
+          token_hash,
+          redirect_to,
+          email_action_type,
+          user_email: user.email,
+        })
+      )
+      subject = '🔧 Confirme sua conta no YOULY'
+    }
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: 'YOULY <no-reply@youly.com.br>',
       to: [user.email],
-      subject: '🔧 Confirme sua conta no YOULY',
+      subject,
       html,
     })
 
