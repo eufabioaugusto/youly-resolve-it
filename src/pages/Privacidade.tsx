@@ -13,7 +13,7 @@ const Privacidade = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <img src="/images/hero-youly-1.png" alt="Youly" className="h-8" />
+          <img src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541291424-Youly-Logo.png" alt="Youly" className="h-8" />
         </div>
       </header>
 
