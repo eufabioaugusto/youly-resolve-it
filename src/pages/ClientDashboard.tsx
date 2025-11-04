@@ -556,7 +556,7 @@ const ClientDashboard = () => {
                   
                   <Separator className="my-4" />
                   
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -564,6 +564,7 @@ const ClientDashboard = () => {
                         setSelectedJob(job);
                         setDetailsModalOpen(true);
                       }}
+                      className="flex-1 md:flex-initial min-w-[calc(50%-0.375rem)] md:min-w-0"
                     >
                       Ver detalhes
                     </Button>
@@ -573,7 +574,7 @@ const ClientDashboard = () => {
                       <>
                         <Button 
                           onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
-                          className="bg-gradient-primary hover:shadow-glow"
+                          className="bg-gradient-primary hover:shadow-glow flex-1 md:flex-initial min-w-[calc(50%-0.375rem)] md:min-w-0"
                           size="sm"
                         >
                           Ver Montadores Sugeridos
@@ -582,6 +583,7 @@ const ClientDashboard = () => {
                           onClick={() => navigate(`/pedido/${job.id}/candidatos`)}
                           variant="outline"
                           size="sm"
+                          className="w-full md:w-auto"
                         >
                           Ver Candidatos ({job.candidaturas_count || 0})
                         </Button>
