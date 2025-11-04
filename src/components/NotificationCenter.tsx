@@ -71,7 +71,7 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
         navigate(`/cliente/os/${metadata.ordem_servico_id}`);
       }
     } else if (metadata.negociacao_id && metadata.job_id) {
-      // Negociação específica - ir para a página da negociação
+      // Negociação específica confirmada - ir para a página da negociação
       if (userRole === 'montador') {
         navigate(`/montador/negociacao/${metadata.job_id}`);
       } else {
@@ -85,11 +85,12 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
         navigate('/cliente/negociacoes');
       }
     } else if (metadata.job_id) {
-      // Job específico - ir para a negociação desse job
+      // Job sem negociacao_id - ir para candidatos (cliente) ou trabalhos (montador)
       if (userRole === 'montador') {
-        navigate(`/montador/negociacao/${metadata.job_id}`);
+        navigate('/trabalhos-disponiveis');
       } else {
-        navigate(`/cliente/negociacao/${metadata.job_id}`);
+        // Cliente vai para página de candidatos do job
+        navigate(`/pedido/${metadata.job_id}/candidatos`);
       }
     } else if (metadata.saque_id) {
       // Saque - só montadores têm carteira
