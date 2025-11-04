@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductImageUpload } from "@/components/ProductImageUpload";
 import { Wrench, ArrowLeft, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
+import { currencyMask } from "@/lib/masks";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -282,12 +283,13 @@ const CreateJob = () => {
                     <Label htmlFor="valor_estimado">Valor estimado (R$)</Label>
                     <Input
                       id="valor_estimado"
-                      type="number"
+                      type="text"
                       placeholder="150,00"
                       value={formData.valor_estimado}
-                      onChange={(e) => setFormData({ ...formData, valor_estimado: e.target.value })}
-                      step="0.01"
-                      min="0"
+                      onChange={(e) => {
+                        const maskedValue = currencyMask(e.target.value);
+                        setFormData({ ...formData, valor_estimado: maskedValue });
+                      }}
                     />
                     <div className="flex items-center gap-1">
                       <InfoIcon className="w-3 h-3 text-destructive" />
