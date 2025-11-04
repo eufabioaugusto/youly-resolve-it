@@ -71,6 +71,26 @@ const JobDetailsModal = ({ job, open, onOpenChange }: JobDetailsModalProps) => {
 
           <Separator />
 
+          {/* Imagens dos Produtos */}
+          {job.imagens_produtos && job.imagens_produtos.length > 0 && (
+            <>
+              <div>
+                <h4 className="font-medium mb-3">Imagens dos Produtos</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {job.imagens_produtos.map((imgUrl: string, index: number) => (
+                    <img
+                      key={index}
+                      src={imgUrl}
+                      alt={`Produto ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
+                  ))}
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
           {/* Endereço */}
           <div>
             <h4 className="font-medium mb-2 flex items-center gap-2">
