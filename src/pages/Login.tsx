@@ -169,7 +169,7 @@ const Login = () => {
               </div>
               
               <div className="flex items-center justify-between text-sm">
-                <Link to="#" className="text-primary hover:underline">
+                <Link to="/esqueci-senha" className="text-primary hover:underline">
                   Esqueceu a senha?
                 </Link>
               </div>

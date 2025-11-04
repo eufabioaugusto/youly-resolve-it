@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ComoFunciona from "./pages/ComoFunciona";
 import ParaEmpresas from "./pages/ParaEmpresas";
 import ComoContratar from "./pages/ComoContratar";
@@ -54,6 +56,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/esqueci-senha" element={<ForgotPassword />} />
+              <Route path="/reset-senha" element={<ResetPassword />} />
               <Route path="/admin/register" element={<AdminRegister />} />
               <Route path="/como-funciona" element={<ComoFunciona />} />
               <Route path="/para-empresas" element={<ParaEmpresas />} />
