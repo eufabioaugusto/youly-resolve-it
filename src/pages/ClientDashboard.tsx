@@ -574,10 +574,11 @@ const ClientDashboard = () => {
                       <>
                         <Button 
                           onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
-                          className="bg-gradient-primary hover:shadow-glow flex-1 md:flex-initial min-w-[calc(50%-0.375rem)] md:min-w-0"
+                          className="bg-gradient-primary hover:shadow-glow flex-1 md:flex-initial min-w-[calc(50%-0.375rem)] md:min-w-0 text-xs md:text-sm"
                           size="sm"
                         >
-                          Ver Montadores Sugeridos
+                          <span className="hidden md:inline">Ver Montadores Sugeridos</span>
+                          <span className="md:hidden">Montadores</span>
                         </Button>
                         <Button 
                           onClick={() => navigate(`/pedido/${job.id}/candidatos`)}
