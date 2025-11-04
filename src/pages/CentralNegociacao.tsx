@@ -781,7 +781,7 @@ const CentralNegociacao = () => {
                             <DollarSign className="w-4 h-4 mr-2" />
                             Efetuar Pagamento
                           </Button>
-                          {negociacao.jobs?.status === 'aguardando_pagamento' && (
+                          {!negociacao.jobs?.ordem_servico_id && (
                             <Button
                               onClick={() => setCancelDialogOpen(true)}
                               variant="outline"
