@@ -20,13 +20,23 @@ import { DataSelecaoModal } from "@/components/DataSelecaoModal";
 import { ImageGalleryModal } from "@/components/ImageGalleryModal";
 import { useTimeout } from "@/hooks/useTimeout";
 import { currencyMask, currencyToNumber } from "@/lib/masks";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const CentralNegociacao = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { profile, montadorProfile, clienteProfile } = useProfile();
-  const { fetchNegociacao, enviarOrcamento, responderOrcamento } = useNegociacoes();
+  const { fetchNegociacao, enviarOrcamento, responderOrcamento, cancelarNegociacao } = useNegociacoes();
   
   const [negociacao, setNegociacao] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +46,8 @@ const CentralNegociacao = () => {
   const [timeoutAtivo, setTimeoutAtivo] = useState<any>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [motivoCancelamento, setMotivoCancelamento] = useState('');
   
   const { getTimeoutAtivo } = useTimeout();
   
@@ -248,13 +260,41 @@ const CentralNegociacao = () => {
     }
   };
 
+  const handleCancelarNegociacao = async () => {
+    if (!negociacao) return;
+    
+    setActionLoading(true);
+    try {
+      const result = await cancelarNegociacao(negociacao.id, motivoCancelamento || undefined);
+      
+      if (result?.success) {
+        setCancelDialogOpen(false);
+        setMotivoCancelamento('');
+        
+        // Redirecionar para o dashboard após 2 segundos
+        setTimeout(() => {
+          navigate('/cliente');
+        }, 2000);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar a negociação.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pendente: { variant: "outline", text: "Aguardando orçamento" },
       orcamento_enviado: { variant: "default", text: "Orçamento recebido", className: "bg-warning text-warning-foreground" },
       aceito: { variant: "default", text: "Aceito", className: "bg-success text-success-foreground" },
       recusado: { variant: "destructive", text: "Recusado" },
-      contra_proposta: { variant: "default", text: "Contra-proposta", className: "bg-info text-info-foreground" }
+      contra_proposta: { variant: "default", text: "Contra-proposta", className: "bg-info text-info-foreground" },
+      cancelado: { variant: "secondary", text: "Cancelado" }
     };
     
     const config = statusConfig[status] || { variant: "secondary", text: status };
@@ -731,15 +771,29 @@ const CentralNegociacao = () => {
                         ? "O orçamento foi aceito e o trabalho está confirmado. Proceda com o pagamento." 
                         : "O orçamento foi aceito e o trabalho está confirmado. O cliente foi notificado para efetuar o pagamento."}
                     </p>
-                    {isCliente && (
-                      <Button
-                        onClick={() => setPagamentoModalOpen(true)}
-                        className="bg-gradient-primary mr-3"
-                      >
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        Efetuar Pagamento
-                      </Button>
-                    )}
+                    <div className="flex gap-3 justify-center">
+                      {isCliente && (
+                        <>
+                          <Button
+                            onClick={() => setPagamentoModalOpen(true)}
+                            className="bg-gradient-primary"
+                          >
+                            <DollarSign className="w-4 h-4 mr-2" />
+                            Efetuar Pagamento
+                          </Button>
+                          {negociacao.jobs?.status === 'aguardando_pagamento' && (
+                            <Button
+                              onClick={() => setCancelDialogOpen(true)}
+                              variant="outline"
+                              className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Cancelar Negociação
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
@@ -807,6 +861,46 @@ const CentralNegociacao = () => {
             initialIndex={selectedImageIndex}
           />
         )}
+
+        {/* Dialog de Cancelamento */}
+        <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancelar Negociação</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja cancelar esta negociação? Esta ação não pode ser desfeita.
+                O trabalho será liberado para outros montadores.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Label htmlFor="motivo">Motivo do cancelamento (opcional)</Label>
+              <Textarea
+                id="motivo"
+                placeholder="Explique o motivo do cancelamento..."
+                value={motivoCancelamento}
+                onChange={(e) => setMotivoCancelamento(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={actionLoading}>Voltar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancelarNegociacao}
+                disabled={actionLoading}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                {actionLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Cancelando...
+                  </div>
+                ) : (
+                  'Confirmar Cancelamento'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

@@ -252,6 +252,85 @@ export const useNegociacoes = () => {
     return responderOrcamento(negociacaoId, 'recusado');
   };
 
+  const cancelarNegociacao = async (
+    negociacaoId: string,
+    motivoCancelamento?: string
+  ) => {
+    try {
+      // Buscar dados da negociação antes de cancelar
+      const { data: negociacao, error: fetchError } = await supabase
+        .from('negociacoes')
+        .select('*, jobs(*), montadores(user_id)')
+        .eq('id', negociacaoId)
+        .single();
+
+      if (fetchError || !negociacao) {
+        throw new Error('Negociação não encontrada');
+      }
+
+      // Atualizar negociação para cancelado
+      const { error: negociacaoError } = await supabase
+        .from('negociacoes')
+        .update({
+          status: 'cancelado',
+          motivo_cancelamento: motivoCancelamento,
+          data_cancelamento: new Date().toISOString(),
+          cancelado_por: user?.id
+        })
+        .eq('id', negociacaoId);
+
+      if (negociacaoError) throw negociacaoError;
+
+      // Liberar job para outros montadores
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({
+          status: 'aberto',
+          montador_id: null
+        })
+        .eq('id', negociacao.job_id);
+
+      if (jobError) throw jobError;
+
+      // Notificar montador sobre o cancelamento
+      if (negociacao.montadores?.user_id) {
+        const { error: notifError } = await supabase
+          .from('notificacoes')
+          .insert({
+            user_id: negociacao.montadores.user_id,
+            tipo: 'negociacao',
+            mensagem: `O cliente cancelou a negociação${motivoCancelamento ? ': ' + motivoCancelamento : ''}`,
+            metadata: {
+              negociacao_id: negociacaoId,
+              job_id: negociacao.job_id
+            }
+          });
+
+        if (notifError) {
+          console.error('Erro ao enviar notificação:', notifError);
+        }
+      }
+
+      // Limpar cache
+      negociacoesCache.clear();
+
+      toast({
+        title: "Negociação cancelada",
+        description: "O trabalho foi liberado para outros montadores."
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao cancelar negociação:', error);
+      toast({
+        title: "Erro ao cancelar",
+        description: error.message,
+        variant: "destructive"
+      });
+      return { success: false };
+    }
+  };
+
   // Buscar negociação individual
   const fetchNegociacao = async (jobId: string) => {
     if (!user) return null;
@@ -456,6 +535,7 @@ export const useNegociacoes = () => {
     enviarOrcamento,
     responderOrcamento,
     aceitarContraproposta,
-    recusarContraproposta
+    recusarContraproposta,
+    cancelarNegociacao
   };
 };

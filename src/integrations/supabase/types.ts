@@ -408,14 +408,17 @@ export type Database = {
       }
       negociacoes: {
         Row: {
+          cancelado_por: string | null
           cliente_id: string
           created_at: string
+          data_cancelamento: string | null
           data_pagamento: string | null
           data_resposta_montador: string | null
           data_selecionada_montador: Json | null
           id: string
           job_id: string
           montador_id: string
+          motivo_cancelamento: string | null
           observacoes_cliente: string | null
           observacoes_montador: string | null
           pagamento_id: string | null
@@ -427,14 +430,17 @@ export type Database = {
           valor_proposto_montador: number | null
         }
         Insert: {
+          cancelado_por?: string | null
           cliente_id: string
           created_at?: string
+          data_cancelamento?: string | null
           data_pagamento?: string | null
           data_resposta_montador?: string | null
           data_selecionada_montador?: Json | null
           id?: string
           job_id: string
           montador_id: string
+          motivo_cancelamento?: string | null
           observacoes_cliente?: string | null
           observacoes_montador?: string | null
           pagamento_id?: string | null
@@ -446,14 +452,17 @@ export type Database = {
           valor_proposto_montador?: number | null
         }
         Update: {
+          cancelado_por?: string | null
           cliente_id?: string
           created_at?: string
+          data_cancelamento?: string | null
           data_pagamento?: string | null
           data_resposta_montador?: string | null
           data_selecionada_montador?: Json | null
           id?: string
           job_id?: string
           montador_id?: string
+          motivo_cancelamento?: string | null
           observacoes_cliente?: string | null
           observacoes_montador?: string | null
           pagamento_id?: string | null
