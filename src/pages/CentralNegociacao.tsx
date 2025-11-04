@@ -19,6 +19,7 @@ import { TimeoutMonitor } from "@/components/TimeoutMonitor";
 import { DataSelecaoModal } from "@/components/DataSelecaoModal";
 import { ImageGalleryModal } from "@/components/ImageGalleryModal";
 import { useTimeout } from "@/hooks/useTimeout";
+import { currencyMask, currencyToNumber } from "@/lib/masks";
 
 const CentralNegociacao = () => {
   const { jobId } = useParams();
@@ -185,7 +186,7 @@ const CentralNegociacao = () => {
     
     setActionLoading(true);
     try {
-      await enviarOrcamento(negociacao.id, parseFloat(valorProposta), observacoes);
+      await enviarOrcamento(negociacao.id, currencyToNumber(valorProposta), observacoes);
       toast({
         title: "Orçamento enviado!",
         description: "O cliente foi notificado sobre seu orçamento."
@@ -209,7 +210,7 @@ const CentralNegociacao = () => {
     
     setActionLoading(true);
     try {
-      const valorContra = acao === 'contra_proposta' ? parseFloat(valorContraproposta) : undefined;
+      const valorContra = acao === 'contra_proposta' ? currencyToNumber(valorContraproposta) : undefined;
       
       const result = await responderOrcamento(
         negociacao.id, 
@@ -564,11 +565,10 @@ const CentralNegociacao = () => {
                     <Label htmlFor="valor">Valor da Proposta (R$)</Label>
                     <Input
                       id="valor"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
+                      type="text"
+                      placeholder="R$ 0,00"
                       value={valorProposta}
-                      onChange={(e) => setValorProposta(e.target.value)}
+                      onChange={(e) => setValorProposta(currencyMask(e.target.value))}
                     />
                   </div>
                   <div>
@@ -649,11 +649,10 @@ const CentralNegociacao = () => {
                       <Label htmlFor="contravalor">Novo Valor (R$)</Label>
                       <Input
                         id="contravalor"
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
+                        type="text"
+                        placeholder="R$ 0,00"
                         value={valorContraproposta}
-                        onChange={(e) => setValorContraproposta(e.target.value)}
+                        onChange={(e) => setValorContraproposta(currencyMask(e.target.value))}
                       />
                     </div>
                     <div>
