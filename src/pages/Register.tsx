@@ -12,7 +12,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, ArrowLeft, Users, Wrench as WorkerIcon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { phoneMask, cpfMask, removeMask, validateCPF, validatePhone } from "@/lib/masks";
+import { phoneMask, cpfMask, removeMask, validateCPF, validatePhone, currencyMask } from "@/lib/masks";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -326,18 +326,19 @@ const Register = () => {
                        maxLength={14}
                      />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hourly-rate">Valor por hora (R$)</Label>
-                    <Input 
-                      id="hourly-rate" 
-                      type="number"
-                      placeholder="45,00"
-                      value={workerForm.hourlyRate}
-                      onChange={(e) => setWorkerForm({...workerForm, hourlyRate: e.target.value})}
-                      className="h-11"
-                      step="0.01"
-                      min="0"
-                    />
+                   <div className="space-y-2">
+                     <Label htmlFor="hourly-rate">Valor por hora (R$)</Label>
+                     <Input 
+                       id="hourly-rate" 
+                       type="text"
+                       placeholder="45,00"
+                       value={workerForm.hourlyRate}
+                       onChange={(e) => {
+                         const maskedValue = currencyMask(e.target.value);
+                         setWorkerForm({...workerForm, hourlyRate: maskedValue});
+                       }}
+                       className="h-11"
+                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="documento-foto">Foto do Documento (RG ou CNH) *</Label>

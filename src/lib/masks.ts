@@ -73,3 +73,28 @@ export const validatePhone = (phone: string): boolean => {
   // Telefone deve ter 10 ou 11 dígitos
   return numbers.length === 10 || numbers.length === 11;
 };
+
+// Função para máscara de moeda brasileira: 00,00 / 1.234,56
+export const currencyMask = (value: string): string => {
+  // Remove tudo que não é dígito
+  const numbers = value.replace(/\D/g, '');
+  
+  if (!numbers) return '';
+  
+  // Converte para número e divide por 100 para ter os centavos
+  const amount = parseInt(numbers) / 100;
+  
+  // Formata para moeda brasileira
+  return amount.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+// Função para converter valor mascarado para número
+export const currencyToNumber = (value: string): number => {
+  if (!value) return 0;
+  // Remove pontos e substitui vírgula por ponto
+  const cleaned = value.replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleaned) || 0;
+};
