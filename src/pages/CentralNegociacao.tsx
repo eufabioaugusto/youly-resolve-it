@@ -575,7 +575,7 @@ const CentralNegociacao = () => {
                     <Label htmlFor="obs">Observações (opcional)</Label>
                     <Textarea
                       id="obs"
-                      placeholder="Detalhe sua proposta, prazo de execução, materiais inclusos, etc."
+                      placeholder="Detalhe a sua proposta, escreva a data do atendimento, materiais inclusos, etc"
                       value={observacoes}
                       onChange={(e) => setObservacoes(e.target.value)}
                     />
