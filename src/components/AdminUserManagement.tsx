@@ -5,16 +5,35 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Search, UserCog, Mail, Phone, Eye } from 'lucide-react';
+import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2 } from 'lucide-react';
 import { AdminMontadorDetailsModal } from './AdminMontadorDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function AdminUserManagement() {
-  const { users, loading } = useAdmin();
+  const { users, loading, fetchUsers } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMontador, setSelectedMontador] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Buscar montadores pendentes
   const { data: montadoresPendentes, refetch: refetchPendentes } = useQuery({
@@ -73,6 +92,34 @@ export function AdminUserManagement() {
 
   const handleSuccess = () => {
     refetchPendentes();
+    fetchUsers();
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      // Se for montador, desativar ao invés de deletar
+      if (userToDelete.role === 'montador') {
+        const { error } = await supabase
+          .from('montadores')
+          .update({ status: 'inativo', status_cadastro: 'reprovado' })
+          .eq('user_id', userToDelete.user_id);
+
+        if (error) throw error;
+        toast.success('Montador removido com sucesso');
+      } else {
+        toast.error('Função disponível apenas para montadores no momento');
+        return;
+      }
+
+      fetchUsers();
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error);
+      toast.error('Erro ao remover usuário');
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -166,6 +213,26 @@ export function AdminUserManagement() {
                             </p>
                           </div>
                         </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remover
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardContent>
                   </Card>
@@ -238,6 +305,24 @@ export function AdminUserManagement() {
         onOpenChange={setModalOpen}
         onSuccess={handleSuccess}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o usuário <strong>{userToDelete?.nome}</strong>?
+              {userToDelete?.role === 'montador' && ' O montador será desativado e não poderá mais acessar o sistema.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
