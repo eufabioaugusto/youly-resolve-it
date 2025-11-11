@@ -160,7 +160,7 @@ const Index = () => {
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
                 <div className="text-2xl font-bold">1000+</div>
-                <div className="text-sm opacity-90">Móveis montados</div>
+                <div className="text-sm opacity-90">Móveis montados por dia</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
                 <div className="text-2xl font-bold">4.9★</div>
