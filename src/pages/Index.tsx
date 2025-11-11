@@ -219,7 +219,7 @@ const Index = () => {
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <div className="text-5xl md:text-6xl font-extrabold tracking-tight">+1.000</div>
-                <div className="text-2xl md:text-3xl font-semibold mt-2">móveis já montados pela rede YOULY</div>
+                <div className="text-2xl md:text-3xl font-semibold mt-2">móveis montados por dia pela rede YOULY</div>
                 <p className="mt-4 text-white/90">
                   Garantia de 30 dias em todos os serviços. Segurança, velocidade e avaliação real.
                 </p>
