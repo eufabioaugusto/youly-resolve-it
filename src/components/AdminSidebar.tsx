@@ -37,8 +37,16 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ currentSection, onSectionChange }: AdminSidebarProps) {
-  const { state } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const handleSectionChange = (section: string) => {
+    onSectionChange(section);
+    // Fecha o sidebar automaticamente no mobile após clicar
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
@@ -55,7 +63,7 @@ export function AdminSidebar({ currentSection, onSectionChange }: AdminSidebarPr
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.section}>
                   <SidebarMenuButton
-                    onClick={() => onSectionChange(item.section)}
+                    onClick={() => handleSectionChange(item.section)}
                     className={
                       currentSection === item.section
                         ? "bg-muted text-primary font-medium"
