@@ -479,26 +479,24 @@ export function AdminJobManagement() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-              <TabsList className="inline-flex min-w-full md:grid md:grid-cols-4 md:w-full">
-                <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-                  <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>Disponíveis ({jobsDisponiveis.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="andamento" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>Andamento ({jobsEmAndamento.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="finalizados" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>Finalizados ({jobsFinalizados.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="timeout" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>Timeout ({jobsTimeout.length})</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="grid grid-cols-2 gap-2 h-auto md:grid-cols-4 w-full">
+              <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Disponíveis ({jobsDisponiveis.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="andamento" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Andamento ({jobsEmAndamento.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="finalizados" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Finalizados ({jobsFinalizados.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="timeout" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="truncate">Timeout ({jobsTimeout.length})</span>
+              </TabsTrigger>
+            </TabsList>
 
             <TabsContent value="disponiveis" className="mt-6">
               {jobsDisponiveis.length === 0 ? (
