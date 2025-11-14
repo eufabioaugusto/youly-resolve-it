@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
   { title: "Visão Geral", icon: LayoutDashboard, section: "overview" },
@@ -37,14 +38,15 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ currentSection, onSectionChange }: AdminSidebarProps) {
-  const { state, setOpen, isMobile } = useSidebar();
+  const { state, setOpen, setOpenMobile } = useSidebar();
+  const isMobile = useIsMobile();
   const isCollapsed = state === "collapsed";
 
   const handleSectionChange = (section: string) => {
     onSectionChange(section);
-    // Fecha o sidebar automaticamente no mobile após clicar
+    // Fecha o sidebar automaticamente no mobile após clicar com pequeno delay
     if (isMobile) {
-      setOpen(false);
+      setTimeout(() => setOpenMobile(false), 150);
     }
   };
 
