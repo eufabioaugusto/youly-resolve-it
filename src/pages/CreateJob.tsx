@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductImageUpload } from "@/components/ProductImageUpload";
+import { DatePickerInput } from "@/components/DatePickerInput";
 import { Wrench, ArrowLeft, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
 import { currencyMask } from "@/lib/masks";
@@ -170,7 +171,8 @@ const CreateJob = () => {
   const getMinDate = () => {
     const now = new Date();
     now.setDate(now.getDate() + 2);
-    return now.toISOString().split("T")[0];
+    now.setHours(0, 0, 0, 0);
+    return now;
   };
 
   // Função para verificar períodos disponíveis para uma data
@@ -432,11 +434,12 @@ const CreateJob = () => {
                         onCheckedChange={(checked) => updateDataOpcao(index, "selecionado", checked)}
                       />
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          type="date"
+                        <DatePickerInput
                           value={opcao.data}
-                          onChange={(e) => updateDataOpcao(index, "data", e.target.value)}
-                          min={getMinDate()}
+                          onChange={(date) => updateDataOpcao(index, "data", date)}
+                          minDate={getMinDate()}
+                          disabled={!opcao.selecionado}
+                          placeholder="Selecione a data"
                         />
                         <Select
                           value={opcao.periodo}
