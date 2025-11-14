@@ -381,6 +381,31 @@ const CentralNegociacao = () => {
               {getStatusBadge(negociacao.status)}
             </div>
             
+            {/* Botões de Ação no Topo - Para Status Aceito */}
+            {negociacao.status === 'aceito' && isCliente && (
+              <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center px-4">
+                <Button
+                  onClick={() => setPagamentoModalOpen(true)}
+                  size="sm"
+                  className="bg-gradient-primary w-full sm:w-auto"
+                >
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Efetuar Pagamento
+                </Button>
+                {!negociacao.jobs?.ordem_servico_id && (
+                  <Button
+                    onClick={() => setCancelDialogOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-white w-full sm:w-auto"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancelar Negociação
+                  </Button>
+                )}
+              </div>
+            )}
+            
             {/* Timeout Monitor para Montador */}
             {isMontador && timeoutAtivo && !timeoutAtivo.expirado && (
               <div className="mt-6">
@@ -771,12 +796,13 @@ const CentralNegociacao = () => {
                         ? "O orçamento foi aceito e o trabalho está confirmado. Proceda com o pagamento." 
                         : "O orçamento foi aceito e o trabalho está confirmado. O cliente foi notificado para efetuar o pagamento."}
                     </p>
-                    <div className="flex gap-3 justify-center">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center px-4">
                       {isCliente && (
                         <>
                           <Button
                             onClick={() => setPagamentoModalOpen(true)}
-                            className="bg-gradient-primary"
+                            size="sm"
+                            className="bg-gradient-primary w-full sm:w-auto"
                           >
                             <DollarSign className="w-4 h-4 mr-2" />
                             Efetuar Pagamento
@@ -785,7 +811,8 @@ const CentralNegociacao = () => {
                             <Button
                               onClick={() => setCancelDialogOpen(true)}
                               variant="outline"
-                              className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+                              size="sm"
+                              className="border-destructive text-destructive hover:bg-destructive hover:text-white w-full sm:w-auto"
                             >
                               <XCircle className="w-4 h-4 mr-2" />
                               Cancelar Negociação
