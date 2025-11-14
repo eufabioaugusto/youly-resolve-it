@@ -83,25 +83,46 @@ const AvailableJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar jobs primeiro
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
-        .select(`
-          *,
-          clientes!jobs_cliente_id_fkey(
-            avaliacao_media,
-            pedidos_total,
-            profiles!clientes_user_id_fkey(nome)
-          )
-        `)
+        .select('*')
         .eq('status', 'aberto')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar jobs:', error);
-        throw error;
-      }
-      
-      setJobs(data || []);
+      if (jobsError) throw jobsError;
+
+      // Para cada job, buscar dados do cliente
+      const jobsWithClientes = await Promise.all(
+        (jobsData || []).map(async (job) => {
+          const { data: cliente } = await supabase
+            .from('clientes')
+            .select('avaliacao_media, pedidos_total, user_id')
+            .eq('id', job.cliente_id)
+            .single();
+
+          let clienteNome = 'Cliente';
+          if (cliente?.user_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('nome')
+              .eq('user_id', cliente.user_id)
+              .single();
+            clienteNome = profile?.nome || 'Cliente';
+          }
+
+          return {
+            ...job,
+            clientes: {
+              avaliacao_media: cliente?.avaliacao_media || 0,
+              pedidos_total: cliente?.pedidos_total || 0,
+              profiles: { nome: clienteNome }
+            }
+          };
+        })
+      );
+
+      setJobs(jobsWithClientes);
       setHasError(false);
     } catch (error) {
       console.error('Erro ao buscar jobs:', error);
