@@ -479,22 +479,22 @@ export function AdminJobManagement() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="disponiveis">
-                <Package className="w-4 h-4 mr-2" />
-                Disponíveis ({jobsDisponiveis.length})
+            <TabsList className="w-full inline-flex md:grid md:grid-cols-4 overflow-x-auto">
+              <TabsTrigger value="disponiveis" className="flex-shrink-0 gap-1 px-3 text-xs sm:text-sm">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Disponíveis ({jobsDisponiveis.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="andamento">
-                <PlayCircle className="w-4 h-4 mr-2" />
-                Em Andamento ({jobsEmAndamento.length})
+              <TabsTrigger value="andamento" className="flex-shrink-0 gap-1 px-3 text-xs sm:text-sm">
+                <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Andamento ({jobsEmAndamento.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="finalizados">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Finalizados ({jobsFinalizados.length})
+              <TabsTrigger value="finalizados" className="flex-shrink-0 gap-1 px-3 text-xs sm:text-sm">
+                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Finalizados ({jobsFinalizados.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="timeout">
-                <AlertCircle className="w-4 h-4 mr-2" />
-                Timeout ({jobsTimeout.length})
+              <TabsTrigger value="timeout" className="flex-shrink-0 gap-1 px-3 text-xs sm:text-sm">
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">Timeout ({jobsTimeout.length})</span>
               </TabsTrigger>
             </TabsList>
 
