@@ -64,22 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    console.log('🚪 SignOut chamado');
     try {
-      // Check if there's an active session before trying to sign out
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.warn('Logout error (ignoring):', error);
-          // Continue with logout process even if server logout fails
-        }
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn('Logout error (ignoring):', error);
       }
     } catch (error) {
       console.warn('Error during logout process (ignoring):', error);
-      // Continue with logout process even if there are errors
     } finally {
-      // Always clear local state
       setSession(null);
       setUser(null);
     }

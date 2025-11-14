@@ -18,55 +18,64 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   const [montadorStatus, setMontadorStatus] = useState<string | null>(null);
   const [checkingMontador, setCheckingMontador] = useState(true);
 
-  // Verificar status do montador
+  // Verificar status do montador - apenas uma vez quando os dados carregarem
   useEffect(() => {
-    if (!authLoading && !profileLoading) {
-      // Defer Supabase calls with setTimeout to prevent auth deadlock
-      setTimeout(() => {
-        const checkMontadorStatus = async () => {
-          if (user && profile?.role === 'montador') {
-            try {
-              const { data: montadorData } = await supabase
-                .from('montadores')
-                .select('status_cadastro, motivo_reprovacao')
-                .eq('user_id', user.id)
-                .single();
-
-              if (montadorData) {
-                if (montadorData.status_cadastro === 'pendente') {
-                  await signOut();
-                  toast({
-                    title: "Cadastro pendente de aprovação",
-                    description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
-                    variant: "destructive"
-                  });
-                  setMontadorStatus('pendente');
-                } else if (montadorData.status_cadastro === 'reprovado') {
-                  await signOut();
-                  toast({
-                    title: "Cadastro não aprovado",
-                    description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado.",
-                    variant: "destructive"
-                  });
-                  setMontadorStatus('reprovado');
-                } else {
-                  setMontadorStatus('aprovado');
-                }
-              }
-            } catch (error) {
-              console.error('Erro ao verificar status do montador:', error);
-            } finally {
-              setCheckingMontador(false);
-            }
-          } else {
-            setCheckingMontador(false);
-          }
-        };
-        
-        checkMontadorStatus();
-      }, 0);
+    if (authLoading || profileLoading || !user || !profile) {
+      setCheckingMontador(false);
+      return;
     }
-  }, [user, profile, authLoading, profileLoading, signOut, toast]);
+
+    if (profile.role !== 'montador') {
+      setCheckingMontador(false);
+      setMontadorStatus('aprovado');
+      return;
+    }
+
+    // Defer Supabase calls with setTimeout to prevent auth deadlock
+    const checkStatus = setTimeout(() => {
+      const checkMontadorStatus = async () => {
+        try {
+          const { data: montadorData } = await supabase
+            .from('montadores')
+            .select('status_cadastro, motivo_reprovacao')
+            .eq('user_id', user.id)
+            .single();
+
+          if (montadorData) {
+            if (montadorData.status_cadastro === 'pendente') {
+              console.log('🚫 Montador pendente, fazendo logout');
+              await signOut();
+              toast({
+                title: "Cadastro pendente de aprovação",
+                description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
+                variant: "destructive"
+              });
+              setMontadorStatus('pendente');
+            } else if (montadorData.status_cadastro === 'reprovado') {
+              console.log('🚫 Montador reprovado, fazendo logout');
+              await signOut();
+              toast({
+                title: "Cadastro não aprovado",
+                description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado.",
+                variant: "destructive"
+              });
+              setMontadorStatus('reprovado');
+            } else {
+              setMontadorStatus('aprovado');
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status do montador:', error);
+        } finally {
+          setCheckingMontador(false);
+        }
+      };
+      
+      checkMontadorStatus();
+    }, 100);
+
+    return () => clearTimeout(checkStatus);
+  }, [user?.id, profile?.role, authLoading, profileLoading]); // Removido signOut e toast das dependências
 
   // Durante o loading, apenas mostrar um spinner discreto
   if (authLoading || profileLoading || checkingMontador) {
