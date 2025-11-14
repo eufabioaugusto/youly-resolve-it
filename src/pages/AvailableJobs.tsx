@@ -236,7 +236,7 @@ const AvailableJobs = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Pedidos Disponíveis</h1>
-            <p className="text-white/80">Encontre trabalhos que combinam com você</p>
+            <p className="text-dark/80">Encontre trabalhos que combinam com você</p>
           </div>
 
           {/* Filtros */}
