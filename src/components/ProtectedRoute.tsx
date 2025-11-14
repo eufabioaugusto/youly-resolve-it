@@ -20,45 +20,51 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
   // Verificar status do montador
   useEffect(() => {
-    const checkMontadorStatus = async () => {
-      if (user && profile?.role === 'montador') {
-        try {
-          const { data: montadorData } = await supabase
-            .from('montadores')
-            .select('status_cadastro, motivo_reprovacao')
-            .eq('user_id', user.id)
-            .single();
-
-          if (montadorData) {
-            if (montadorData.status_cadastro === 'pendente') {
-              await signOut();
-              toast({
-                title: "Cadastro pendente de aprovação",
-                description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
-                variant: "destructive"
-              });
-              setMontadorStatus('pendente');
-            } else if (montadorData.status_cadastro === 'reprovado') {
-              await signOut();
-              toast({
-                title: "Cadastro não aprovado",
-                description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado.",
-                variant: "destructive"
-              });
-              setMontadorStatus('reprovado');
-            } else {
-              setMontadorStatus('aprovado');
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao verificar status do montador:', error);
-        }
-      }
-      setCheckingMontador(false);
-    };
-
     if (!authLoading && !profileLoading) {
-      checkMontadorStatus();
+      // Defer Supabase calls with setTimeout to prevent auth deadlock
+      setTimeout(() => {
+        const checkMontadorStatus = async () => {
+          if (user && profile?.role === 'montador') {
+            try {
+              const { data: montadorData } = await supabase
+                .from('montadores')
+                .select('status_cadastro, motivo_reprovacao')
+                .eq('user_id', user.id)
+                .single();
+
+              if (montadorData) {
+                if (montadorData.status_cadastro === 'pendente') {
+                  await signOut();
+                  toast({
+                    title: "Cadastro pendente de aprovação",
+                    description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
+                    variant: "destructive"
+                  });
+                  setMontadorStatus('pendente');
+                } else if (montadorData.status_cadastro === 'reprovado') {
+                  await signOut();
+                  toast({
+                    title: "Cadastro não aprovado",
+                    description: montadorData.motivo_reprovacao || "Seu cadastro não foi aprovado.",
+                    variant: "destructive"
+                  });
+                  setMontadorStatus('reprovado');
+                } else {
+                  setMontadorStatus('aprovado');
+                }
+              }
+            } catch (error) {
+              console.error('Erro ao verificar status do montador:', error);
+            } finally {
+              setCheckingMontador(false);
+            }
+          } else {
+            setCheckingMontador(false);
+          }
+        };
+        
+        checkMontadorStatus();
+      }, 0);
     }
   }, [user, profile, authLoading, profileLoading, signOut, toast]);
 
