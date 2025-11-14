@@ -7,11 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Wrench, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 
 const Login = () => {
-  const { signIn, signOut } = useAuth();
+  const { signIn, signOut, user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -21,6 +23,20 @@ const Login = () => {
 
   // Pegar a URL de onde o usuário veio (ou dashboard padrão)
   const from = (location.state as any)?.from || null;
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (!authLoading && user && profile) {
+      console.log('✅ Usuário já autenticado, redirecionando...');
+      const dashboardMap: Record<string, string> = {
+        'client': '/cliente',
+        'montador': '/montador',
+        'admin': '/admin'
+      };
+      const destination = from || dashboardMap[profile.role] || '/';
+      navigate(destination, { replace: true });
+    }
+  }, [user, profile, authLoading, from, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +136,12 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      {authLoading ? (
+        <div className="flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="w-full max-w-md">
         <Link 
           to="/" 
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
@@ -194,6 +215,7 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
+      )}
     </div>
   );
 };

@@ -19,9 +19,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔐 [useAuth] Inicializando autenticação...');
+    
     // FIRST get existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session found' : 'No session');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ [useAuth] Erro ao buscar sessão:', error);
+      }
+      console.log('📦 [useAuth] Sessão inicial:', session ? `Usuário: ${session.user.email}` : 'Nenhuma sessão');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -29,17 +34,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        console.log('Auth state change:', _event, session ? 'Session exists' : 'No session');
+      (event, session) => {
+        console.log('🔔 [useAuth] Evento de auth:', event, session ? `Usuário: ${session.user.email}` : 'Sem sessão');
         setSession(session);
         setUser(session?.user ?? null);
       }
     );
 
     return () => {
+      console.log('🧹 [useAuth] Limpando subscription');
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     const redirectUrl = `${window.location.origin}/`;
