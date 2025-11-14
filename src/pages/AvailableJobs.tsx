@@ -52,12 +52,9 @@ const AvailableJobs = () => {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    console.log('🔄 useEffect montadorProfile mudou:', montadorProfile);
+    fetchJobs();
+    
     if (montadorProfile) {
-      console.log('✅ Montador profile disponível, iniciando buscas...');
-      setLoading(true);
-      setHasError(false);
-      fetchJobs();
       fetchCandidaturas();
 
       // Configurar listener de realtime para candidaturas
@@ -73,13 +70,12 @@ const AvailableJobs = () => {
           },
           (payload) => {
             console.log('🔔 Nova candidatura detectada via Realtime:', payload);
-            fetchCandidaturas(); // Recarregar candidaturas do banco
+            fetchCandidaturas();
           }
         )
         .subscribe();
 
       return () => {
-        console.log('🧹 Limpando canal Realtime');
         supabase.removeChannel(channel);
       };
     }
@@ -91,17 +87,20 @@ const AvailableJobs = () => {
         .from('jobs')
         .select(`
           *,
-          clientes!inner(
+          clientes!jobs_cliente_id_fkey(
             avaliacao_media,
             pedidos_total,
-            profiles(nome)
+            profiles!clientes_user_id_fkey(nome)
           )
         `)
         .eq('status', 'aberto')
-        .not('id', 'in', `(SELECT job_id FROM timeout_montador WHERE expirado = true)`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar jobs:', error);
+        throw error;
+      }
+      
       setJobs(data || []);
       setHasError(false);
     } catch (error) {
@@ -113,38 +112,20 @@ const AvailableJobs = () => {
   };
 
   const fetchCandidaturas = async () => {
-    if (!montadorProfile) {
-      console.log('❌ fetchCandidaturas: montadorProfile não disponível');
-      return;
-    }
+    if (!montadorProfile) return;
 
     try {
-      console.log('🔍 INICIANDO BUSCA DE CANDIDATURAS');
-      console.log('🆔 Montador Profile ID:', montadorProfile.id);
-      console.log('👤 User ID do montador:', montadorProfile.user_id);
-      
       const { data, error } = await supabase
         .from('candidaturas')
-        .select('job_id, montador_id, status, proposta')
+        .select('job_id')
         .eq('montador_id', montadorProfile.id);
 
-      console.log('📦 Resposta bruta do Supabase:', { data, error });
-
-      if (error) {
-        console.error('❌ Erro na query de candidaturas:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       const jobIds = data?.map(c => c.job_id) || [];
-      console.log('✅ Job IDs encontrados:', jobIds);
-      console.log('📊 Total de candidaturas:', jobIds.length);
-      console.log('🎯 Candidaturas completas:', data);
-      
       setCandidaturas(jobIds);
-      
-      console.log('✔️ Estado atualizado com:', jobIds);
     } catch (error) {
-      console.error('❌ Erro ao buscar candidaturas:', error);
+      console.error('Erro ao buscar candidaturas:', error);
     }
   };
 
@@ -154,8 +135,6 @@ const AvailableJobs = () => {
   };
 
   const handleCandidaturaSuccess = async () => {
-    console.log('Candidatura enviada com sucesso, buscando do banco...');
-    // Buscar candidaturas diretamente do banco de dados
     await fetchCandidaturas();
   };
 
@@ -189,8 +168,7 @@ const AvailableJobs = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  // Mostra loading enquanto carrega o profile OU durante o fetch
-  if (loading || !montadorProfile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -201,19 +179,22 @@ const AvailableJobs = () => {
     );
   }
 
-  // Mostra erro apenas se realmente houve um erro no fetch
   if (hasError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle>Ops! Algo deu errado</CardTitle>
+            <CardTitle>Ops! Problema ao carregar</CardTitle>
             <CardDescription>
-              Não conseguimos carregar os pedidos no momento. Isso pode acontecer se houver problemas de conexão ou se os pedidos não estão mais disponíveis.
+              Não conseguimos carregar os pedidos. Verifique sua conexão e tente novamente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={() => fetchJobs()} className="w-full">
+            <Button onClick={() => {
+              setLoading(true);
+              setHasError(false);
+              fetchJobs();
+            }} className="w-full">
               Tentar novamente
             </Button>
             <Button 
@@ -395,13 +376,8 @@ const AvailableJobs = () => {
                         Ver detalhes
                       </Button>
                       <Button 
-                        onClick={() => {
-                          console.log('🖱️ Clique no botão do job:', job.id);
-                          console.log('📋 Array de candidaturas atual:', candidaturas);
-                          console.log('🔍 Job está na lista?', candidaturas.includes(job.id));
-                          openCandidateModal(job);
-                        }}
-                        disabled={candidaturas.includes(job.id)}
+                        onClick={() => openCandidateModal(job)}
+                        disabled={!montadorProfile || candidaturas.includes(job.id)}
                         className="flex-1 bg-gradient-primary hover:shadow-glow"
                       >
                         {candidaturas.includes(job.id) 
