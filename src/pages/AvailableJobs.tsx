@@ -49,11 +49,14 @@ const AvailableJobs = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [candidateModalOpen, setCandidateModalOpen] = useState(false);
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     console.log('🔄 useEffect montadorProfile mudou:', montadorProfile);
     if (montadorProfile) {
       console.log('✅ Montador profile disponível, iniciando buscas...');
+      setLoading(true);
+      setHasError(false);
       fetchJobs();
       fetchCandidaturas();
 
@@ -100,8 +103,10 @@ const AvailableJobs = () => {
 
       if (error) throw error;
       setJobs(data || []);
+      setHasError(false);
     } catch (error) {
       console.error('Erro ao buscar jobs:', error);
+      setHasError(true);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os pedidos disponíveis",
@@ -189,10 +194,35 @@ const AvailableJobs = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  if (loading) {
+  // Mostra loading enquanto carrega o profile OU durante o fetch
+  if (loading || !montadorProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground text-lg">Carregando disponíveis...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando trabalhos disponíveis...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostra erro apenas se realmente houve um erro no fetch (não apenas profile carregando)
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-destructive">Erro</CardTitle>
+            <CardDescription>
+              Não foi possível carregar os pedidos disponíveis
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
