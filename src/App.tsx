@@ -105,6 +105,11 @@ const App = () => (
                   <MontadorProfile />
                 </ProtectedRoute>
               } />
+              <Route path="/montador/negociacoes" element={
+                <ProtectedRoute requiredRole="montador">
+                  <CentralNegociacoes />
+                </ProtectedRoute>
+              } />
               <Route path="/montador/negociacao/:jobId" element={
                 <ProtectedRoute requiredRole="montador">
                   <CentralNegociacao />
