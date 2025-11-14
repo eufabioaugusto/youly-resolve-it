@@ -227,7 +227,7 @@ const CreateJob = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-3">
                   <Label>Tipo de Serviço *</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-1.5 md:gap-3">
                     {["Móvel novo", "Móvel usado", "Desmontagem"].map((tipo) => (
                       <button
                         key={tipo}
