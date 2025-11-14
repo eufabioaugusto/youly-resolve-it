@@ -94,7 +94,7 @@ const AvailableJobs = () => {
           clientes!inner(
             avaliacao_media,
             pedidos_total,
-            profiles!clientes_user_id_fkey(nome)
+            profiles(nome)
           )
         `)
         .eq('status', 'aberto')
@@ -107,11 +107,6 @@ const AvailableJobs = () => {
     } catch (error) {
       console.error('Erro ao buscar jobs:', error);
       setHasError(true);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os pedidos disponíveis",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
@@ -206,20 +201,27 @@ const AvailableJobs = () => {
     );
   }
 
-  // Mostra erro apenas se realmente houve um erro no fetch (não apenas profile carregando)
+  // Mostra erro apenas se realmente houve um erro no fetch
   if (hasError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-destructive">Erro</CardTitle>
+            <CardTitle>Ops! Algo deu errado</CardTitle>
             <CardDescription>
-              Não foi possível carregar os pedidos disponíveis
+              Não conseguimos carregar os pedidos no momento. Isso pode acontecer se houver problemas de conexão ou se os pedidos não estão mais disponíveis.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => window.location.reload()} className="w-full">
+          <CardContent className="space-y-3">
+            <Button onClick={() => fetchJobs()} className="w-full">
               Tentar novamente
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/montador')} 
+              className="w-full"
+            >
+              Voltar ao dashboard
             </Button>
           </CardContent>
         </Card>
@@ -284,13 +286,26 @@ const AvailableJobs = () => {
           <div className="grid gap-6">
             {filteredJobs.length === 0 ? (
               <Card className="shadow-glow border-0 bg-white">
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">
+                <CardContent className="p-8 text-center space-y-4">
+                  <p className="text-muted-foreground text-lg">
                     {jobs.length === 0 
-                      ? "Nenhum pedido disponível no momento."
-                      : "Nenhum pedido encontrado com os filtros aplicados."
+                      ? "📭 Nenhum pedido disponível no momento"
+                      : "🔍 Nenhum pedido encontrado com os filtros aplicados"
                     }
                   </p>
+                  <p className="text-sm text-muted-foreground">
+                    {jobs.length === 0 
+                      ? "Novos pedidos aparecerão aqui assim que clientes publicarem."
+                      : "Tente ajustar os filtros de busca ou categoria."
+                    }
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate('/montador')}
+                    className="mt-4"
+                  >
+                    Voltar ao dashboard
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
