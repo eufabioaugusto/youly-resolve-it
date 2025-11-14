@@ -7,16 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  ArrowLeft, 
-  MapPin, 
-  Calendar, 
-  DollarSign, 
-  Clock,
-  Star,
-  Search,
-  Filter
-} from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, DollarSign, Clock, Star, Search, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import CandidateModal from "@/components/CandidateModal";
 import JobDetailsModal from "@/components/JobDetailsModal";
@@ -44,8 +35,8 @@ const AvailableJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [candidaturas, setCandidaturas] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [candidateModalOpen, setCandidateModalOpen] = useState(false);
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
@@ -53,25 +44,25 @@ const AvailableJobs = () => {
 
   useEffect(() => {
     fetchJobs();
-    
+
     if (montadorProfile) {
       fetchCandidaturas();
 
       // Configurar listener de realtime para candidaturas
       const channel = supabase
-        .channel('candidaturas-changes')
+        .channel("candidaturas-changes")
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'candidaturas',
-            filter: `montador_id=eq.${montadorProfile.id}`
+            event: "INSERT",
+            schema: "public",
+            table: "candidaturas",
+            filter: `montador_id=eq.${montadorProfile.id}`,
           },
           (payload) => {
-            console.log('🔔 Nova candidatura detectada via Realtime:', payload);
+            console.log("🔔 Nova candidatura detectada via Realtime:", payload);
             fetchCandidaturas();
-          }
+          },
         )
         .subscribe();
 
@@ -85,10 +76,10 @@ const AvailableJobs = () => {
     try {
       // Buscar jobs primeiro
       const { data: jobsData, error: jobsError } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('status', 'aberto')
-        .order('created_at', { ascending: false });
+        .from("jobs")
+        .select("*")
+        .eq("status", "aberto")
+        .order("created_at", { ascending: false });
 
       if (jobsError) throw jobsError;
 
@@ -96,19 +87,19 @@ const AvailableJobs = () => {
       const jobsWithClientes = await Promise.all(
         (jobsData || []).map(async (job) => {
           const { data: cliente } = await supabase
-            .from('clientes')
-            .select('avaliacao_media, pedidos_total, user_id')
-            .eq('id', job.cliente_id)
+            .from("clientes")
+            .select("avaliacao_media, pedidos_total, user_id")
+            .eq("id", job.cliente_id)
             .single();
 
-          let clienteNome = 'Cliente';
+          let clienteNome = "Cliente";
           if (cliente?.user_id) {
             const { data: profile } = await supabase
-              .from('profiles')
-              .select('nome')
-              .eq('user_id', cliente.user_id)
+              .from("profiles")
+              .select("nome")
+              .eq("user_id", cliente.user_id)
               .single();
-            clienteNome = profile?.nome || 'Cliente';
+            clienteNome = profile?.nome || "Cliente";
           }
 
           return {
@@ -116,16 +107,16 @@ const AvailableJobs = () => {
             clientes: {
               avaliacao_media: cliente?.avaliacao_media || 0,
               pedidos_total: cliente?.pedidos_total || 0,
-              profiles: { nome: clienteNome }
-            }
+              profiles: { nome: clienteNome },
+            },
           };
-        })
+        }),
       );
 
       setJobs(jobsWithClientes);
       setHasError(false);
     } catch (error) {
-      console.error('Erro ao buscar jobs:', error);
+      console.error("Erro ao buscar jobs:", error);
       setHasError(true);
     } finally {
       setLoading(false);
@@ -137,16 +128,16 @@ const AvailableJobs = () => {
 
     try {
       const { data, error } = await supabase
-        .from('candidaturas')
-        .select('job_id')
-        .eq('montador_id', montadorProfile.id);
+        .from("candidaturas")
+        .select("job_id")
+        .eq("montador_id", montadorProfile.id);
 
       if (error) throw error;
-      
-      const jobIds = data?.map(c => c.job_id) || [];
+
+      const jobIds = data?.map((c) => c.job_id) || [];
       setCandidaturas(jobIds);
     } catch (error) {
-      console.error('Erro ao buscar candidaturas:', error);
+      console.error("Erro ao buscar candidaturas:", error);
     }
   };
 
@@ -165,28 +156,29 @@ const AvailableJobs = () => {
     const minDate = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
     const dataOpcoes = Array.isArray(job.data_opcoes) ? job.data_opcoes : [];
-    return dataOpcoes.some(opcao => {
+    return dataOpcoes.some((opcao) => {
       const dataOpcao = new Date(opcao.data);
       return dataOpcao >= minDate;
     });
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = searchTerm === '' || 
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+      searchTerm === "" ||
       job.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.categoria.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = categoryFilter === 'all' || job.categoria === categoryFilter;
-    
+
+    const matchesCategory = categoryFilter === "all" || job.categoria === categoryFilter;
+
     return matchesSearch && matchesCategory && isJobAvailable(job);
   });
 
   const formatPeriodo = (periodo: string) => {
-    return periodo === 'manha' ? 'Manhã (08h-12h)' : 'Tarde (13h-18h)';
+    return periodo === "manha" ? "Manhã (08h-12h)" : "Tarde (13h-18h)";
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   if (loading) {
@@ -211,18 +203,17 @@ const AvailableJobs = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={() => {
-              setLoading(true);
-              setHasError(false);
-              fetchJobs();
-            }} className="w-full">
-              Tentar novamente
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/montador')} 
+            <Button
+              onClick={() => {
+                setLoading(true);
+                setHasError(false);
+                fetchJobs();
+              }}
               className="w-full"
             >
+              Tentar novamente
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/montador")} className="w-full">
               Voltar ao dashboard
             </Button>
           </CardContent>
@@ -234,8 +225,8 @@ const AvailableJobs = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <Link 
-          to="/montador" 
+        <Link
+          to="/montador"
           className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -244,7 +235,7 @@ const AvailableJobs = () => {
 
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Pedidos Disponíveis</h1>
+            <h1 className="text-3xl font-bold mb-2">Pedidos Disponíveis</h1>
             <p className="text-white/80">Encontre trabalhos que combinam com você</p>
           </div>
 
@@ -290,22 +281,16 @@ const AvailableJobs = () => {
               <Card className="shadow-glow border-0 bg-white">
                 <CardContent className="p-8 text-center space-y-4">
                   <p className="text-muted-foreground text-lg">
-                    {jobs.length === 0 
+                    {jobs.length === 0
                       ? "📭 Nenhum pedido disponível no momento"
-                      : "🔍 Nenhum pedido encontrado com os filtros aplicados"
-                    }
+                      : "🔍 Nenhum pedido encontrado com os filtros aplicados"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {jobs.length === 0 
+                    {jobs.length === 0
                       ? "Novos pedidos aparecerão aqui assim que clientes publicarem."
-                      : "Tente ajustar os filtros de busca ou categoria."
-                    }
+                      : "Tente ajustar os filtros de busca ou categoria."}
                   </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/montador')}
-                    className="mt-4"
-                  >
+                  <Button variant="outline" onClick={() => navigate("/montador")} className="mt-4">
                     Voltar ao dashboard
                   </Button>
                 </CardContent>
@@ -332,9 +317,7 @@ const AvailableJobs = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <Badge variant="outline">{job.categoria}</Badge>
-                        {candidaturas.includes(job.id) && (
-                          <Badge variant="secondary">Candidatura enviada</Badge>
-                        )}
+                        {candidaturas.includes(job.id) && <Badge variant="secondary">Candidatura enviada</Badge>}
                       </div>
                     </div>
                   </CardHeader>
@@ -344,16 +327,14 @@ const AvailableJobs = () => {
                     <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{job.clientes.profiles?.nome || 'Cliente'}</p>
+                          <p className="font-medium">{job.clientes.profiles?.nome || "Cliente"}</p>
                           <p className="text-sm text-muted-foreground">
                             {job.clientes.pedidos_total} pedidos realizados
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">
-                            {job.clientes.avaliacao_media.toFixed(1)}
-                          </span>
+                          <span className="text-sm font-medium">{job.clientes.avaliacao_media.toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
@@ -366,7 +347,7 @@ const AvailableJobs = () => {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {(Array.isArray(job.data_opcoes) ? job.data_opcoes : [])
-                          .filter(opcao => new Date(opcao.data) >= new Date(Date.now() + 48 * 60 * 60 * 1000))
+                          .filter((opcao) => new Date(opcao.data) >= new Date(Date.now() + 48 * 60 * 60 * 1000))
                           .map((opcao, index) => (
                             <Badge key={index} variant="outline" className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
@@ -386,7 +367,7 @@ const AvailableJobs = () => {
 
                     {/* Botões */}
                     <div className="flex gap-3">
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           setSelectedJob(job);
@@ -396,15 +377,12 @@ const AvailableJobs = () => {
                       >
                         Ver detalhes
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => openCandidateModal(job)}
                         disabled={!montadorProfile || candidaturas.includes(job.id)}
                         className="flex-1 bg-gradient-primary hover:shadow-glow"
                       >
-                        {candidaturas.includes(job.id) 
-                          ? "Candidatura Enviada" 
-                          : "Candidatar-se"
-                        }
+                        {candidaturas.includes(job.id) ? "Candidatura Enviada" : "Candidatar-se"}
                       </Button>
                     </div>
                   </CardContent>
@@ -414,11 +392,7 @@ const AvailableJobs = () => {
           </div>
 
           {/* Modal de Detalhes */}
-          <JobDetailsModal
-            job={selectedJob}
-            open={jobDetailsModalOpen}
-            onOpenChange={setJobDetailsModalOpen}
-          />
+          <JobDetailsModal job={selectedJob} open={jobDetailsModalOpen} onOpenChange={setJobDetailsModalOpen} />
 
           {/* Modal de Candidatura */}
           <CandidateModal
