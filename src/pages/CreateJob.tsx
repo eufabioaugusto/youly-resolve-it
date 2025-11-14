@@ -233,7 +233,7 @@ const CreateJob = () => {
                         key={tipo}
                         type="button"
                         onClick={() => toggleTipoServico(tipo)}
-                        className={`px-4 py-3 rounded-lg border-2 transition-all font-medium ${
+                        className={`px-4 py-3 rounded-lg border-2 transition-all font-medium text-sm md:text-base ${
                           formData.tipo_servico === tipo
                             ? "border-destructive bg-destructive text-destructive-foreground"
                             : "border-input bg-background text-foreground hover:border-destructive/50"
