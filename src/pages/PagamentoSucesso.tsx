@@ -26,6 +26,8 @@ export default function PagamentoSucesso() {
         // Buscar pagamento pela external_reference do MP
         // Por enquanto, mostrar sucesso genérico
         setLoading(false);
+      } else {
+        setLoading(false);
       }
     };
 
@@ -94,16 +96,21 @@ export default function PagamentoSucesso() {
             <div className="flex gap-3">
               <Button 
                 variant="outline" 
-                onClick={() => navigate(-1)}
+                onClick={() => window.location.href = 'https://youly.com.br'}
                 className="flex-1"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
+                Voltar ao Início
               </Button>
               <Button 
                 onClick={() => {
-                  // Quem faz pagamento sempre é cliente, então redireciona para /cliente
-                  navigate('/cliente');
+                  // Verificar se está autenticado antes de navegar
+                  if (user) {
+                    navigate('/cliente');
+                  } else {
+                    // Se não estiver autenticado, redirecionar para login com retorno para /cliente
+                    navigate('/login', { state: { from: '/cliente' } });
+                  }
                 }}
                 className="flex-1"
               >
