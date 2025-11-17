@@ -356,7 +356,7 @@ export const useNegociacoes = () => {
         .from('negociacoes')
         .select('*')
         .eq('job_id', jobId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }); // Mais recente primeiro
       
       if (negociacaoError) {
         console.error('Erro na consulta de negociação:', negociacaoError);
@@ -368,8 +368,10 @@ export const useNegociacoes = () => {
         return null;
       }
       
-      // Priorizar negociação ATIVA (não recusada)
-      const negociacaoData = negociacoesData.find(n => n.status !== 'recusado') || negociacoesData[0];
+      // Priorizar negociação ATIVA (não recusada nem cancelada) e mais recente
+      const negociacaoData = negociacoesData.find(n => 
+        n.status !== 'recusado' && n.status !== 'cancelado'
+      ) || negociacoesData[0];
 
 
       // Buscar dados relacionados separadamente com logs detalhados
