@@ -151,8 +151,8 @@ const CentralNegociacao = () => {
         return;
       }
 
-      // Se a negociação existe, buscar com joins
-      const data = await fetchNegociacao(jobId);
+      // Se a negociação existe, buscar com joins (forçar atualização em tentativas de retry)
+      const data = await fetchNegociacao(jobId, tentativa > 1);
       
       if (!data && tentativa < 3) {
         console.log(`Dados completos não encontrados, tentando novamente em 2s...`);
@@ -203,7 +203,10 @@ const CentralNegociacao = () => {
         title: "Orçamento enviado!",
         description: "O cliente foi notificado sobre seu orçamento."
       });
-      await loadNegociacao();
+      // Esperar um pouco para garantir que o banco atualizou, então forçar reload
+      setTimeout(async () => {
+        await loadNegociacao(1); // Força nova tentativa sem cache
+      }, 500);
       setValorProposta('');
       setObservacoes('');
     } catch (error) {

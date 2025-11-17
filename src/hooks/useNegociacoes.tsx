@@ -332,15 +332,21 @@ export const useNegociacoes = () => {
   };
 
   // Buscar negociação individual
-  const fetchNegociacao = async (jobId: string) => {
+  const fetchNegociacao = async (jobId: string, forceRefresh: boolean = false) => {
     if (!user) return null;
 
     try {
-      // Verificar cache primeiro
+      // Verificar cache primeiro (a menos que forceRefresh seja true)
       const cacheKey = `negociacao_${jobId}`;
-      if (negociacoesCache.has(cacheKey)) {
+      if (!forceRefresh && negociacoesCache.has(cacheKey)) {
         console.log('Negociação encontrada no cache:', jobId);
         return negociacoesCache.get(cacheKey);
+      }
+      
+      // Se forceRefresh, limpar cache primeiro
+      if (forceRefresh) {
+        console.log('Forçando atualização da negociação:', jobId);
+        negociacoesCache.delete(cacheKey);
       }
 
       console.log('Buscando negociação para jobId:', jobId);
