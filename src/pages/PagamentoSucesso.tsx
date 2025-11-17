@@ -102,11 +102,8 @@ export default function PagamentoSucesso() {
               </Button>
               <Button 
                 onClick={() => {
-                  // Redirecionar baseado no role do usuário
-                  const dashboardRoute = profile?.role === 'client' ? '/cliente' : 
-                                       profile?.role === 'montador' ? '/montador' : 
-                                       '/';
-                  navigate(dashboardRoute);
+                  // Quem faz pagamento sempre é cliente, então redireciona para /cliente
+                  navigate('/cliente');
                 }}
                 className="flex-1"
               >
