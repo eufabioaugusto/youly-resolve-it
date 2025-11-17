@@ -294,9 +294,9 @@ serve(async (req) => {
         email: clienteEmail
       },
       back_urls: {
-        success: `${req.headers.get('origin')}/pagamento/sucesso`,
-        failure: `${req.headers.get('origin')}/pagamento/falha`,
-        pending: `${req.headers.get('origin')}/pagamento/pendente`
+        success: `https://youly.com.br/pagamento/sucesso`,
+        failure: `https://youly.com.br/pagamento/falha`,
+        pending: `https://youly.com.br/pagamento/pendente`
       },
       auto_return: 'approved',
       external_reference: pagamento.id,
