@@ -249,19 +249,23 @@ const ClientDashboard = () => {
   };
 
   const getOrcamentoInfo = (job: any) => {
-    if (!job.negociacoes || job.negociacoes.length === 0) {
-      return {
-        texto: "Aguardando orçamentos",
-        classe: "text-muted-foreground",
-        valor: null
-      };
-    }
-
-    const negociacaoAtiva = job.negociacoes.find((n: any) => 
+    // Verificar se há negociações ativas
+    const negociacaoAtiva = job.negociacoes?.find((n: any) => 
       n.status === 'orcamento_enviado' || n.status === 'aceito' || n.status === 'contra_proposta'
     );
 
     if (!negociacaoAtiva) {
+      // Se não há negociação ativa, verificar se há candidaturas
+      const totalCandidaturas = job.candidaturas?.length || 0;
+      
+      if (totalCandidaturas > 0) {
+        return {
+          texto: `${totalCandidaturas} candidatura${totalCandidaturas > 1 ? 's' : ''}`,
+          classe: "text-info",
+          valor: null
+        };
+      }
+      
       return {
         texto: "Aguardando orçamentos",
         classe: "text-muted-foreground",
@@ -569,8 +573,13 @@ const ClientDashboard = () => {
                       Ver detalhes
                     </Button>
                     
-                    {/* Jobs em aberto SEM negociação */}
-                    {job.status === 'aberto' && (!job.negociacoes || job.negociacoes.length === 0) && (
+                    {/* Jobs em aberto SEM negociação ativa */}
+                    {job.status === 'aberto' && (() => {
+                      const temNegociacaoAtiva = job.negociacoes?.some((n: any) => 
+                        n.status !== 'cancelado' && n.status !== 'recusado'
+                      );
+                      return !temNegociacaoAtiva;
+                    })() && (
                       <>
                         <Button 
                           onClick={() => navigate(`/trabalhos-sugeridos/${job.id}`)}
@@ -592,8 +601,12 @@ const ClientDashboard = () => {
                     )}
                     
                     {/* Jobs com negociação ativa (qualquer status exceto pago/com OS) */}
-                    {((job.negociacoes && job.negociacoes.length > 0) || job.status === 'em_negociacao' || job.status === 'aguardando_pagamento') 
-                      && job.status !== 'pago' && !job.ordem_servico && (
+                    {(() => {
+                      const temNegociacaoAtiva = job.negociacoes?.some((n: any) => 
+                        n.status !== 'cancelado' && n.status !== 'recusado'
+                      );
+                      return temNegociacaoAtiva;
+                    })() && job.status !== 'pago' && !job.ordem_servico && (
                       <Button 
                         onClick={() => navigate(`/cliente/negociacao/${job.id}`)}
                         className="bg-gradient-primary hover:shadow-glow"
