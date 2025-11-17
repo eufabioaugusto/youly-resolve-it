@@ -616,25 +616,25 @@ const WorkerDashboard = () => {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="available" className="relative text-sm">
+            <TabsTrigger value="available" className="text-sm">
               Trabalhos Disponíveis
               {availableJobs.length > 0 && (
                 <Badge 
                   variant="secondary" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
                 >
                   {availableJobs.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="os" className="relative text-sm">
+            <TabsTrigger value="os" className="text-sm">
               Ordens de Serviço
               {ordensServico.filter(os => 
                 os.status === 'pendente' || os.status === 'a_caminho' || os.status === 'iniciada' || os.status === 'pendente_pecas'
               ).length > 0 && (
                 <Badge 
                   variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
                 >
                   {ordensServico.filter(os => 
                     os.status === 'pendente' || os.status === 'a_caminho' || os.status === 'iniciada' || os.status === 'pendente_pecas'
@@ -642,14 +642,14 @@ const WorkerDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="negotiations" className="relative text-sm">
+            <TabsTrigger value="negotiations" className="text-sm">
               Negociações
               {negociacoes.filter(neg => 
                 neg.status === 'pendente' || neg.status === 'contra_proposta'
               ).length > 0 && (
                 <Badge 
                   variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
                 >
                   {negociacoes.filter(neg => 
                     neg.status === 'pendente' || neg.status === 'contra_proposta'
