@@ -605,52 +605,77 @@ const WorkerDashboard = () => {
           </Card>
         </div>
 
-        {/* Tabs */}
+        {/* Navigation Buttons */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="available" className="text-sm">
-              Trabalhos Disponíveis
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+            <Button
+              variant={activeTab === 'available' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('available')}
+              className={activeTab === 'available' ? 'bg-destructive hover:bg-destructive/90' : 'hover:bg-destructive/10'}
+              size="sm"
+            >
+              <span className="text-xs sm:text-sm truncate">Trabalhos</span>
               {availableJobs.length > 0 && (
                 <Badge 
                   variant="secondary" 
-                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
+                  className="ml-1 sm:ml-2 h-4 sm:h-5 px-1 sm:px-2 flex items-center justify-center text-xs"
                 >
                   {availableJobs.length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="os" className="text-sm">
-              Ordens de Serviço
+            </Button>
+            
+            <Button
+              variant={activeTab === 'os' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('os')}
+              className={activeTab === 'os' ? 'bg-destructive hover:bg-destructive/90' : 'hover:bg-destructive/10'}
+              size="sm"
+            >
+              <span className="text-xs sm:text-sm truncate">OS</span>
               {ordensServico.filter(os => 
                 os.status === 'pendente' || os.status === 'a_caminho' || os.status === 'iniciada' || os.status === 'pendente_pecas'
               ).length > 0 && (
                 <Badge 
-                  variant="destructive" 
-                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
+                  variant="secondary"
+                  className="ml-1 sm:ml-2 h-4 sm:h-5 px-1 sm:px-2 flex items-center justify-center text-xs"
                 >
                   {ordensServico.filter(os => 
                     os.status === 'pendente' || os.status === 'a_caminho' || os.status === 'iniciada' || os.status === 'pendente_pecas'
                   ).length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="negotiations" className="text-sm">
-              Negociações
+            </Button>
+            
+            <Button
+              variant={activeTab === 'negotiations' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('negotiations')}
+              className={activeTab === 'negotiations' ? 'bg-destructive hover:bg-destructive/90' : 'hover:bg-destructive/10'}
+              size="sm"
+            >
+              <span className="text-xs sm:text-sm truncate">Negociações</span>
               {negociacoes.filter(neg => 
                 neg.status === 'pendente' || neg.status === 'contra_proposta'
               ).length > 0 && (
                 <Badge 
-                  variant="destructive" 
-                  className="ml-2 h-5 px-2 flex items-center justify-center text-xs"
+                  variant="secondary"
+                  className="ml-1 sm:ml-2 h-4 sm:h-5 px-1 sm:px-2 flex items-center justify-center text-xs"
                 >
                   {negociacoes.filter(neg => 
                     neg.status === 'pendente' || neg.status === 'contra_proposta'
                   ).length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-sm">Carteira</TabsTrigger>
-          </TabsList>
+            </Button>
+            
+            <Button
+              variant={activeTab === 'wallet' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('wallet')}
+              className={activeTab === 'wallet' ? 'bg-destructive hover:bg-destructive/90' : 'hover:bg-destructive/10'}
+              size="sm"
+            >
+              <span className="text-xs sm:text-sm">Carteira</span>
+            </Button>
+          </div>
           
           <TabsContent value="available" className="mt-6">
             <Card>
