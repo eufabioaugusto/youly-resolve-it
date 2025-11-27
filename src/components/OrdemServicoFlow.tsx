@@ -293,7 +293,7 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle class="text-xs lg:text-2xl">Ordem de Serviço #{ordemServico.id.slice(0, 8)}</CardTitle>
+              <CardTitle className="text-xs lg:text-2xl">Ordem de Serviço #{ordemServico.id.slice(0, 8)}</CardTitle>
               <CardDescription>
                 Código de validação: <strong>*****</strong>
               </CardDescription>
