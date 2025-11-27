@@ -18,27 +18,56 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       return null;
     }
 
-    console.log(`ViaCEP retornou:`, viaCepData);
+    console.log(`📍 ViaCEP retornou para ${cepLimpo}:`, viaCepData);
 
-    // Usar apenas cidade e estado para busca mais ampla e confiável
-    const cidade = viaCepData.localidade;
-    const uf = viaCepData.uf;
-    const query = `${cidade}, ${uf}, Brasil`;
+    // Tentar busca precisa primeiro (logradouro + bairro + cidade)
+    let query = '';
+    let nominatimData: any[] = [];
     
-    console.log(`Buscando coordenadas para: ${query}`);
+    // Estratégia 1: Endereço completo (mais preciso)
+    if (viaCepData.logradouro && viaCepData.bairro) {
+      query = `${viaCepData.logradouro}, ${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
+      console.log(`🎯 Tentando busca precisa: ${query}`);
+      
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+      const nominatimResponse = await fetch(nominatimUrl, {
+        headers: {
+          'User-Agent': 'Youly-App/1.0',
+        },
+      });
+      nominatimData = await nominatimResponse.json();
+    }
     
-    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-
-    const nominatimResponse = await fetch(nominatimUrl, {
-      headers: {
-        'User-Agent': 'Youly-App/1.0',
-      },
-    });
-
-    const nominatimData = await nominatimResponse.json();
+    // Estratégia 2: Bairro + Cidade (fallback)
+    if (nominatimData.length === 0 && viaCepData.bairro) {
+      query = `${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
+      console.log(`🔄 Tentando busca por bairro: ${query}`);
+      
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+      const nominatimResponse = await fetch(nominatimUrl, {
+        headers: {
+          'User-Agent': 'Youly-App/1.0',
+        },
+      });
+      nominatimData = await nominatimResponse.json();
+    }
+    
+    // Estratégia 3: Apenas Cidade + Estado (último recurso)
+    if (nominatimData.length === 0) {
+      query = `${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
+      console.log(`⚠️ Usando apenas cidade: ${query}`);
+      
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+      const nominatimResponse = await fetch(nominatimUrl, {
+        headers: {
+          'User-Agent': 'Youly-App/1.0',
+        },
+      });
+      nominatimData = await nominatimResponse.json();
+    }
 
     if (nominatimData.length === 0) {
-      console.error(`Nominatim não encontrou coordenadas para: ${query}`);
+      console.error(`❌ Nominatim não encontrou coordenadas para CEP ${cepLimpo}`);
       return null;
     }
 
@@ -47,7 +76,7 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       lng: parseFloat(nominatimData[0].lon),
     };
     
-    console.log(`✅ Coordenadas encontradas para ${cidade}-${uf}:`, coords);
+    console.log(`✅ Coordenadas encontradas para ${cepLimpo} (${viaCepData.bairro || viaCepData.localidade}):`, coords);
     return coords;
   } catch (error) {
     console.error('Erro ao buscar coordenadas:', error);
