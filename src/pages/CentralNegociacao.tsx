@@ -198,21 +198,35 @@ const CentralNegociacao = () => {
     
     setActionLoading(true);
     try {
-      await enviarOrcamento(negociacao.id, currencyToNumber(valorProposta), observacoes);
+      console.log('📤 Enviando orçamento:', {
+        negociacaoId: negociacao.id,
+        valor: currencyToNumber(valorProposta),
+        montadorProfile
+      });
+      
+      const success = await enviarOrcamento(negociacao.id, currencyToNumber(valorProposta), observacoes);
+      
+      if (!success) {
+        throw new Error('Falha ao enviar orçamento');
+      }
+      
       toast({
         title: "Orçamento enviado!",
         description: "O cliente foi notificado sobre seu orçamento."
       });
-      // Esperar um pouco para garantir que o banco atualizou, então forçar reload
+      
+      // Esperar um pouco e forçar reload
       setTimeout(async () => {
-        await loadNegociacao(1); // Força nova tentativa sem cache
+        await loadNegociacao(1);
       }, 500);
+      
       setValorProposta('');
       setObservacoes('');
     } catch (error) {
+      console.error('❌ Erro ao enviar orçamento:', error);
       toast({
         title: "Erro ao enviar orçamento",
-        description: "Tente novamente em alguns instantes.",
+        description: "Verifique se você tem permissão para atualizar esta negociação.",
         variant: "destructive"
       });
     } finally {
