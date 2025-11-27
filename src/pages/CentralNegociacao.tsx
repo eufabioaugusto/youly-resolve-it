@@ -151,8 +151,8 @@ const CentralNegociacao = () => {
         return;
       }
 
-      // Se a negociação existe, buscar com joins (forçar atualização em tentativas de retry)
-      const data = await fetchNegociacao(jobId, tentativa > 1);
+      // Sempre buscar dados atualizados da negociação (ignorando cache)
+      const data = await fetchNegociacao(jobId, true);
       
       if (!data && tentativa < 3) {
         console.log(`Dados completos não encontrados, tentando novamente em 2s...`);
