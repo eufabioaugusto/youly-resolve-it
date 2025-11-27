@@ -32,9 +32,6 @@ export function PagamentoModal({
   const handlePagamento = async (metodo: 'cartao' | 'pix') => {
     setEtapa('processando');
     
-    // Abrir janela IMEDIATAMENTE no contexto do click do usuário para evitar bloqueio de pop-up
-    const paymentWindow = window.open('', '_blank');
-    
     try {
       const resultado = await criarCheckout(jobId, montadorId, valor);
       
@@ -43,29 +40,14 @@ export function PagamentoModal({
         
         // Aguardar um momento para mostrar a mensagem
         setTimeout(() => {
-          // Se conseguiu abrir a janela, redirecionar ela
-          if (paymentWindow && !paymentWindow.closed) {
-            paymentWindow.location.href = resultado.init_point;
-          } else {
-            // Fallback: redirecionar na mesma aba (comum em mobile)
-            window.location.href = resultado.init_point;
-          }
-          onOpenChange(false);
-          setEtapa('selecao');
+          // Sempre redirecionar na mesma aba - mais confiável em mobile e Safari
+          window.location.href = resultado.init_point;
         }, 1500);
       } else {
-        // Se falhou, fechar a janela em branco que foi aberta
-        if (paymentWindow) {
-          paymentWindow.close();
-        }
         setEtapa('selecao');
       }
     } catch (error) {
       console.error('Erro no pagamento:', error);
-      // Se falhou, fechar a janela em branco que foi aberta
-      if (paymentWindow) {
-        paymentWindow.close();
-      }
       setEtapa('selecao');
     }
   };
