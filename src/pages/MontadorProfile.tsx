@@ -238,7 +238,7 @@ const MontadorProfile = () => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-2xl font-bold">Informações Básicas</h2>
+                      <h2 className="text-xl lg:text-2xl font-bold">Informações Básicas</h2>
                       {montadorProfile && (
                         <NivelBadge
                           nivel={montadorProfile.nivel_gamificacao || "Bronze"}
