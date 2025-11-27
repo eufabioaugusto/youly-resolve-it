@@ -95,16 +95,34 @@ export const useNegociacoes = () => {
     observacoes?: string
   ) => {
     try {
-      const { error } = await supabase
+      console.log('📤 [useNegociacoes] Enviando orçamento:', {
+        negociacaoId,
+        valor,
+        montadorProfile
+      });
+      
+      const { data: updateResult, error } = await supabase
         .from('negociacoes')
         .update({
           status: 'orcamento_enviado',
           valor_proposto_montador: valor,
-          observacoes_montador: observacoes
+          observacoes_montador: observacoes,
+          data_resposta_montador: new Date().toISOString()
         })
-        .eq('id', negociacaoId);
+        .eq('id', negociacaoId)
+        .select();
 
-      if (error) throw error;
+      console.log('📦 [useNegociacoes] Resultado update:', { updateResult, error });
+
+      if (error) {
+        console.error('❌ [useNegociacoes] Erro no update:', error);
+        throw error;
+      }
+
+      if (!updateResult || updateResult.length === 0) {
+        console.error('❌ [useNegociacoes] Nenhuma linha atualizada. Verifique RLS policies.');
+        throw new Error('Nenhuma negociação foi atualizada. Verifique suas permissões.');
+      }
 
       // Buscar dados da negociação para notificação
       const { data: negociacao } = await supabase
@@ -127,9 +145,10 @@ export const useNegociacoes = () => {
 
       return true;
     } catch (error: any) {
+      console.error('❌ [useNegociacoes] Erro ao enviar orçamento:', error);
       toast({
         title: "Erro ao enviar orçamento",
-        description: error.message,
+        description: error.message || "Verifique suas permissões",
         variant: "destructive"
       });
       return false;
