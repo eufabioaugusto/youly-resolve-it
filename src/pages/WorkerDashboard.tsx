@@ -558,56 +558,48 @@ const WorkerDashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardContent className="p-3 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Saldo disponível</p>
-                  <p className="text-base sm:text-2xl font-bold truncate">
-                    R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
-                  </p>
-                </div>
-                <Wallet className="h-5 w-5 sm:h-8 sm:w-8 text-green-600 self-end sm:self-auto" />
+              <div className="flex flex-col items-center text-center gap-1 sm:gap-2">
+                <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Saldo</p>
+                <p className="text-sm sm:text-2xl font-bold">
+                  R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
+                </p>
               </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-3 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Avaliação média</p>
-                  <p className="text-base sm:text-2xl font-bold">
-                    {montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}
-                  </p>
-                </div>
-                <Star className="h-5 w-5 sm:h-8 sm:w-8 text-yellow-500 self-end sm:self-auto" />
+              <div className="flex flex-col items-center text-center gap-1 sm:gap-2">
+                <Star className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Avaliação</p>
+                <p className="text-sm sm:text-2xl font-bold">
+                  {montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}
+                </p>
               </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-3 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Trabalhos realizados</p>
-                  <p className="text-base sm:text-2xl font-bold">
-                    {montadorProfile?.projetos_realizados || 0}
-                  </p>
-                </div>
-                <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 text-destructive self-end sm:self-auto" />
+              <div className="flex flex-col items-center text-center gap-1 sm:gap-2">
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Trabalhos</p>
+                <p className="text-sm sm:text-2xl font-bold">
+                  {montadorProfile?.projetos_realizados || 0}
+                </p>
               </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-3 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Total faturado</p>
-                  <p className="text-base sm:text-2xl font-bold truncate">
-                    R$ {montadorProfile?.total_valor_movimentado?.toFixed(2) || '0,00'}
-                  </p>
-                </div>
-                <DollarSign className="h-5 w-5 sm:h-8 sm:w-8 text-green-600 self-end sm:self-auto" />
+              <div className="flex flex-col items-center text-center gap-1 sm:gap-2">
+                <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Faturado</p>
+                <p className="text-sm sm:text-2xl font-bold">
+                  R$ {montadorProfile?.total_valor_movimentado?.toFixed(2) || '0,00'}
+                </p>
               </div>
             </CardContent>
           </Card>
