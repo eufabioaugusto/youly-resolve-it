@@ -102,34 +102,43 @@ const SuggestedMontadores = () => {
         console.log("Profiles carregados:", profilesData);
 
         // Combinar dados dos montadores com seus profiles e calcular distâncias
-        const montadoresWithProfiles = await Promise.all(
-          montadoresData.map(async (montador) => {
-            const profile = profilesData?.find((p) => p.user_id === montador.user_id);
-            let distancia_km: number | undefined;
+        // Usar Promise.allSettled para não falhar tudo se uma requisição falhar
+        const montadoresPromises = montadoresData.map(async (montador) => {
+          const profile = profilesData?.find((p) => p.user_id === montador.user_id);
+          let distancia_km: number | undefined;
 
-            // Calcular distância se ambos CEPs estiverem disponíveis
-            const jobCep = (jobData.endereco as any)?.cep;
-            const montadorCep = (profile?.endereco as any)?.cep;
+          // Calcular distância se ambos CEPs estiverem disponíveis
+          const jobCep = (jobData.endereco as any)?.cep;
+          const montadorCep = (profile?.endereco as any)?.cep;
 
-            if (jobCep && montadorCep) {
-              try {
-                console.log(`📍 Calculando distância: Job CEP ${jobCep} <-> Montador CEP ${montadorCep} (${profile?.nome})`);
-                distancia_km = await calcularDistanciaEntreCeps(jobCep, montadorCep);
-                console.log(`📏 Distância calculada para ${profile?.nome}: ${distancia_km}km`);
-              } catch (error) {
-                console.error(`❌ Erro ao calcular distância para ${profile?.nome}:`, error);
-              }
-            } else {
-              console.warn(`⚠️ CEPs faltando - Job: ${jobCep}, Montador ${profile?.nome}: ${montadorCep}`);
+          if (jobCep && montadorCep) {
+            try {
+              console.log(`📍 Calculando distância: Job CEP ${jobCep} <-> Montador CEP ${montadorCep} (${profile?.nome})`);
+              distancia_km = await calcularDistanciaEntreCeps(jobCep, montadorCep);
+              console.log(`📏 Distância calculada para ${profile?.nome}: ${distancia_km}km`);
+            } catch (error) {
+              console.error(`❌ Erro ao calcular distância para ${profile?.nome}:`, error);
+              distancia_km = undefined; // Falha silenciosa
             }
+          } else {
+            console.warn(`⚠️ CEPs faltando - Job: ${jobCep}, Montador ${profile?.nome}: ${montadorCep}`);
+          }
 
-            return {
-              ...montador,
-              profiles: profile || { nome: "Montador" },
-              distancia_km,
-            };
-          })
-        );
+          return {
+            ...montador,
+            profiles: profile || { nome: "Montador" },
+            distancia_km,
+          };
+        });
+
+        const montadoresResults = await Promise.allSettled(montadoresPromises);
+        
+        // Filtrar apenas resultados bem-sucedidos
+        const montadoresWithProfiles = montadoresResults
+          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+          .map(result => result.value);
+
+        console.log(`✅ ${montadoresWithProfiles.length}/${montadoresData.length} montadores processados com sucesso`);
 
         // Filtrar montadores dentro do raio de 20km
         // IMPORTANTE: Se a distância não puder ser calculada, NÃO exibir o montador

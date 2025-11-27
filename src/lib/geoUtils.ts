@@ -1,3 +1,59 @@
+// Cache de coordenadas no localStorage
+const CACHE_KEY = 'youly_coords_cache';
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+interface CoordCache {
+  [cep: string]: {
+    coords: { lat: number; lng: number };
+    timestamp: number;
+  };
+}
+
+function getCachedCoords(cep: string): { lat: number; lng: number } | null {
+  try {
+    const cache: CoordCache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    const cached = cache[cep];
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`✅ Coordenadas do cache para ${cep}:`, cached.coords);
+      return cached.coords;
+    }
+  } catch (error) {
+    console.error('Erro ao ler cache:', error);
+  }
+  return null;
+}
+
+function setCachedCoords(cep: string, coords: { lat: number; lng: number }): void {
+  try {
+    const cache: CoordCache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    cache[cep] = {
+      coords,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.error('Erro ao salvar cache:', error);
+  }
+}
+
+// Controle de rate limiting para Nominatim (1 req/segundo)
+let lastNominatimRequest = 0;
+const NOMINATIM_DELAY = 1100; // 1.1 segundos entre requisições
+
+async function waitForRateLimit(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastNominatimRequest;
+  
+  if (timeSinceLastRequest < NOMINATIM_DELAY) {
+    const waitTime = NOMINATIM_DELAY - timeSinceLastRequest;
+    console.log(`⏳ Aguardando ${waitTime}ms para rate limit...`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastNominatimRequest = Date.now();
+}
+
 // Função para buscar coordenadas de um CEP usando a API do ViaCEP + Nominatim
 async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng: number } | null> {
   try {
@@ -7,6 +63,12 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
     if (cepLimpo.length !== 8) {
       console.error(`CEP inválido: ${cep}`);
       return null;
+    }
+
+    // Verificar cache primeiro
+    const cached = getCachedCoords(cepLimpo);
+    if (cached) {
+      return cached;
     }
 
     // Buscar endereço pelo ViaCEP
@@ -29,6 +91,7 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       query = `${viaCepData.logradouro}, ${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
       console.log(`🎯 Tentando busca precisa: ${query}`);
       
+      await waitForRateLimit();
       const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
       const nominatimResponse = await fetch(nominatimUrl, {
         headers: {
@@ -43,6 +106,7 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       query = `${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
       console.log(`🔄 Tentando busca por bairro: ${query}`);
       
+      await waitForRateLimit();
       const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
       const nominatimResponse = await fetch(nominatimUrl, {
         headers: {
@@ -57,6 +121,7 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       query = `${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
       console.log(`⚠️ Usando apenas cidade: ${query}`);
       
+      await waitForRateLimit();
       const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
       const nominatimResponse = await fetch(nominatimUrl, {
         headers: {
@@ -75,6 +140,9 @@ async function buscarCoordenadasPorCep(cep: string): Promise<{ lat: number; lng:
       lat: parseFloat(nominatimData[0].lat),
       lng: parseFloat(nominatimData[0].lon),
     };
+    
+    // Salvar no cache
+    setCachedCoords(cepLimpo, coords);
     
     console.log(`✅ Coordenadas encontradas para ${cepLimpo} (${viaCepData.bairro || viaCepData.localidade}):`, coords);
     return coords;
