@@ -555,59 +555,59 @@ const WorkerDashboard = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Saldo disponível</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Saldo disponível</p>
+                  <p className="text-base sm:text-2xl font-bold truncate">
                     R$ {carteira?.saldo_disponivel?.toFixed(2) || '0,00'}
                   </p>
                 </div>
-                <Wallet className="h-8 w-8 text-green-600" />
+                <Wallet className="h-5 w-5 sm:h-8 sm:w-8 text-green-600 self-end sm:self-auto" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avaliação média</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Avaliação média</p>
+                  <p className="text-base sm:text-2xl font-bold">
                     {montadorProfile?.avaliacao_media?.toFixed(1) || '0.0'}
                   </p>
                 </div>
-                <Star className="h-8 w-8 text-yellow-500" />
+                <Star className="h-5 w-5 sm:h-8 sm:w-8 text-yellow-500 self-end sm:self-auto" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Trabalhos realizados</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Trabalhos realizados</p>
+                  <p className="text-base sm:text-2xl font-bold">
                     {montadorProfile?.projetos_realizados || 0}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-destructive" />
+                <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 text-destructive self-end sm:self-auto" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total faturado</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Total faturado</p>
+                  <p className="text-base sm:text-2xl font-bold truncate">
                     R$ {montadorProfile?.total_valor_movimentado?.toFixed(2) || '0,00'}
                   </p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
+                <DollarSign className="h-5 w-5 sm:h-8 sm:w-8 text-green-600 self-end sm:self-auto" />
               </div>
             </CardContent>
           </Card>
