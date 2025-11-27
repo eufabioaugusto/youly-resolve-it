@@ -114,15 +114,28 @@ export const useNotificationsRealtime = () => {
   };
 
   const markAllAsRead = async () => {
-    const { error } = await supabase
+    console.log('🔔 Iniciando markAllAsRead para user:', user?.id);
+    console.log('📊 Notificações não lidas antes:', notifications.filter(n => !n.lida).length);
+    
+    const { data, error } = await supabase
       .from('notificacoes')
       .update({ lida: true })
       .eq('user_id', user?.id)
-      .eq('lida', false);
+      .eq('lida', false)
+      .select();
 
     if (error) {
-      console.error('Erro ao marcar todas notificações como lidas:', error);
+      console.error('❌ Erro ao marcar todas notificações como lidas:', error);
+      return;
     }
+
+    console.log('✅ Notificações atualizadas no banco:', data?.length);
+    
+    // Atualizar estado local imediatamente
+    setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
+    setUnreadCount(0);
+    
+    console.log('✅ Estado local atualizado');
   };
 
   return {
