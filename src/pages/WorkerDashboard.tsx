@@ -843,23 +843,12 @@ const WorkerDashboard = () => {
                     {negociacoes.map((negociacao) => (
                       <Card key={negociacao.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-xs lg:text-2xl mb-1">
+                          <div className="space-y-3">
+                            {/* Linha 1: Título + Badge */}
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="font-semibold text-sm sm:text-lg">
                                 Negociação #{negociacao.id.slice(0, 8)}
                               </h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <User className="w-4 h-4" />
-                                  Cliente {negociacao.cliente_id.slice(0, 8)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {new Date(negociacao.created_at).toLocaleDateString("pt-BR")}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
                               <Badge
                                 variant={
                                   negociacao.status === "pendente"
@@ -874,18 +863,18 @@ const WorkerDashboard = () => {
                                 }
                                 className={
                                   negociacao.status === "orcamento_enviado"
-                                    ? "bg-warning text-warning-foreground"
+                                    ? "bg-warning text-warning-foreground text-xs"
                                     : negociacao.status === "aceito"
-                                      ? "bg-success text-success-foreground"
+                                      ? "bg-success text-success-foreground text-xs"
                                       : negociacao.status === "contra_proposta"
-                                        ? "bg-info text-info-foreground"
-                                        : ""
+                                        ? "bg-info text-info-foreground text-xs"
+                                        : "text-xs"
                                 }
                               >
                                 {negociacao.status === "pendente"
-                                  ? "Aguardando Orçamento"
+                                  ? "Aguardando"
                                   : negociacao.status === "orcamento_enviado"
-                                    ? "Orçamento Enviado"
+                                    ? "Enviado"
                                     : negociacao.status === "aceito"
                                       ? "Aceito"
                                       : negociacao.status === "contra_proposta"
@@ -894,25 +883,35 @@ const WorkerDashboard = () => {
                                           ? "Recusado"
                                           : negociacao.status}
                               </Badge>
+                            </div>
+
+                            {/* Linha 2: Cliente + Data */}
+                            <div className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                                Cliente {negociacao.cliente_id.slice(0, 8)}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                {new Date(negociacao.created_at).toLocaleDateString("pt-BR")}
+                              </span>
                               {negociacao.valor_proposto_montador && (
-                                <span className="font-bold text-green-600">
+                                <span className="font-bold text-green-600 ml-auto">
                                   R$ {negociacao.valor_proposto_montador.toFixed(2)}
                                 </span>
                               )}
                             </div>
-                          </div>
 
-                          <div className="flex justify-between items-center">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => navigate(`/montador/negociacao/${negociacao.job_id}`)}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver Negociação
-                              </Button>
-                            </div>
+                            {/* Linha 3: Botão */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/montador/negociacao/${negociacao.job_id}`)}
+                              className="w-full sm:w-auto"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver Negociação
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
