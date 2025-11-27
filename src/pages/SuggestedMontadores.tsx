@@ -113,11 +113,14 @@ const SuggestedMontadores = () => {
 
             if (jobCep && montadorCep) {
               try {
+                console.log(`📍 Calculando distância: Job CEP ${jobCep} <-> Montador CEP ${montadorCep} (${profile?.nome})`);
                 distancia_km = await calcularDistanciaEntreCeps(jobCep, montadorCep);
-                console.log(`Distância ${profile?.nome}: ${distancia_km}km`);
+                console.log(`📏 Distância calculada para ${profile?.nome}: ${distancia_km}km`);
               } catch (error) {
-                console.error(`Erro ao calcular distância para ${profile?.nome}:`, error);
+                console.error(`❌ Erro ao calcular distância para ${profile?.nome}:`, error);
               }
+            } else {
+              console.warn(`⚠️ CEPs faltando - Job: ${jobCep}, Montador ${profile?.nome}: ${montadorCep}`);
             }
 
             return {
