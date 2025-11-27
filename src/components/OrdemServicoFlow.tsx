@@ -14,6 +14,7 @@ import { useAvaliacoes } from "@/hooks/useAvaliacoes";
 import { toast } from "sonner";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage, createImagePreview, revokeImagePreview } from "@/lib/imageCompression";
 
 interface OrdemServicoFlowProps {
   ordemServico: any;
@@ -165,25 +166,38 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
   const handleSelectFoto = async (tipo: string, file: File | null) => {
     if (!file) return;
 
-    console.log("📸 Upload iniciado:", { tipo, file: file.name });
+    console.log("📸 Upload iniciado:", { tipo, file: file.name, tamanho: `${(file.size / 1024 / 1024).toFixed(2)}MB` });
 
-    // Criar preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotosPreview((prev) => ({ ...prev, [tipo]: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    // Validar tamanho máximo (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 10MB.");
+      return;
+    }
 
-    // Upload automático
+    // Criar preview otimizado
+    const previewUrl = createImagePreview(file);
+    setFotosPreview((prev) => ({ ...prev, [tipo]: previewUrl }));
+
+    // Upload automático com compressão
     setUploadingFoto(tipo);
 
     try {
-      await uploadFoto(ordemServico.id, tipo, file);
+      // Comprimir imagem antes do upload
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1920,
+        maxHeight: 1920,
+        quality: 0.85
+      });
+
+      await uploadFoto(ordemServico.id, tipo, compressedFile);
       setFotosEnviadas((prev) => ({ ...prev, [tipo]: true }));
       toast.success("Foto enviada com sucesso!");
     } catch (error) {
       console.error("❌ Erro ao fazer upload:", error);
-      toast.error("Erro ao enviar foto");
+      toast.error("Erro ao enviar foto. Tente novamente.");
+      
+      // Revogar preview em caso de erro
+      revokeImagePreview(previewUrl);
       setFotosPreview((prev) => ({ ...prev, [tipo]: null }));
     } finally {
       setUploadingFoto(null);
