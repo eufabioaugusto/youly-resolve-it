@@ -49,7 +49,47 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          {/* Mobile: Hamburguer + Logo | Desktop: Logo */}
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Trigger */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon" className="shrink-0">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <nav className="flex flex-col space-y-6 mt-8">
+                  <Link
+                    to="/como-funciona"
+                    className="text-lg hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Como funciona
+                  </Link>
+                  <Link
+                    to="/para-empresas"
+                    className="text-lg hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Para empresas
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="text-lg hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Entrar
+                  </Link>
+                  <Button variant="outline" asChild>
+                    <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                      Cadastrar
+                    </Link>
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
+
             <img
               src="https://storage.googleapis.com/gpt-engineer-file-uploads/HuLLY2XYTgNcG9iwF9oWsCLkpi53/social-images/social-1758541291424-Youly-Logo.png"
               alt="Youly Logo"
@@ -73,44 +113,10 @@ const Index = () => {
             </Button>
           </nav>
 
-          {/* Mobile Menu */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col space-y-6 mt-8">
-                <Link
-                  to="/como-funciona"
-                  className="text-lg hover:text-primary transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Como funciona
-                </Link>
-                <Link
-                  to="/para-empresas"
-                  className="text-lg hover:text-primary transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Para empresas
-                </Link>
-                <Link
-                  to="/login"
-                  className="text-lg hover:text-primary transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Entrar
-                </Link>
-                <Button variant="outline" asChild>
-                  <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                    Cadastrar
-                  </Link>
-                </Button>
-              </nav>
-            </SheetContent>
-          </Sheet>
+          {/* Mobile: Botão Entrar */}
+          <Button variant="default" size="sm" className="md:hidden" asChild>
+            <Link to="/login">Entrar</Link>
+          </Button>
         </div>
       </header>
 
