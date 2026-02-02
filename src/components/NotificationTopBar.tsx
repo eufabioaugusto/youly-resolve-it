@@ -13,6 +13,7 @@ const NotificationTopBar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -62,9 +63,12 @@ const NotificationTopBar = () => {
   }, []);
 
   const handleDismiss = () => {
-    setIsVisible(false);
-    setIsDismissed(true);
-    sessionStorage.setItem('notification-bar-dismissed', 'true');
+    setIsAnimatingOut(true);
+    setTimeout(() => {
+      setIsVisible(false);
+      setIsDismissed(true);
+      sessionStorage.setItem('notification-bar-dismissed', 'true');
+    }, 300);
   };
 
   const handleClick = () => {
@@ -80,13 +84,46 @@ const NotificationTopBar = () => {
   return (
     <div 
       className={cn(
-        "fixed top-0 left-0 right-0 z-[200] transition-all duration-300",
+        "w-full z-50 transition-all duration-300 overflow-hidden",
         "bg-gradient-to-r from-primary via-primary to-primary/90",
-        "backdrop-blur-sm border-b border-primary-foreground/10"
+        "border-b border-primary-foreground/10",
+        isAnimatingOut 
+          ? "animate-[slideUp_0.3s_ease-out_forwards] opacity-0" 
+          : "animate-[slideDown_0.3s_ease-out]"
       )}
+      style={{
+        // Custom keyframes inline for slide animations
+        animation: isAnimatingOut 
+          ? 'slideUp 0.3s ease-out forwards' 
+          : 'slideDown 0.3s ease-out'
+      }}
     >
+      <style>{`
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes slideUp {
+          from {
+            transform: translateY(0);
+            opacity: 1;
+            max-height: 50px;
+          }
+          to {
+            transform: translateY(-100%);
+            opacity: 0;
+            max-height: 0;
+          }
+        }
+      `}</style>
       <div className="container max-w-7xl mx-auto">
-        <div className="flex items-center justify-between py-2 px-4">
+        <div className="flex items-center justify-between py-2.5 px-4">
           <button
             onClick={handleClick}
             className="flex items-center gap-2 text-primary-foreground hover:opacity-80 transition-opacity flex-1"
