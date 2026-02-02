@@ -12,6 +12,7 @@ import { AdminFinanceiro } from "@/components/AdminFinanceiro";
 import { AdminRankingMontadores } from "@/components/AdminRankingMontadores";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminSaques } from "@/components/AdminSaques";
+import { AdminEstornos } from "@/components/AdminEstornos";
 import { 
   Users, 
   DollarSign, 
@@ -127,6 +128,8 @@ export default function AdminDashboard() {
         return <AdminCarteiraGestao />;
       case "saques":
         return <AdminSaques />;
+      case "estornos":
+        return <AdminEstornos />;
       case "overview":
       default:
         return (
