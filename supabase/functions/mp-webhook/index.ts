@@ -122,19 +122,67 @@ serve(async (req) => {
     
     console.log('Webhook recebido:', JSON.stringify(body, null, 2));
 
-    // 🎯 SUPORTE PARA AMBOS OS FORMATOS DO MP
+    // 🎯 SUPORTE PARA MÚLTIPLOS TIPOS DE EVENTO DO MP
     let paymentId: string | null = null;
+    let eventType: string = '';
     
-    // Formato novo: { type: "payment", data: { id: "123" } }
+    // Formato novo: { type: "payment" | "refund", data: { id: "123" } }
     if (body.type === 'payment' && body.data?.id) {
       paymentId = body.data.id;
+      eventType = 'payment';
       console.log('📦 Formato novo detectado - payment ID:', paymentId);
+    }
+    // Formato de estorno: { type: "refund", data: { id: "123" } }
+    else if (body.type === 'refund' && body.data?.id) {
+      const refundId = body.data.id;
+      eventType = 'refund';
+      console.log('💸 Evento de estorno detectado - refund ID:', refundId);
+      
+      // Buscar detalhes do refund no MP para obter o payment_id
+      const refundResponse = await fetch(`https://api.mercadopago.com/v1/payments/refunds/${refundId}`, {
+        headers: {
+          'Authorization': `Bearer ${mercadoPagoAccessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (refundResponse.ok) {
+        const refundData = await refundResponse.json();
+        console.log('📥 Dados do refund:', refundData);
+        
+        // Atualizar estorno no banco se existir
+        if (refundData.payment_id) {
+          const { data: pagamento } = await supabase
+            .from('pagamentos')
+            .select('id')
+            .eq('mercado_pago_payment_id', refundData.payment_id.toString())
+            .single();
+          
+          if (pagamento) {
+            // Atualizar estorno correspondente
+            await supabase
+              .from('estornos')
+              .update({
+                mercado_pago_refund_id: refundId.toString(),
+                status: refundData.status === 'approved' ? 'concluido' : 'processando',
+                processed_at: new Date().toISOString()
+              })
+              .eq('pagamento_id', pagamento.id)
+              .is('mercado_pago_refund_id', null);
+            
+            console.log('✅ Estorno atualizado via webhook');
+          }
+        }
+      }
+      
+      return new Response('OK', { status: 200 });
     }
     // Formato antigo: { topic: "payment", resource: "123" }
     else if (body.topic === 'payment' && body.resource) {
       // Extrair ID da URL do resource
       const resourceParts = body.resource.split('/');
       paymentId = resourceParts[resourceParts.length - 1];
+      eventType = 'payment';
       console.log('📦 Formato antigo detectado - payment ID:', paymentId);
     }
     // Formato merchant_order - ignorar

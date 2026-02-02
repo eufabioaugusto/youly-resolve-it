@@ -8,6 +8,7 @@ import {
   Wallet,
   Wrench,
   Banknote,
+  RotateCcw,
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,6 +31,7 @@ const menuItems = [
   { title: "Financeiro", icon: DollarSign, section: "financeiro" },
   { title: "Carteiras", icon: Wallet, section: "carteiras" },
   { title: "Saques", icon: Banknote, section: "saques" },
+  { title: "Estornos", icon: RotateCcw, section: "estornos" },
 ];
 
 interface AdminSidebarProps {

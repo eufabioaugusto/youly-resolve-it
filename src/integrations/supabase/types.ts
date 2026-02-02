@@ -243,6 +243,108 @@ export type Database = {
         }
         Relationships: []
       }
+      estornos: {
+        Row: {
+          aprovado_por: string | null
+          cliente_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          job_id: string
+          mercado_pago_refund_id: string | null
+          metadata: Json | null
+          montador_id: string
+          motivo: string
+          motivo_categoria: Database["public"]["Enums"]["estorno_motivo_categoria"]
+          ordem_servico_id: string | null
+          pagamento_id: string
+          processed_at: string | null
+          solicitado_por: string
+          status: Database["public"]["Enums"]["estorno_status"]
+          tipo: Database["public"]["Enums"]["estorno_tipo"]
+          valor_estorno: number
+          valor_original: number
+        }
+        Insert: {
+          aprovado_por?: string | null
+          cliente_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_id: string
+          mercado_pago_refund_id?: string | null
+          metadata?: Json | null
+          montador_id: string
+          motivo: string
+          motivo_categoria: Database["public"]["Enums"]["estorno_motivo_categoria"]
+          ordem_servico_id?: string | null
+          pagamento_id: string
+          processed_at?: string | null
+          solicitado_por: string
+          status?: Database["public"]["Enums"]["estorno_status"]
+          tipo?: Database["public"]["Enums"]["estorno_tipo"]
+          valor_estorno: number
+          valor_original: number
+        }
+        Update: {
+          aprovado_por?: string | null
+          cliente_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_id?: string
+          mercado_pago_refund_id?: string | null
+          metadata?: Json | null
+          montador_id?: string
+          motivo?: string
+          motivo_categoria?: Database["public"]["Enums"]["estorno_motivo_categoria"]
+          ordem_servico_id?: string | null
+          pagamento_id?: string
+          processed_at?: string | null
+          solicitado_por?: string
+          status?: Database["public"]["Enums"]["estorno_status"]
+          tipo?: Database["public"]["Enums"]["estorno_tipo"]
+          valor_estorno?: number
+          valor_original?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estornos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estornos_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estornos_montador_id_fkey"
+            columns: ["montador_id"]
+            isOneToOne: false
+            referencedRelation: "montadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estornos_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordem_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estornos_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           categoria: string | null
@@ -1034,6 +1136,10 @@ export type Database = {
         Args: { p_cliente_id: string; p_user_id: string }
         Returns: boolean
       }
+      processar_estorno_completo: {
+        Args: { p_estorno_id: string; p_mp_refund_id: string }
+        Returns: boolean
+      }
       processar_pagamento_aprovado: {
         Args: {
           p_installments?: number
@@ -1056,10 +1162,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      verificar_permissao_estorno: {
+        Args: { p_pagamento_id: string; p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "client" | "montador"
       candidatura_status: "pendente" | "aceito" | "recusado"
+      estorno_motivo_categoria:
+        | "nao_compareceu"
+        | "defeito_produto"
+        | "servico_incompleto"
+        | "desistencia_cliente"
+        | "erro_sistema"
+        | "outro"
+      estorno_status:
+        | "solicitado"
+        | "aprovado"
+        | "processando"
+        | "concluido"
+        | "recusado"
+        | "falhou"
+      estorno_tipo: "total" | "parcial"
       foto_tipo:
         | "movel_caixa"
         | "movel_montado"
@@ -1082,8 +1207,15 @@ export type Database = {
         | "concluida"
         | "concluida_com_assistencia"
         | "pendente_pecas"
+        | "cancelada"
       pagamento_metodo: "pix" | "cartao"
-      pagamento_status: "pago" | "pendente" | "estornado"
+      pagamento_status:
+        | "pago"
+        | "pendente"
+        | "estornado"
+        | "estorno_solicitado"
+        | "estorno_processando"
+        | "estorno_falhou"
       saque_status: "solicitado" | "pago" | "rejeitado" | "aprovado"
       saque_status_new: "solicitado" | "aprovado" | "processado" | "cancelado"
       sms_status: "pendente" | "enviado" | "erro"
@@ -1218,6 +1350,23 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "client", "montador"],
       candidatura_status: ["pendente", "aceito", "recusado"],
+      estorno_motivo_categoria: [
+        "nao_compareceu",
+        "defeito_produto",
+        "servico_incompleto",
+        "desistencia_cliente",
+        "erro_sistema",
+        "outro",
+      ],
+      estorno_status: [
+        "solicitado",
+        "aprovado",
+        "processando",
+        "concluido",
+        "recusado",
+        "falhou",
+      ],
+      estorno_tipo: ["total", "parcial"],
       foto_tipo: [
         "movel_caixa",
         "movel_montado",
@@ -1242,9 +1391,17 @@ export const Constants = {
         "concluida",
         "concluida_com_assistencia",
         "pendente_pecas",
+        "cancelada",
       ],
       pagamento_metodo: ["pix", "cartao"],
-      pagamento_status: ["pago", "pendente", "estornado"],
+      pagamento_status: [
+        "pago",
+        "pendente",
+        "estornado",
+        "estorno_solicitado",
+        "estorno_processando",
+        "estorno_falhou",
+      ],
       saque_status: ["solicitado", "pago", "rejeitado", "aprovado"],
       saque_status_new: ["solicitado", "aprovado", "processado", "cancelado"],
       sms_status: ["pendente", "enviado", "erro"],
