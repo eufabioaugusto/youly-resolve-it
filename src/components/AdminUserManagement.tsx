@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2 } from 'lucide-react';
+import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2, Filter, Users, Wrench, User } from 'lucide-react';
 import { AdminMontadorDetailsModal } from './AdminMontadorDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,10 +26,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type RoleFilter = 'todos' | 'montador' | 'client' | 'admin';
 
 export function AdminUserManagement() {
   const { users, loading, fetchUsers } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('todos');
   const [selectedMontador, setSelectedMontador] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
@@ -72,13 +82,28 @@ export function AdminUserManagement() {
     }
   });
 
-  const filteredUsers = users.filter(user => 
-    user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.telefone?.includes(searchTerm)
-  ).filter(user => {
+  // Filtrar usuários por busca e role
+  const filteredUsers = users.filter(user => {
+    // Filtro de busca
+    const matchesSearch = user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.telefone?.includes(searchTerm);
+    
+    // Filtro de role
+    const matchesRole = roleFilter === 'todos' || user.role === roleFilter;
+    
     // Filtrar apenas usuários ativos (não pendentes)
-    return user.role !== 'montador' || !montadoresPendentes?.some(m => m.user_id === user.user_id);
+    const notPending = user.role !== 'montador' || !montadoresPendentes?.some(m => m.user_id === user.user_id);
+    
+    return matchesSearch && matchesRole && notPending;
   });
+
+  // Contadores por role
+  const countByRole = {
+    todos: users.filter(u => u.role !== 'montador' || !montadoresPendentes?.some(m => m.user_id === u.user_id)).length,
+    montador: users.filter(u => u.role === 'montador' && !montadoresPendentes?.some(m => m.user_id === u.user_id)).length,
+    client: users.filter(u => u.role === 'client').length,
+    admin: users.filter(u => u.role === 'admin').length,
+  };
 
   const filteredPendentes = montadoresPendentes?.filter(m =>
     m.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -174,7 +199,8 @@ export function AdminUserManagement() {
                 </TabsTrigger>
               </TabsList>
 
-              <div className="mb-6">
+              <div className="mb-6 space-y-4">
+                {/* Busca */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
@@ -183,6 +209,58 @@ export function AdminUserManagement() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
+                </div>
+
+                {/* Filtro por Tipo de Usuário */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Filter className="w-4 h-4" />
+                    <span>Filtrar por tipo:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={roleFilter === 'todos' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setRoleFilter('todos')}
+                      className="gap-2"
+                    >
+                      <Users className="w-4 h-4" />
+                      Todos
+                      <Badge variant="secondary" className="ml-1">{countByRole.todos}</Badge>
+                    </Button>
+                    <Button
+                      variant={roleFilter === 'montador' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setRoleFilter('montador')}
+                      className="gap-2"
+                    >
+                      <Wrench className="w-4 h-4" />
+                      Montadores
+                      <Badge variant="secondary" className="ml-1">{countByRole.montador}</Badge>
+                    </Button>
+                    <Button
+                      variant={roleFilter === 'client' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setRoleFilter('client')}
+                      className="gap-2"
+                    >
+                      <User className="w-4 h-4" />
+                      Clientes
+                      <Badge variant="secondary" className="ml-1">{countByRole.client}</Badge>
+                    </Button>
+                    {countByRole.admin > 0 && (
+                      <Button
+                        variant={roleFilter === 'admin' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setRoleFilter('admin')}
+                        className="gap-2"
+                      >
+                        <UserCog className="w-4 h-4" />
+                        Admins
+                        <Badge variant="secondary" className="ml-1">{countByRole.admin}</Badge>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
