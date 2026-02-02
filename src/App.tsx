@@ -50,10 +50,10 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <AuthProvider>
-          <NotificationTopBar />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <NotificationTopBar />
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
