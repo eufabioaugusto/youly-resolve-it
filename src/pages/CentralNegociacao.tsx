@@ -66,55 +66,52 @@ const CentralNegociacao = () => {
     }
   }, [jobId]);
 
-  // Escutar atualizações em tempo real
+  // 🔥 REALTIME: Escutar todas as atualizações da negociação e do job
   useEffect(() => {
     if (!jobId) return;
 
-    const channel = supabase
+    console.log('🔔 Configurando realtime para negociação do job:', jobId);
+
+    // Canal para mudanças na negociação (INSERT, UPDATE, DELETE)
+    const negociacaoChannel = supabase
       .channel(`negociacao-realtime-${jobId}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*', // Escutar TODOS os eventos
           schema: 'public',
           table: 'negociacoes',
           filter: `job_id=eq.${jobId}`
         },
         (payload) => {
-          console.log('Negociação atualizada em tempo real:', payload);
+          console.log('🔥 Negociação atualizada (realtime):', payload);
+          loadNegociacao();
+        }
+      )
+      .subscribe();
+
+    // Canal para mudanças no job (status, etc)
+    const jobChannel = supabase
+      .channel(`job-realtime-${jobId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'jobs',
+          filter: `id=eq.${jobId}`
+        },
+        (payload) => {
+          console.log('🔥 Job atualizado (realtime):', payload);
           loadNegociacao();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [jobId]);
-
-  // Escutar atualizações em tempo real
-  useEffect(() => {
-    if (!jobId) return;
-
-    const channel = supabase
-      .channel(`negociacao-realtime-${jobId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'negociacoes',
-          filter: `job_id=eq.${jobId}`
-        },
-        (payload) => {
-          console.log('Negociação atualizada em tempo real:', payload);
-          loadNegociacao();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      console.log('🔕 Removendo channels realtime da negociação');
+      supabase.removeChannel(negociacaoChannel);
+      supabase.removeChannel(jobChannel);
     };
   }, [jobId]);
 
