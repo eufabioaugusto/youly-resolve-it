@@ -201,7 +201,7 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
           </CardHeader>
           <Separator />
           <CardContent className="p-0">
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-[300px]">
               {notifications.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground">
                   <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -209,7 +209,7 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
                 </div>
               ) : (
                 <div className="p-2">
-                  {notifications.map((notification, index) => (
+                  {notifications.slice(0, 5).map((notification, index) => (
                     <div key={notification.id}>
                       <div 
                         className={`p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
@@ -237,13 +237,29 @@ const NotificationCenter = ({ variant = 'floating' }: NotificationCenterProps) =
                           </div>
                         </div>
                       </div>
-                      {index < notifications.length - 1 && <Separator className="my-1" />}
+                      {index < Math.min(notifications.length, 5) - 1 && <Separator className="my-1" />}
                     </div>
                   ))}
                 </div>
               )}
             </ScrollArea>
           </CardContent>
+          
+          {/* Ver tudo link */}
+          <Separator />
+          <div className="p-3">
+            <Button
+              variant="ghost"
+              className="w-full text-primary hover:text-primary"
+              onClick={() => {
+                const userRole = window.location.pathname.includes('/montador') ? 'montador' : 'cliente';
+                navigate(`/${userRole}/notificacoes`);
+                setOpen(false);
+              }}
+            >
+              Ver todas as notificações
+            </Button>
+          </div>
         </Card>
       </PopoverContent>
     </Popover>
