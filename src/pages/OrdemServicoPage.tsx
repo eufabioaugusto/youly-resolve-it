@@ -2,25 +2,66 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, XCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { OrdemServicoFlow } from '@/components/OrdemServicoFlow';
 import { useProfile } from '@/hooks/useProfile';
-
+import { SolicitarEstornoModal } from '@/components/SolicitarEstornoModal';
+import { useEstorno } from '@/hooks/useEstorno';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 export default function OrdemServicoPage() {
   const { osId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { profile, montadorProfile } = useProfile();
+  const { verificarPermissao } = useEstorno();
   const [ordemServico, setOrdemServico] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showEstornoModal, setShowEstornoModal] = useState(false);
+  const [pagamentoId, setPagamentoId] = useState<string | null>(null);
+  const [pagamentoValor, setPagamentoValor] = useState<number>(0);
+  const [permissaoEstorno, setPermissaoEstorno] = useState<any>(null);
+  const [loadingPagamento, setLoadingPagamento] = useState(false);
 
   useEffect(() => {
     if (osId && profile) {
       loadOrdemServico();
     }
   }, [osId, profile]);
+
+  // Buscar pagamento relacionado e verificar permissão de estorno
+  useEffect(() => {
+    const loadPagamentoEPermissao = async () => {
+      if (!ordemServico?.job_id || profile?.role !== 'client') return;
+      
+      setLoadingPagamento(true);
+      try {
+        // Buscar pagamento do job
+        const { data: pagamento } = await supabase
+          .from('pagamentos')
+          .select('id, valor_total, status')
+          .eq('job_id', ordemServico.job_id)
+          .eq('status', 'pago')
+          .maybeSingle();
+
+        if (pagamento) {
+          setPagamentoId(pagamento.id);
+          setPagamentoValor(pagamento.valor_total);
+          
+          // Verificar permissão de estorno
+          const permissao = await verificarPermissao(pagamento.id);
+          setPermissaoEstorno(permissao);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar pagamento:', error);
+      } finally {
+        setLoadingPagamento(false);
+      }
+    };
+
+    loadPagamentoEPermissao();
+  }, [ordemServico?.job_id, profile?.role]);
 
   const loadOrdemServico = async () => {
     setLoading(true);
@@ -102,6 +143,20 @@ export default function OrdemServicoPage() {
     loadOrdemServico();
   };
 
+  const handleEstornoSuccess = () => {
+    setShowEstornoModal(false);
+    loadOrdemServico();
+    // Resetar permissão pois pagamento foi estornado
+    setPagamentoId(null);
+    setPermissaoEstorno(null);
+  };
+
+  // Verificar se pode mostrar botão de estorno
+  const canShowEstornoButton = profile?.role === 'client' && 
+    pagamentoId && 
+    permissaoEstorno?.permitido &&
+    !['concluida', 'concluida_com_assistencia', 'cancelada'].includes(ordemServico?.status);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -167,12 +222,55 @@ export default function OrdemServicoPage() {
                   {ordemServico.jobs?.endereco?.estado}
                 </p>
               </div>
+
+              {/* Botão de Solicitar Estorno */}
+              {canShowEstornoButton && (
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowEstornoModal(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Solicitar Cancelamento/Estorno
+                  </Button>
+                  {permissaoEstorno?.requer_aprovacao && (
+                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {permissaoEstorno.motivo}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Alerta quando estorno não é permitido (para clientes) */}
+              {profile?.role === 'client' && pagamentoId && permissaoEstorno && !permissaoEstorno.permitido && (
+                <Alert variant="default" className="mt-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {permissaoEstorno.motivo}
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 
           <OrdemServicoFlow ordemServico={ordemServico} onOSAtualizada={handleOSAtualizada} />
         </div>
       </div>
+
+      {/* Modal de Estorno */}
+      {pagamentoId && (
+        <SolicitarEstornoModal
+          open={showEstornoModal}
+          onOpenChange={setShowEstornoModal}
+          pagamentoId={pagamentoId}
+          valorOriginal={pagamentoValor}
+          jobDescricao={ordemServico?.jobs?.descricao || ''}
+          onSuccess={handleEstornoSuccess}
+        />
+      )}
     </div>
   );
 }
