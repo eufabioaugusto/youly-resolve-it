@@ -71,11 +71,29 @@ const WorkerDashboard = () => {
     }
   }, [montadorProfile]);
 
-  // 🔥 REALTIME: Atualizar negociações e OS automaticamente
+  // 🔥 REALTIME: Atualizar jobs, negociações e OS automaticamente
   useEffect(() => {
     if (!montadorProfile?.id) return;
 
     console.log("🔔 Configurando realtime para montador:", montadorProfile.id);
+
+    // 🔥 Escutar mudanças nos JOBS (status, atribuição, etc)
+    const jobsChannel = supabase
+      .channel("worker-jobs-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "jobs",
+        },
+        (payload) => {
+          console.log("🔥 Job atualizado (realtime):", payload);
+          // Atualizar a lista de jobs disponíveis
+          fetchAvailableJobs();
+        },
+      )
+      .subscribe();
 
     const negociacoesChannel = supabase
       .channel("negociacoes-realtime")
@@ -89,11 +107,8 @@ const WorkerDashboard = () => {
         },
         (payload) => {
           console.log("🔥 Negociação atualizada:", payload);
+          // Atualizar jobs (para remover da lista quando entrar em negociação)
           fetchAvailableJobs();
-          toast({
-            title: "Nova atualização!",
-            description: "Suas negociações foram atualizadas.",
-          });
         },
       )
       .subscribe();
@@ -111,16 +126,13 @@ const WorkerDashboard = () => {
         (payload) => {
           console.log("🔥 Ordem de Serviço atualizada:", payload);
           fetchOrdensServico();
-          toast({
-            title: "Nova Ordem de Serviço!",
-            description: "Você tem uma nova OS disponível.",
-          });
         },
       )
       .subscribe();
 
     return () => {
       console.log("🔕 Desconectando realtime");
+      supabase.removeChannel(jobsChannel);
       supabase.removeChannel(negociacoesChannel);
       supabase.removeChannel(osChannel);
     };
