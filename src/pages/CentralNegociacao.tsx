@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { NivelBadge } from "@/components/ui/nivel-badge";
-import { ArrowLeft, Clock, MapPin, DollarSign, MessageSquare, CheckCircle, XCircle, AlertCircle, Star, Send, History } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, DollarSign, MessageSquare, CheckCircle, XCircle, AlertCircle, Star, Send, History, RefreshCw } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useNegociacoes } from "@/hooks/useNegociacoes";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +48,7 @@ const CentralNegociacao = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [motivoCancelamento, setMotivoCancelamento] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const { getTimeoutAtivo } = useTimeout();
   
@@ -433,6 +434,23 @@ const CentralNegociacao = () => {
             </p>
             <div className="flex justify-center gap-4 items-center">
               {getStatusBadge(negociacao.status)}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  await loadNegociacao();
+                  setIsRefreshing(false);
+                  toast({
+                    title: "Atualizado!",
+                    description: "Dados atualizados com sucesso."
+                  });
+                }}
+                disabled={isRefreshing}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
             
             {/* Botões de Ação no Topo - Para Status Aceito */}
