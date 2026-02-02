@@ -40,6 +40,7 @@ import PagamentoSucesso from "./pages/PagamentoSucesso";
 import PagamentoFalha from "./pages/PagamentoFalha";
 import PesquisaSatisfacao from "./pages/PesquisaSatisfacao";
 import OrdemServicoPage from "./pages/OrdemServicoPage";
+import Notificacoes from "./pages/Notificacoes";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,11 @@ const App = () => (
                   <OrdemServicoPage />
                 </ProtectedRoute>
               } />
+              <Route path="/cliente/notificacoes" element={
+                <ProtectedRoute requiredRole="client">
+                  <Notificacoes />
+                </ProtectedRoute>
+              } />
               <Route path="/montador" element={
                 <ProtectedRoute requiredRole="montador">
                   <WorkerDashboard />
@@ -118,6 +124,11 @@ const App = () => (
               <Route path="/montador/os/:osId" element={
                 <ProtectedRoute requiredRole="montador">
                   <OrdemServicoPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/montador/notificacoes" element={
+                <ProtectedRoute requiredRole="montador">
+                  <Notificacoes />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
