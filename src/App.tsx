@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import NotificationTopBar from "@/components/NotificationTopBar";
+import GlobalNotificationListener from "@/components/GlobalNotificationListener";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -53,6 +54,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <GlobalNotificationListener />
             <NotificationTopBar />
             <ScrollToTop />
             <Routes>
