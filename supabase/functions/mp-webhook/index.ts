@@ -272,13 +272,25 @@ serve(async (req) => {
       console.log('⚙️ [1/6] Atualizando status do pagamento...');
       
       // ========================================
-      // CALCULAR COMISSÃO DA PLATAFORMA (20%)
+      // USAR VALOR REAL DO MERCADO PAGO (transaction_amount)
+      // O valor no banco pode ser o estimado do job, mas o valor
+      // real cobrado no checkout do MP é o que importa
       // ========================================
-      const valorTotal = Number(pagamentoDB.valor_total);
+      const valorRealPago = Number(payment.transaction_amount);
+      const valorBanco = Number(pagamentoDB.valor_total);
+      
+      if (valorRealPago !== valorBanco) {
+        console.warn('⚠️ VALOR DIVERGENTE! Banco:', valorBanco, '| MP real:', valorRealPago);
+        console.warn('Usando valor REAL do Mercado Pago para cálculos');
+      }
+      
+      const valorTotal = valorRealPago; // Sempre usar o valor real pago
       const comissaoPlataforma = valorTotal * 0.20; // 20% para a plataforma
       const valorMontador = valorTotal * 0.80; // 80% para o montador
       
-      console.log('💰 Valores calculados:', {
+      console.log('💰 Valores calculados (baseado no valor REAL do MP):', {
+        valorRealPago,
+        valorBancoPrevio: valorBanco,
         valorTotal,
         comissaoPlataforma,
         valorMontador
@@ -288,6 +300,7 @@ serve(async (req) => {
         .from('pagamentos')
         .update({
           status: 'pago',
+          valor_total: valorTotal, // Atualizar com valor real do MP
           mercado_pago_payment_id: payment.id.toString(),
           mercado_pago_payment_method: payment.payment_method_id || 'unknown',
           installments: payment.installments || 1,
@@ -374,7 +387,7 @@ serve(async (req) => {
         .update({
           pagamento_id: pagamentoId,
           data_pagamento: new Date().toISOString(),
-          valor_final: pagamentoDB.valor_total
+          valor_final: valorTotal // Usar valor real do MP
         })
         .eq('job_id', pagamentoDB.job_id)
         .eq('montador_id', pagamentoDB.montador_id);
