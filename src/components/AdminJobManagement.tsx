@@ -267,26 +267,24 @@ export function AdminJobManagement() {
       console.log('✅ [AdminJobManagement] Jobs com timeout expirado:', timeoutDataComJobs);
       setJobsTimeout(timeoutDataComJobs || []);
 
-      // 5. JOBS CANCELADOS
-      const { data: jobsCanceladosData, error: canceladosError } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('status', 'cancelado')
+      // 5. JOBS CANCELADOS (buscar da ordem_servico com status cancelada)
+      const { data: osCanceladasData, error: canceladosError } = await supabase
+        .from('ordem_servico')
+        .select('*, jobs!ordem_servico_job_id_fkey(*)')
+        .eq('status', 'cancelada')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (canceladosError) throw canceladosError;
 
-      let jobsCanceladosEnriquecidos = jobsCanceladosData || [];
-      if (jobsCanceladosData && jobsCanceladosData.length > 0) {
-        const clienteIdsCan = jobsCanceladosData.map(j => j.cliente_id);
-        const montadorIdsCan = jobsCanceladosData.map(j => j.montador_id).filter(Boolean);
+      let osCanceladasEnriquecidas = osCanceladasData || [];
+      if (osCanceladasData && osCanceladasData.length > 0) {
+        const clienteIdsCan = osCanceladasData.map(os => os.cliente_id);
+        const montadorIdsCan = osCanceladasData.map(os => os.montador_id);
 
         const [{ data: clientesData }, { data: montadoresData }] = await Promise.all([
           supabase.from('clientes').select('id, user_id').in('id', clienteIdsCan),
-          montadorIdsCan.length > 0 
-            ? supabase.from('montadores').select('id, user_id').in('id', montadorIdsCan)
-            : Promise.resolve({ data: [] })
+          supabase.from('montadores').select('id, user_id').in('id', montadorIdsCan)
         ]);
 
         const allUserIds = [
@@ -299,20 +297,20 @@ export function AdminJobManagement() {
           .select('user_id, nome')
           .in('user_id', allUserIds);
 
-        jobsCanceladosEnriquecidos = jobsCanceladosData.map(job => ({
-          ...job,
+        osCanceladasEnriquecidas = osCanceladasData.map(os => ({
+          ...os,
           cliente: {
-            ...clientesData?.find(c => c.id === job.cliente_id),
-            profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === job.cliente_id)?.user_id)
+            ...clientesData?.find(c => c.id === os.cliente_id),
+            profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === os.cliente_id)?.user_id)
           },
-          montador: job.montador_id ? {
-            ...montadoresData?.find(m => m.id === job.montador_id),
-            profile: profilesData?.find(p => p.user_id === montadoresData?.find(m => m.id === job.montador_id)?.user_id)
-          } : null
+          montador: {
+            ...montadoresData?.find(m => m.id === os.montador_id),
+            profile: profilesData?.find(p => p.user_id === montadoresData?.find(m => m.id === os.montador_id)?.user_id)
+          }
         }));
       }
 
-      setJobsCancelados(jobsCanceladosEnriquecidos);
+      setJobsCancelados(osCanceladasEnriquecidas);
 
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
@@ -477,13 +475,14 @@ export function AdminJobManagement() {
   }
 
   const renderJobCard = (job: any, tipo: 'disponivel' | 'andamento' | 'finalizado' | 'cancelado') => {
+    const isOSBased = tipo === 'finalizado' || tipo === 'cancelado';
     return (
       <Card key={job.id}>
         <CardContent className="p-4">
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h4 className="font-semibold">{tipo === 'finalizado' ? job.jobs?.descricao : job.descricao}</h4>
+                <h4 className="font-semibold">{isOSBased ? job.jobs?.descricao : job.descricao}</h4>
                 <p className="text-sm text-muted-foreground mt-1">
                   Cliente: {job.cliente?.profile?.nome || 'Cliente'}
                 </p>
@@ -507,8 +506,8 @@ export function AdminJobManagement() {
             </div>
             
             <div className="text-xs text-muted-foreground space-y-1">
-              <p>📍 {(tipo === 'finalizado' ? job.jobs?.endereco : job.endereco)?.cidade}, {(tipo === 'finalizado' ? job.jobs?.endereco : job.endereco)?.estado}</p>
-              <p>💰 R$ {tipo === 'finalizado' ? job.jobs?.valor_estimado?.toFixed(2) : job.valor_estimado?.toFixed(2) || '0.00'}</p>
+              <p>📍 {(isOSBased ? job.jobs?.endereco : job.endereco)?.cidade}, {(isOSBased ? job.jobs?.endereco : job.endereco)?.estado}</p>
+              <p>💰 R$ {isOSBased ? job.jobs?.valor_estimado?.toFixed(2) : job.valor_estimado?.toFixed(2) || '0.00'}</p>
               <p>📅 {new Date(job.created_at).toLocaleDateString('pt-BR')} às {new Date(job.created_at).toLocaleTimeString('pt-BR')}</p>
               {tipo === 'finalizado' && job.garantia_ativa && (
                 <p className="text-success">🛡️ Garantia ativa</p>
@@ -529,7 +528,7 @@ export function AdminJobManagement() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="flex overflow-x-auto h-auto w-full gap-1 p-1 md:grid md:grid-cols-5">
+            <TabsList className="flex overflow-x-auto scrollbar-none h-auto w-full gap-1 p-1 md:grid md:grid-cols-5 [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
               <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
                 <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span>Disponíveis ({jobsDisponiveis.length})</span>
