@@ -651,7 +651,7 @@ const ClientDashboard = () => {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => navigate(`/ordem-servico/${job.ordem_servico.id}`)}
+                            onClick={() => navigate(`/cliente/os/${job.ordem_servico.id}`)}
                             className="flex items-center gap-1"
                           >
                             <XCircle className="w-3 h-3" />
@@ -662,7 +662,7 @@ const ClientDashboard = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/ordem-servico/${job.ordem_servico.id}`)}
+                            onClick={() => navigate(`/cliente/os/${job.ordem_servico.id}`)}
                             className="flex items-center gap-1 text-xs"
                           >
                             <ExternalLink className="w-3 h-3" />
