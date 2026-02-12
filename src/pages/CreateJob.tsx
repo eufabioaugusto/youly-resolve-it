@@ -13,7 +13,7 @@ import { ProductImageUpload } from "@/components/ProductImageUpload";
 import { DatePickerInput } from "@/components/DatePickerInput";
 import { Wrench, ArrowLeft, Calendar, Loader2, InfoIcon } from "lucide-react";
 import { useState } from "react";
-import { currencyMask } from "@/lib/masks";
+import { currencyMask, currencyToNumber } from "@/lib/masks";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -82,7 +82,7 @@ const CreateJob = () => {
           tipo_servico: formData.tipo_servico,
           endereco: formData.endereco,
           data_opcoes: opcoesSelecionadas,
-          valor_estimado: parseFloat(formData.valor_estimado) || null,
+          valor_estimado: currencyToNumber(formData.valor_estimado) || null,
           imagens_produtos: formData.imagens_produtos,
         })
         .select()
