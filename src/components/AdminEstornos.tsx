@@ -78,7 +78,7 @@ interface EstornoComDetalhes {
 }
 
 export function AdminEstornos() {
-  const { aprovarEstorno, recusarEstorno, loading: actionLoading } = useEstorno();
+  const { aprovarEstorno, recusarEstorno, reprocessarEstorno, loading: actionLoading } = useEstorno();
   
   const [estornos, setEstornos] = useState<EstornoComDetalhes[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +89,7 @@ export function AdminEstornos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [estornoSelecionado, setEstornoSelecionado] = useState<EstornoComDetalhes | null>(null);
   const [motivoRecusa, setMotivoRecusa] = useState('');
-  const [acao, setAcao] = useState<'aprovar' | 'recusar' | null>(null);
+  const [acao, setAcao] = useState<'aprovar' | 'recusar' | 'reprocessar' | null>(null);
 
   useEffect(() => {
     loadEstornos();
@@ -190,7 +190,18 @@ export function AdminEstornos() {
     }
   };
 
-  const abrirModal = (estorno: EstornoComDetalhes, acaoInicial?: 'aprovar' | 'recusar') => {
+  const handleReprocessar = async () => {
+    if (!estornoSelecionado) return;
+    
+    const sucesso = await reprocessarEstorno(estornoSelecionado.id);
+    if (sucesso) {
+      setModalOpen(false);
+      setEstornoSelecionado(null);
+      loadEstornos();
+    }
+  };
+
+  const abrirModal = (estorno: EstornoComDetalhes, acaoInicial?: 'aprovar' | 'recusar' | 'reprocessar') => {
     setEstornoSelecionado(estorno);
     setAcao(acaoInicial || null);
     setMotivoRecusa('');
@@ -370,7 +381,7 @@ export function AdminEstornos() {
                               <Eye className="w-4 h-4" />
                             </Button>
                             {estorno.status === 'solicitado' && (
-                              <>
+                                <>
                                 <Button
                                   variant="default"
                                   size="sm"
@@ -386,6 +397,26 @@ export function AdminEstornos() {
                                   <XCircle className="w-4 h-4" />
                                 </Button>
                               </>
+                            )}
+                            {(estorno.status === 'concluido' && estorno.error_message) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => abrirModal(estorno, 'reprocessar')}
+                                title="Reprocessar - corrigir registros pendentes"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {estorno.status === 'falhou' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => abrirModal(estorno, 'reprocessar')}
+                                title="Reprocessar estorno falho"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -404,7 +435,7 @@ export function AdminEstornos() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {acao === 'aprovar' ? 'Aprovar Estorno' : acao === 'recusar' ? 'Recusar Estorno' : 'Detalhes do Estorno'}
+              {acao === 'aprovar' ? 'Aprovar Estorno' : acao === 'recusar' ? 'Recusar Estorno' : acao === 'reprocessar' ? 'Reprocessar Estorno' : 'Detalhes do Estorno'}
             </DialogTitle>
             <DialogDescription>
               ID: {estornoSelecionado?.id.substring(0, 8)}...
@@ -468,6 +499,16 @@ export function AdminEstornos() {
                   </p>
                 </div>
               )}
+
+              {acao === 'reprocessar' && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Reprocessar:</strong> Isso vai forçar a atualização da OS para "cancelada", 
+                    o job para "cancelado" e o pagamento para "estornado". Use quando o estorno foi aprovado 
+                    no MP mas os registros internos ficaram inconsistentes.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -485,6 +526,12 @@ export function AdminEstornos() {
               <Button variant="destructive" onClick={handleRecusar} disabled={actionLoading || motivoRecusa.length < 10}>
                 {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
                 Confirmar Recusa
+              </Button>
+            )}
+            {acao === 'reprocessar' && (
+              <Button onClick={handleReprocessar} disabled={actionLoading}>
+                {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                Reprocessar Estorno
               </Button>
             )}
           </DialogFooter>

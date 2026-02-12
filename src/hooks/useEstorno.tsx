@@ -287,6 +287,32 @@ export function useEstorno() {
     }
   };
 
+  const reprocessarEstorno = async (estornoId: string) => {
+    setLoading(true);
+    try {
+      const response = await supabase.functions.invoke('mp-refund-admin', {
+        body: { estornoId, acao: 'reprocessar' }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      const data = response.data;
+
+      if (data.error) {
+        toast({ title: 'Erro', description: data.error, variant: 'destructive' });
+        return false;
+      }
+
+      toast({ title: 'Reprocessado', description: data.mensagem });
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao reprocessar:', error);
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     verificarPermissao,
@@ -294,6 +320,7 @@ export function useEstorno() {
     buscarEstornos,
     buscarEstornoPorId,
     aprovarEstorno,
-    recusarEstorno
+    recusarEstorno,
+    reprocessarEstorno
   };
 }

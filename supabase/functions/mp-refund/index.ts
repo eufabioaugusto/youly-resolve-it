@@ -300,18 +300,48 @@ serve(async (req) => {
         );
 
         if (processError) {
-          console.error('Erro ao processar estorno no banco:', processError);
-          // Mesmo que falhe no banco, o estorno foi feito no MP
-          // Marcar como concluído manualmente
-          await supabase
-            .from('estornos')
+          console.error('Erro ao processar estorno no banco via RPC:', processError);
+          // Fallback: atualizar manualmente cada tabela
+          console.log('🔄 Executando fallback manual...');
+          
+          // Atualizar pagamento
+          await supabase.from('pagamentos')
+            .update({ status: 'estornado', updated_at: new Date().toISOString() })
+            .eq('id', pagamentoId);
+
+          // Cancelar OS
+          if (estorno.ordem_servico_id) {
+            await supabase.from('ordem_servico')
+              .update({ status: 'cancelada', updated_at: new Date().toISOString() })
+              .eq('id', estorno.ordem_servico_id);
+          }
+
+          // Cancelar job
+          await supabase.from('jobs')
+            .update({ status: 'cancelado', updated_at: new Date().toISOString() })
+            .eq('id', estorno.job_id);
+
+          // Cancelar negociação
+          await supabase.from('negociacoes')
+            .update({ 
+              status: 'cancelado', 
+              motivo_cancelamento: 'Estorno processado: ' + motivo,
+              data_cancelamento: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('job_id', estorno.job_id);
+
+          // Atualizar estorno como concluído
+          await supabase.from('estornos')
             .update({
               status: 'concluido',
               mercado_pago_refund_id: mpResult.id?.toString(),
               processed_at: new Date().toISOString(),
-              error_message: 'Estorno realizado no MP, mas houve erro no processamento interno: ' + processError.message
+              error_message: 'Processado via fallback manual. Erro RPC: ' + processError.message
             })
             .eq('id', estorno.id);
+
+          console.log('✅ Fallback manual concluído');
         }
 
         return new Response(
