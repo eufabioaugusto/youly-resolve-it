@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Search, AlertCircle, Clock, CheckCircle, Wrench, PlayCircle, Package } from 'lucide-react';
+import { Search, AlertCircle, Clock, CheckCircle, Wrench, PlayCircle, Package, XCircle } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 export function AdminJobManagement() {
@@ -16,6 +16,7 @@ export function AdminJobManagement() {
   const [jobsEmAndamento, setJobsEmAndamento] = useState<any[]>([]);
   const [jobsFinalizados, setJobsFinalizados] = useState<any[]>([]);
   const [jobsTimeout, setJobsTimeout] = useState<any[]>([]);
+  const [jobsCancelados, setJobsCancelados] = useState<any[]>([]);
   const [montadores, setMontadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
@@ -266,6 +267,53 @@ export function AdminJobManagement() {
       console.log('✅ [AdminJobManagement] Jobs com timeout expirado:', timeoutDataComJobs);
       setJobsTimeout(timeoutDataComJobs || []);
 
+      // 5. JOBS CANCELADOS
+      const { data: jobsCanceladosData, error: canceladosError } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('status', 'cancelado')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (canceladosError) throw canceladosError;
+
+      let jobsCanceladosEnriquecidos = jobsCanceladosData || [];
+      if (jobsCanceladosData && jobsCanceladosData.length > 0) {
+        const clienteIdsCan = jobsCanceladosData.map(j => j.cliente_id);
+        const montadorIdsCan = jobsCanceladosData.map(j => j.montador_id).filter(Boolean);
+
+        const [{ data: clientesData }, { data: montadoresData }] = await Promise.all([
+          supabase.from('clientes').select('id, user_id').in('id', clienteIdsCan),
+          montadorIdsCan.length > 0 
+            ? supabase.from('montadores').select('id, user_id').in('id', montadorIdsCan)
+            : Promise.resolve({ data: [] })
+        ]);
+
+        const allUserIds = [
+          ...(clientesData?.map(c => c.user_id) || []),
+          ...(montadoresData?.map(m => m.user_id) || [])
+        ];
+
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', allUserIds);
+
+        jobsCanceladosEnriquecidos = jobsCanceladosData.map(job => ({
+          ...job,
+          cliente: {
+            ...clientesData?.find(c => c.id === job.cliente_id),
+            profile: profilesData?.find(p => p.user_id === clientesData?.find(c => c.id === job.cliente_id)?.user_id)
+          },
+          montador: job.montador_id ? {
+            ...montadoresData?.find(m => m.id === job.montador_id),
+            profile: profilesData?.find(p => p.user_id === montadoresData?.find(m => m.id === job.montador_id)?.user_id)
+          } : null
+        }));
+      }
+
+      setJobsCancelados(jobsCanceladosEnriquecidos);
+
       // Buscar montadores disponíveis
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
@@ -428,7 +476,7 @@ export function AdminJobManagement() {
     );
   }
 
-  const renderJobCard = (job: any, tipo: 'disponivel' | 'andamento' | 'finalizado') => {
+  const renderJobCard = (job: any, tipo: 'disponivel' | 'andamento' | 'finalizado' | 'cancelado') => {
     return (
       <Card key={job.id}>
         <CardContent className="p-4">
@@ -447,10 +495,12 @@ export function AdminJobManagement() {
               </div>
               <Badge variant={
                 tipo === 'disponivel' ? 'default' :
-                tipo === 'andamento' ? 'secondary' : 'outline'
+                tipo === 'andamento' ? 'secondary' : 
+                tipo === 'cancelado' ? 'destructive' : 'outline'
               }>
                 {tipo === 'disponivel' ? 'Disponível' :
                  tipo === 'andamento' ? job.status === 'pago' ? 'Pago' : 'Em negociação' :
+                 tipo === 'cancelado' ? 'Cancelado' :
                  job.status === 'concluida' ? 'Concluída' :
                  job.status === 'concluida_com_assistencia' ? 'Com assistência' : 'Pendente peças'}
               </Badge>
@@ -479,22 +529,26 @@ export function AdminJobManagement() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 gap-2 h-auto md:grid-cols-4 w-full">
-              <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+            <TabsList className="flex overflow-x-auto h-auto w-full gap-1 p-1 md:grid md:grid-cols-5">
+              <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
                 <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Disponíveis ({jobsDisponiveis.length})</span>
+                <span>Disponíveis ({jobsDisponiveis.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="andamento" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="andamento" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
                 <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Andamento ({jobsEmAndamento.length})</span>
+                <span>Andamento ({jobsEmAndamento.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="finalizados" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="finalizados" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
                 <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Finalizados ({jobsFinalizados.length})</span>
+                <span>Finalizados ({jobsFinalizados.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="timeout" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="cancelados" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
+                <XCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span>Cancelados ({jobsCancelados.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="timeout" className="flex items-center gap-1 px-3 py-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
                 <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">Timeout ({jobsTimeout.length})</span>
+                <span>Timeout ({jobsTimeout.length})</span>
               </TabsTrigger>
             </TabsList>
 
@@ -533,6 +587,19 @@ export function AdminJobManagement() {
               ) : (
                 <div className="grid gap-4">
                   {jobsFinalizados.map(job => renderJobCard(job, 'finalizado'))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="cancelados" className="mt-6">
+              {jobsCancelados.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <XCircle className="w-12 h-12 mx-auto mb-4" />
+                  <p>Nenhum job cancelado</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {jobsCancelados.map(job => renderJobCard(job, 'cancelado'))}
                 </div>
               )}
             </TabsContent>
