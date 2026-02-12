@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.mp-refund-admin]
 verify_jwt = false
 
+[functions.block-user]
+verify_jwt = false
+
 [auth]
 [auth.email]
 # Enable custom SMTP to use our email templates

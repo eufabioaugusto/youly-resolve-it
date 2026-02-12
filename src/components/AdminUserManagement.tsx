@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2, Filter, Users, Wrench, User } from 'lucide-react';
+import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2, Filter, Users, Wrench, User, Ban } from 'lucide-react';
 import { AdminMontadorDetailsModal } from './AdminMontadorDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +44,9 @@ export function AdminUserManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToBlock, setUserToBlock] = useState<any>(null);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   // Buscar montadores pendentes
   const { data: montadoresPendentes, refetch: refetchPendentes } = useQuery({
@@ -144,6 +147,39 @@ export function AdminUserManagement() {
     } catch (error) {
       console.error('Erro ao remover usuário:', error);
       toast.error('Erro ao remover usuário');
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!userToBlock) return;
+    setBlocking(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        'https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/block-user',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ user_id: userToBlock.user_id }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro ao bloquear');
+
+      toast.success(`Usuário ${userToBlock.nome} foi bloqueado com sucesso`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Erro ao bloquear usuário:', error);
+      toast.error(error.message || 'Erro ao bloquear usuário');
+    } finally {
+      setBlocking(false);
+      setBlockDialogOpen(false);
+      setUserToBlock(null);
     }
   };
 
@@ -301,6 +337,16 @@ export function AdminUserManagement() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
+                                setUserToBlock(user);
+                                setBlockDialogOpen(true);
+                              }}
+                              className="text-orange-600 focus:text-orange-600"
+                            >
+                              <Ban className="w-4 h-4 mr-2" />
+                              Bloquear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
                                 setUserToDelete(user);
                                 setDeleteDialogOpen(true);
                               }}
@@ -397,6 +443,33 @@ export function AdminUserManagement() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Ban className="w-5 h-5 text-orange-600" />
+              Bloquear Usuário
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja bloquear <strong>{userToBlock?.nome}</strong>?
+              <br /><br />
+              Esta ação irá <strong>impedir o login</strong> deste usuário permanentemente. 
+              Ele não conseguirá mais acessar a plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blocking}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBlockUser} 
+              disabled={blocking}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              {blocking ? 'Bloqueando...' : 'Confirmar Bloqueio'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
