@@ -12,7 +12,7 @@ const mercadoPagoAccessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN')!;
 
 interface AdminEstornoRequest {
   estornoId: string;
-  acao: 'aprovar' | 'recusar';
+  acao: 'aprovar' | 'recusar' | 'reprocessar';
   motivoRecusa?: string;
 }
 
@@ -67,9 +67,9 @@ serve(async (req) => {
       );
     }
 
-    if (acao !== 'aprovar' && acao !== 'recusar') {
+    if (!['aprovar', 'recusar', 'reprocessar'].includes(acao)) {
       return new Response(
-        JSON.stringify({ error: 'Ação deve ser "aprovar" ou "recusar"' }),
+        JSON.stringify({ error: 'Ação deve ser "aprovar", "recusar" ou "reprocessar"' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -98,7 +98,55 @@ serve(async (req) => {
       );
     }
 
-    // Verificar status
+    // Verificar status - reprocessar permite estornos concluídos com erro
+    if (acao === 'reprocessar') {
+      if (!['concluido', 'falhou'].includes(estorno.status)) {
+        return new Response(
+          JSON.stringify({ error: `Reprocessar só é permitido para estornos concluídos ou falhos (status: ${estorno.status})` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`🔄 Admin ${userId} reprocessando estorno ${estornoId}`);
+      
+      // Forçar atualização de todos os registros relacionados
+      await supabase.from('pagamentos')
+        .update({ status: 'estornado', updated_at: new Date().toISOString() })
+        .eq('id', estorno.pagamento_id);
+
+      if (estorno.ordem_servico_id) {
+        await supabase.from('ordem_servico')
+          .update({ status: 'cancelada', updated_at: new Date().toISOString() })
+          .eq('id', estorno.ordem_servico_id);
+      }
+
+      await supabase.from('jobs')
+        .update({ status: 'cancelado', updated_at: new Date().toISOString() })
+        .eq('id', estorno.job_id);
+
+      await supabase.from('negociacoes')
+        .update({ 
+          status: 'cancelado', 
+          motivo_cancelamento: 'Estorno reprocessado pelo admin',
+          data_cancelamento: new Date().toISOString()
+        })
+        .eq('job_id', estorno.job_id);
+
+      await supabase.from('estornos')
+        .update({ error_message: null })
+        .eq('id', estornoId);
+
+      return new Response(
+        JSON.stringify({
+          sucesso: true,
+          mensagem: 'Estorno reprocessado - todos os registros atualizados',
+          estorno_id: estornoId
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verificar status para aprovar/recusar
     if (estorno.status !== 'solicitado') {
       return new Response(
         JSON.stringify({ error: `Estorno já foi processado (status: ${estorno.status})` }),
@@ -247,18 +295,28 @@ serve(async (req) => {
       );
 
       if (processError) {
-        console.error('Erro ao processar estorno no banco:', processError);
-        // Marcar como concluído mesmo assim
-        await supabase
-          .from('estornos')
-          .update({
-            status: 'concluido',
-            mercado_pago_refund_id: mpResult.id?.toString(),
-            processed_at: new Date().toISOString(),
-            error_message: 'Estorno realizado no MP. Erro interno: ' + processError.message
-          })
-          .eq('id', estornoId);
-      }
+          console.error('Erro ao processar estorno no banco:', processError);
+          // Fallback manual
+          await supabase.from('pagamentos')
+            .update({ status: 'estornado', updated_at: new Date().toISOString() })
+            .eq('id', estorno.pagamento_id);
+          if (estorno.ordem_servico_id) {
+            await supabase.from('ordem_servico')
+              .update({ status: 'cancelada', updated_at: new Date().toISOString() })
+              .eq('id', estorno.ordem_servico_id);
+          }
+          await supabase.from('jobs')
+            .update({ status: 'cancelado', updated_at: new Date().toISOString() })
+            .eq('id', estorno.job_id);
+          await supabase.from('estornos')
+            .update({
+              status: 'concluido',
+              mercado_pago_refund_id: mpResult.id?.toString(),
+              processed_at: new Date().toISOString(),
+              error_message: 'Processado via fallback. Erro: ' + processError.message
+            })
+            .eq('id', estornoId);
+        }
 
       return new Response(
         JSON.stringify({
