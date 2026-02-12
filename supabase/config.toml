@@ -21,6 +21,9 @@ verify_jwt = false
 [functions.block-user]
 verify_jwt = false
 
+[functions.unblock-user]
+verify_jwt = false
+
 [auth]
 [auth.email]
 # Enable custom SMTP to use our email templates
