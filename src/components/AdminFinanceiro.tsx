@@ -207,11 +207,9 @@ export function AdminFinanceiro() {
   };
 
   const calcularResumo = () => {
-    // Total de TODOS os pagamentos (independente do status)
-    const totalMovimentado = pagamentos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
-    
-    // Apenas pagamentos PAGOS para comissão e montadores
+    // APENAS pagamentos com status 'pago' devem ser considerados para cálculos financeiros
     const pagamentosPagos = pagamentos.filter(p => p.status === 'pago');
+    const totalMovimentado = pagamentosPagos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
     const totalComissaoPlataforma = pagamentosPagos.reduce((acc, p) => acc + (p.comissao_plataforma || 0), 0);
     const totalMontadores = pagamentosPagos.reduce((acc, p) => acc + (p.valor_montador || 0), 0);
     
@@ -222,32 +220,17 @@ export function AdminFinanceiro() {
     }, 0);
     const totalProcessamento = montadores.reduce((acc, m) => {
       const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
-      const saldoProcessamento = Number(carteira?.saldo_em_processamento || 0);
-      console.log(`💳 Montador ${m.profiles?.nome}: Em Proc = R$ ${saldoProcessamento.toFixed(2)} (tipo: ${Array.isArray(m.carteira) ? 'array' : 'object'})`);
-      return acc + saldoProcessamento;
+      return acc + (Number(carteira?.saldo_em_processamento || 0));
     }, 0);
-
-    console.log('💰 [AdminFinanceiro] Resumo calculado:', {
-      totalMovimentado,
-      totalComissaoPlataforma,
-      totalMontadores,
-      totalDisponivel,
-      totalProcessamento,
-      totalPagamentos: pagamentos.length,
-      pagamentosPagos: pagamentosPagos.length,
-      qtdMontadores: montadores.length,
-      montadoresComCarteira: montadores.filter(m => {
-        const carteira = Array.isArray(m.carteira) ? m.carteira[0] : m.carteira;
-        return carteira != null;
-      }).length
-    });
 
     return { 
       totalMovimentado, 
       totalComissaoPlataforma, 
       totalMontadores, 
       totalDisponivel, 
-      totalProcessamento 
+      totalProcessamento,
+      totalPagos: pagamentosPagos.length,
+      totalPagamentos: pagamentos.length
     };
   };
 
@@ -274,10 +257,10 @@ export function AdminFinanceiro() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Volume Total</p>
+                <p className="text-sm text-muted-foreground">Volume Pago</p>
                 <p className="text-2xl font-bold">R$ {resumo.totalMovimentado.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {pagamentos.filter(p => p.status === 'pago').length} pagos de {pagamentos.length} total
+                  {resumo.totalPagos} pagos de {resumo.totalPagamentos} total
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-success" />

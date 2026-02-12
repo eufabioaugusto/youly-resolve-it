@@ -52,7 +52,7 @@ export default function AdminDashboard() {
         { count: totalMontadores },
         { count: activeMontadores },
         { count: totalClientes },
-        { count: totalPagamentos },
+        { count: totalPagamentosPagos },
         { data: pagamentosData }
       ] = await Promise.all([
         supabase.from('jobs').select('*', { count: 'exact', head: true }),
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
         supabase.from('montadores').select('*', { count: 'exact', head: true }),
         supabase.from('montadores').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('clientes').select('*', { count: 'exact', head: true }),
-        supabase.from('pagamentos').select('*', { count: 'exact', head: true }),
+        supabase.from('pagamentos').select('*', { count: 'exact', head: true }).eq('status', 'pago'),
         supabase.from('pagamentos').select('valor_total').eq('status', 'pago')
       ]);
 
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
         totalMontadores,
         activeMontadores,
         totalClientes,
-        totalPagamentos,
+        totalPagamentosPagos: totalPagamentosPagos,
         valorTotal
       });
 
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
         totalMontadores: totalMontadores || 0,
         activeMontadores: activeMontadores || 0,
         totalClientes: totalClientes || 0,
-        totalPagamentos: totalPagamentos || 0,
+        totalPagamentos: totalPagamentosPagos || 0,
         valorTotalMovimentado: valorTotal
       });
     } catch (error) {
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">Volume Total</p>
+                        <p className="text-sm text-muted-foreground">Volume Pago</p>
                         <h3 className="text-2xl font-bold">
                           {formatCurrency(stats.valorTotalMovimentado)}
                         </h3>
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
                       <DollarSign className="w-8 h-8 text-yellow-500" />
                     </div>
                     <div className="text-sm text-muted-foreground mt-2">
-                      {stats.totalPagamentos} pagamentos
+                      {stats.totalPagamentos} pagamentos pagos
                     </div>
                   </CardContent>
                 </Card>
