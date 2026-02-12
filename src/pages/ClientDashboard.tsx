@@ -22,7 +22,9 @@ import {
   LogOut,
   Users,
   MessageSquare,
-  Shield
+  Shield,
+  XCircle,
+  ExternalLink
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import JobDetailsModal from "@/components/JobDetailsModal";
@@ -630,17 +632,44 @@ const ClientDashboard = () => {
                       </Button>
                     )}
                     
-                    {/* Jobs pagos - mostrar status da OS */}
+                    {/* Jobs pagos - mostrar status da OS e opções */}
                     {(job.status === "pago" || job.ordem_servico) && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span className="text-success font-medium">
-                          {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
-                           job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
-                           job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
-                           'Pagamento confirmado - Aguardando início'}
-                        </span>
-                      </div>
+                      <>
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success" />
+                          <span className="text-success font-medium">
+                            {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
+                             job.ordem_servico?.status === 'concluida_com_assistencia' ? 'Concluído com assistência' :
+                             job.ordem_servico?.status === 'cancelada' ? 'Cancelado' :
+                             job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
+                             job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
+                             'Pagamento confirmado - Aguardando início'}
+                          </span>
+                        </div>
+                        {/* Botão para acessar OS com opção de estorno */}
+                        {job.ordem_servico && !['concluida', 'concluida_com_assistencia', 'cancelada'].includes(job.ordem_servico.status) && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => navigate(`/ordem-servico/${job.ordem_servico.id}`)}
+                            className="flex items-center gap-1"
+                          >
+                            <XCircle className="w-3 h-3" />
+                            Cancelar / Estorno
+                          </Button>
+                        )}
+                        {job.ordem_servico && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/ordem-servico/${job.ordem_servico.id}`)}
+                            className="flex items-center gap-1 text-xs"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Acompanhar OS
+                          </Button>
+                        )}
+                      </>
                     )}
 
                   </div>
