@@ -650,18 +650,6 @@ const ClientDashboard = () => {
                              'Pagamento confirmado - Aguardando início'}
                           </span>
                         </div>
-                        {/* Botão para acessar OS com opção de estorno */}
-                        {job.ordem_servico && job.status !== 'cancelado' && !['concluida', 'concluida_com_assistencia', 'cancelada'].includes(job.ordem_servico.status) && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => navigate(`/cliente/os/${job.ordem_servico.id}`)}
-                            className="flex items-center gap-1"
-                          >
-                            <XCircle className="w-3 h-3" />
-                            Cancelar / Estorno
-                          </Button>
-                        )}
                         {job.ordem_servico && (
                           <Button
                             variant="ghost"
