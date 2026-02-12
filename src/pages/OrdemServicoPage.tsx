@@ -256,7 +256,7 @@ export default function OrdemServicoPage() {
             </CardContent>
           </Card>
 
-          <OrdemServicoFlow ordemServico={ordemServico} onOSAtualizada={handleOSAtualizada} />
+          <OrdemServicoFlow ordemServico={ordemServico} onOSAtualizada={handleOSAtualizada} userRole={profile?.role} />
         </div>
       </div>
 

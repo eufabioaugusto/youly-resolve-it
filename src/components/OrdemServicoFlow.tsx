@@ -20,9 +20,10 @@ interface OrdemServicoFlowProps {
   ordemServico: any;
   onOSAtualizada?: () => void;
   onStatusChange?: () => void;
+  userRole?: 'client' | 'montador' | 'admin';
 }
 
-export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange }: OrdemServicoFlowProps) {
+export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange, userRole = 'montador' }: OrdemServicoFlowProps) {
   const { atualizarStatus, uploadFoto, finalizarOS, validarCodigo, loading } = useOrdemServico();
   const { enviarSMSACaminho } = useSMS();
   const { criarAvaliacao } = useAvaliacoes();
@@ -300,6 +301,163 @@ export function OrdemServicoFlow({ ordemServico, onOSAtualizada, onStatusChange 
     return <Badge variant={badge.variant}>{badge.label}</Badge>;
   };
 
+  // === CLIENT VIEW ===
+  if (userRole === 'client') {
+    return (
+      <div className="space-y-6">
+        {/* Header com status */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xs lg:text-2xl">Ordem de Serviço #{ordemServico.id.slice(0, 8)}</CardTitle>
+                <CardDescription>Acompanhe o andamento do seu serviço</CardDescription>
+              </div>
+              {renderStatusBadge(ordemServico.status)}
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Timeline de acompanhamento */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Progresso do Serviço
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Etapa 1: Aguardando */}
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  ['pendente', 'a_caminho', 'iniciada', 'concluida', 'concluida_com_assistencia'].includes(ordemServico.status)
+                    ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-medium">Pagamento confirmado</p>
+                  <p className="text-sm text-muted-foreground">Aguardando montador iniciar deslocamento</p>
+                </div>
+              </div>
+
+              {/* Etapa 2: A caminho */}
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  ['a_caminho', 'iniciada', 'concluida', 'concluida_com_assistencia'].includes(ordemServico.status)
+                    ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className={`font-medium ${ordemServico.status === 'a_caminho' ? 'text-primary' : ''}`}>
+                    Montador a caminho
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {ordemServico.status === 'a_caminho' ? 'O montador está indo até você!' : 'Aguardando'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Etapa 3: Em execução */}
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  ['iniciada', 'concluida', 'concluida_com_assistencia'].includes(ordemServico.status)
+                    ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className={`font-medium ${ordemServico.status === 'iniciada' ? 'text-primary' : ''}`}>
+                    Montagem em andamento
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {ordemServico.status === 'iniciada' ? 'O montador está trabalhando no seu serviço' : 'Aguardando'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Etapa 4: Concluído */}
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  ['concluida', 'concluida_com_assistencia'].includes(ordemServico.status)
+                    ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-medium">Serviço concluído</p>
+                  <p className="text-sm text-muted-foreground">
+                    {['concluida', 'concluida_com_assistencia'].includes(ordemServico.status) 
+                      ? 'Serviço finalizado com sucesso!' : 'Aguardando'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Código de validação - mostrar ao cliente quando montador está no local */}
+        {(ordemServico.status === 'a_caminho' || ordemServico.status === 'iniciada') && (
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Código de Validação
+              </CardTitle>
+              <CardDescription>
+                Forneça este código ao montador ao final do serviço para ativar sua garantia
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-4">
+                <p className="text-4xl font-mono font-bold tracking-widest text-primary">
+                  {ordemServico.codigo_validacao}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Garantia */}
+        {ordemServico.garantia_ativa && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Garantia Ativa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  🛡️ Sua garantia está ativa até {new Date(ordemServico.data_expiracao_garantia).toLocaleDateString("pt-BR")}
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status cancelado */}
+        {ordemServico.status === 'cancelada' && (
+          <Card>
+            <CardContent className="pt-6">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Esta ordem de serviço foi cancelada.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // === MONTADOR VIEW (original) ===
   return (
     <div className="space-y-6">
       {/* Header com status */}
