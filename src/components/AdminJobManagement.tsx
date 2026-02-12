@@ -7,10 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Search, AlertCircle, Clock, CheckCircle, Wrench, PlayCircle, Package, XCircle } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 export function AdminJobManagement() {
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const [jobsDisponiveis, setJobsDisponiveis] = useState<any[]>([]);
   const [jobsEmAndamento, setJobsEmAndamento] = useState<any[]>([]);
@@ -528,30 +530,54 @@ export function AdminJobManagement() {
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="w-full overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]" style={{ maxWidth: '100%' }}>
-              <TabsList className="inline-flex h-auto gap-1 p-1 md:grid md:grid-cols-5 md:w-full" style={{ display: 'flex', flexWrap: 'nowrap', width: 'max-content', minWidth: '100%' }}>
-                <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-2 py-2 text-[11px] sm:text-sm whitespace-nowrap">
-                  <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+            {/* Mobile: Select dropdown */}
+            {isMobile ? (
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disponiveis">
+                    📦 Disponíveis ({jobsDisponiveis.length})
+                  </SelectItem>
+                  <SelectItem value="andamento">
+                    ▶️ Andamento ({jobsEmAndamento.length})
+                  </SelectItem>
+                  <SelectItem value="finalizados">
+                    ✅ Finalizados ({jobsFinalizados.length})
+                  </SelectItem>
+                  <SelectItem value="cancelados">
+                    ❌ Cancelados ({jobsCancelados.length})
+                  </SelectItem>
+                  <SelectItem value="timeout">
+                    ⚠️ Timeout ({jobsTimeout.length})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <TabsList className="grid w-full grid-cols-5 h-auto gap-1 p-1">
+                <TabsTrigger value="disponiveis" className="flex items-center gap-1 px-2 py-2 text-sm">
+                  <Package className="w-4 h-4 flex-shrink-0" />
                   <span>Disponíveis ({jobsDisponiveis.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="andamento" className="flex items-center gap-1 px-2 py-2 text-[11px] sm:text-sm whitespace-nowrap">
-                  <PlayCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <TabsTrigger value="andamento" className="flex items-center gap-1 px-2 py-2 text-sm">
+                  <PlayCircle className="w-4 h-4 flex-shrink-0" />
                   <span>Andamento ({jobsEmAndamento.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="finalizados" className="flex items-center gap-1 px-2 py-2 text-[11px] sm:text-sm whitespace-nowrap">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <TabsTrigger value="finalizados" className="flex items-center gap-1 px-2 py-2 text-sm">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
                   <span>Finalizados ({jobsFinalizados.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="cancelados" className="flex items-center gap-1 px-2 py-2 text-[11px] sm:text-sm whitespace-nowrap">
-                  <XCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <TabsTrigger value="cancelados" className="flex items-center gap-1 px-2 py-2 text-sm">
+                  <XCircle className="w-4 h-4 flex-shrink-0" />
                   <span>Cancelados ({jobsCancelados.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="timeout" className="flex items-center gap-1 px-2 py-2 text-[11px] sm:text-sm whitespace-nowrap">
-                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <TabsTrigger value="timeout" className="flex items-center gap-1 px-2 py-2 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>Timeout ({jobsTimeout.length})</span>
                 </TabsTrigger>
               </TabsList>
-            </div>
+            )}
 
             <TabsContent value="disponiveis" className="mt-6">
               {jobsDisponiveis.length === 0 ? (
