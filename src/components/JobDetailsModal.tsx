@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, Clock, DollarSign, User, CreditCard, CheckCircle2, Shield } from "lucide-react";
+import { MapPin, Calendar, Clock, DollarSign, User, CreditCard, CheckCircle2, Shield, ZoomIn } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ImageGalleryModal } from "@/components/ImageGalleryModal";
 
 interface JobDetailsModalProps {
   job: any;
@@ -11,6 +13,9 @@ interface JobDetailsModalProps {
 }
 
 const JobDetailsModal = ({ job, open, onOpenChange }: JobDetailsModalProps) => {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
   if (!job) return null;
 
   const formatDate = (dateStr: string) => {
@@ -76,16 +81,34 @@ const JobDetailsModal = ({ job, open, onOpenChange }: JobDetailsModalProps) => {
             <>
               <div>
                 <h4 className="font-medium mb-3">Imagens dos Produtos</h4>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {job.imagens_produtos.map((imgUrl: string, index: number) => (
-                    <img
+                    <button
                       key={index}
-                      src={imgUrl}
-                      alt={`Produto ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border"
-                    />
+                      onClick={() => {
+                        setSelectedImageIndex(index);
+                        setGalleryOpen(true);
+                      }}
+                      className="relative aspect-square rounded-lg overflow-hidden border-2 border-muted hover:border-primary transition-all cursor-pointer group"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`Produto ${index + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </button>
                   ))}
                 </div>
+
+                <ImageGalleryModal
+                  images={job.imagens_produtos}
+                  isOpen={galleryOpen}
+                  onClose={() => setGalleryOpen(false)}
+                  initialIndex={selectedImageIndex}
+                />
               </div>
               <Separator />
             </>
