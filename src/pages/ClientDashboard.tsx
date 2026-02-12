@@ -632,22 +632,26 @@ const ClientDashboard = () => {
                       </Button>
                     )}
                     
-                    {/* Jobs pagos - mostrar status da OS e opções */}
-                    {(job.status === "pago" || job.ordem_servico) && (
+                    {/* Jobs pagos/cancelados - mostrar status da OS e opções */}
+                    {(job.status === "pago" || job.status === "cancelado" || job.ordem_servico) && (
                       <>
                         <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-success" />
-                          <span className="text-success font-medium">
+                          {job.ordem_servico?.status === 'cancelada' || job.status === 'cancelado' ? (
+                            <XCircle className="w-4 h-4 text-destructive" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 text-success" />
+                          )}
+                          <span className={`font-medium ${job.ordem_servico?.status === 'cancelada' || job.status === 'cancelado' ? 'text-destructive' : 'text-success'}`}>
                             {job.ordem_servico?.status === 'concluida' ? 'Serviço concluído' :
                              job.ordem_servico?.status === 'concluida_com_assistencia' ? 'Concluído com assistência' :
-                             job.ordem_servico?.status === 'cancelada' ? 'Cancelado' :
+                             job.ordem_servico?.status === 'cancelada' || job.status === 'cancelado' ? 'Cancelado - Estorno processado' :
                              job.ordem_servico?.status === 'iniciada' ? 'Em execução' :
                              job.ordem_servico?.status === 'a_caminho' ? 'Montador a caminho' :
                              'Pagamento confirmado - Aguardando início'}
                           </span>
                         </div>
                         {/* Botão para acessar OS com opção de estorno */}
-                        {job.ordem_servico && !['concluida', 'concluida_com_assistencia', 'cancelada'].includes(job.ordem_servico.status) && (
+                        {job.ordem_servico && job.status !== 'cancelado' && !['concluida', 'concluida_com_assistencia', 'cancelada'].includes(job.ordem_servico.status) && (
                           <Button
                             variant="destructive"
                             size="sm"
