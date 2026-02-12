@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2, Filter, Users, Wrench, User, Ban } from 'lucide-react';
+import { Search, UserCog, Mail, Phone, Eye, MoreVertical, Trash2, Filter, Users, Wrench, User, Ban, ShieldCheck } from 'lucide-react';
 import { AdminMontadorDetailsModal } from './AdminMontadorDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,12 +47,26 @@ export function AdminUserManagement() {
   const [userToBlock, setUserToBlock] = useState<any>(null);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [blockAction, setBlockAction] = useState<'block' | 'unblock'>('block');
+
+  // Fetch montador statuses to know who is blocked
+  const { data: montadorStatuses, refetch: refetchStatuses } = useQuery({
+    queryKey: ['montador-statuses'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('montadores')
+        .select('user_id, status');
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      data?.forEach(m => { map[m.user_id] = m.status || 'ativo'; });
+      return map;
+    }
+  });
 
   // Buscar montadores pendentes
   const { data: montadoresPendentes, refetch: refetchPendentes } = useQuery({
     queryKey: ['montadores-pendentes'],
     queryFn: async () => {
-      // Buscar montadores pendentes
       const { data: montadoresData, error: montadoresError } = await supabase
         .from('montadores')
         .select('*')
@@ -62,7 +76,6 @@ export function AdminUserManagement() {
       if (montadoresError) throw montadoresError;
       if (!montadoresData) return [];
 
-      // Buscar perfis dos montadores
       const userIds = montadoresData.map(m => m.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -71,7 +84,6 @@ export function AdminUserManagement() {
 
       if (profilesError) throw profilesError;
 
-      // Combinar dados
       return montadoresData.map(m => {
         const profile = profilesData?.find(p => p.user_id === m.user_id);
         return {
@@ -85,18 +97,16 @@ export function AdminUserManagement() {
     }
   });
 
+  const isUserBlocked = (userId: string) => {
+    return montadorStatuses?.[userId] === 'bloqueado';
+  };
+
   // Filtrar usuários por busca e role
   const filteredUsers = users.filter(user => {
-    // Filtro de busca
     const matchesSearch = user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.telefone?.includes(searchTerm);
-    
-    // Filtro de role
     const matchesRole = roleFilter === 'todos' || user.role === roleFilter;
-    
-    // Filtrar apenas usuários ativos (não pendentes)
     const notPending = user.role !== 'montador' || !montadoresPendentes?.some(m => m.user_id === user.user_id);
-    
     return matchesSearch && matchesRole && notPending;
   });
 
@@ -127,7 +137,6 @@ export function AdminUserManagement() {
     if (!userToDelete) return;
 
     try {
-      // Se for montador, desativar ao invés de deletar
       if (userToDelete.role === 'montador') {
         const { error } = await supabase
           .from('montadores')
@@ -150,14 +159,17 @@ export function AdminUserManagement() {
     }
   };
 
-  const handleBlockUser = async () => {
+  const handleBlockUnblockUser = async () => {
     if (!userToBlock) return;
     setBlocking(true);
+
+    const isUnblock = blockAction === 'unblock';
+    const endpoint = isUnblock ? 'unblock-user' : 'block-user';
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(
-        'https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/block-user',
+        `https://ttzgwemurovxdxhgbdxz.supabase.co/functions/v1/${endpoint}`,
         {
           method: 'POST',
           headers: {
@@ -169,13 +181,18 @@ export function AdminUserManagement() {
       );
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Erro ao bloquear');
+      if (!res.ok) throw new Error(result.error || `Erro ao ${isUnblock ? 'desbloquear' : 'bloquear'}`);
 
-      toast.success(`Usuário ${userToBlock.nome} foi bloqueado com sucesso`);
+      toast.success(
+        isUnblock
+          ? `Usuário ${userToBlock.nome} foi desbloqueado com sucesso`
+          : `Usuário ${userToBlock.nome} foi bloqueado com sucesso`
+      );
       fetchUsers();
+      refetchStatuses();
     } catch (error: any) {
-      console.error('Erro ao bloquear usuário:', error);
-      toast.error(error.message || 'Erro ao bloquear usuário');
+      console.error(`Erro ao ${isUnblock ? 'desbloquear' : 'bloquear'} usuário:`, error);
+      toast.error(error.message || `Erro ao ${isUnblock ? 'desbloquear' : 'bloquear'} usuário`);
     } finally {
       setBlocking(false);
       setBlockDialogOpen(false);
@@ -236,7 +253,6 @@ export function AdminUserManagement() {
               </TabsList>
 
               <div className="mb-6 space-y-4">
-                {/* Busca */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
@@ -247,7 +263,6 @@ export function AdminUserManagement() {
                   />
                 </div>
 
-                {/* Filtro por Tipo de Usuário */}
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Filter className="w-4 h-4" />
@@ -301,66 +316,90 @@ export function AdminUserManagement() {
               </div>
 
               <TabsContent value="ativos" className="space-y-3">
-                {filteredUsers.map((user) => (
-                  <Card key={user.id} className="border bg-muted/30">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-semibold text-lg">{user.nome || 'Sem nome'}</h3>
-                            {getRoleBadge(user.role)}
-                          </div>
-                          
-                          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                            {user.telefone && (
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-3 h-3" />
-                                {user.telefone}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <Mail className="w-3 h-3" />
-                              ID: {user.user_id.slice(0, 8)}...
+                {filteredUsers.map((user) => {
+                  const blocked = isUserBlocked(user.user_id);
+                  return (
+                    <Card key={user.id} className={`border ${blocked ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800' : 'bg-muted/30'}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="font-semibold text-lg">{user.nome || 'Sem nome'}</h3>
+                              {getRoleBadge(user.role)}
+                              {blocked && (
+                                <Badge variant="outline" className="border-orange-500 text-orange-600 bg-orange-100 dark:bg-orange-900/30">
+                                  <Ban className="w-3 h-3 mr-1" />
+                                  Bloqueado
+                                </Badge>
+                              )}
                             </div>
-                            <p className="text-xs">
-                              Cadastrado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                            </p>
+                            
+                            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                              {user.telefone && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="w-3 h-3" />
+                                  {user.telefone}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-3 h-3" />
+                                ID: {user.user_id.slice(0, 8)}...
+                              </div>
+                              <p className="text-xs">
+                                Cadastrado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setUserToBlock(user);
-                                setBlockDialogOpen(true);
-                              }}
-                              className="text-orange-600 focus:text-orange-600"
-                            >
-                              <Ban className="w-4 h-4 mr-2" />
-                              Bloquear
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remover
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {blocked ? (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setUserToBlock(user);
+                                    setBlockAction('unblock');
+                                    setBlockDialogOpen(true);
+                                  }}
+                                  className="text-green-600 focus:text-green-600"
+                                >
+                                  <ShieldCheck className="w-4 h-4 mr-2" />
+                                  Desbloquear
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setUserToBlock(user);
+                                    setBlockAction('block');
+                                    setBlockDialogOpen(true);
+                                  }}
+                                  className="text-orange-600 focus:text-orange-600"
+                                >
+                                  <Ban className="w-4 h-4 mr-2" />
+                                  Bloquear
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remover
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
                 {filteredUsers.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
@@ -452,24 +491,49 @@ export function AdminUserManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Ban className="w-5 h-5 text-orange-600" />
-              Bloquear Usuário
+              {blockAction === 'block' ? (
+                <>
+                  <Ban className="w-5 h-5 text-orange-600" />
+                  Bloquear Usuário
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-5 h-5 text-green-600" />
+                  Desbloquear Usuário
+                </>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja bloquear <strong>{userToBlock?.nome}</strong>?
-              <br /><br />
-              Esta ação irá <strong>impedir o login</strong> deste usuário permanentemente. 
-              Ele não conseguirá mais acessar a plataforma.
+              {blockAction === 'block' ? (
+                <>
+                  Tem certeza que deseja bloquear <strong>{userToBlock?.nome}</strong>?
+                  <br /><br />
+                  Esta ação irá <strong>impedir o login</strong> deste usuário permanentemente. 
+                  Ele não conseguirá mais acessar a plataforma.
+                </>
+              ) : (
+                <>
+                  Tem certeza que deseja desbloquear <strong>{userToBlock?.nome}</strong>?
+                  <br /><br />
+                  O usuário poderá <strong>acessar a plataforma novamente</strong> normalmente.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={blocking}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleBlockUser} 
+              onClick={handleBlockUnblockUser} 
               disabled={blocking}
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              className={blockAction === 'block' 
+                ? "bg-orange-600 text-white hover:bg-orange-700" 
+                : "bg-green-600 text-white hover:bg-green-700"
+              }
             >
-              {blocking ? 'Bloqueando...' : 'Confirmar Bloqueio'}
+              {blocking 
+                ? (blockAction === 'block' ? 'Bloqueando...' : 'Desbloqueando...') 
+                : (blockAction === 'block' ? 'Confirmar Bloqueio' : 'Confirmar Desbloqueio')
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
