@@ -72,13 +72,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('🚪 SignOut chamado');
     try {
-      const { error } = await supabase.auth.signOut();
+      // Use scope: 'local' to ensure local session is ALWAYS cleared
+      // even if the server session is already expired/invalid
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) {
         console.warn('Logout error (ignoring):', error);
       }
     } catch (error) {
       console.warn('Error during logout process (ignoring):', error);
     } finally {
+      // Force clear localStorage as fallback
+      try {
+        window.localStorage.removeItem('youly-auth-token');
+      } catch (e) {
+        console.warn('Failed to clear localStorage:', e);
+      }
       setSession(null);
       setUser(null);
     }
