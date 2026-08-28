@@ -7,7 +7,7 @@ import { Wrench, Users, Shield, Star, CheckCircle, Clock, MapPin, Smartphone, Me
 import { useEffect, useRef, useState } from "react";
 
 const logos = [
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/3840px-Ikea_logo.svg.png",
+  // "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ikea_logo.svg/3840px-Ikea_logo.svg.png",
   "https://logodownload.org/wp-content/uploads/2019/11/tok-stok-logo.png",
   "https://logodownload.org/wp-content/uploads/2014/06/magalu-logo-1.png",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1280px-Amazon_logo.svg.png",
